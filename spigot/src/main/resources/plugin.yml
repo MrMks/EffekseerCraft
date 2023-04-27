@@ -1,0 +1,11 @@
+main: com.github.mrmks.mc.efscraft.spigot.EfsCraft
+name: EffekseerCraft
+version: $version
+
+commands:
+  effek:
+    usage: <command> play|stop|clear <effectReg> [player]
+    permission: efscraft.command
+permissions:
+  efscraft.command:
+    default: op

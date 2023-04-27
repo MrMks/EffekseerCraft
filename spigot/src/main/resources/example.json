@@ -1,0 +1,9 @@
+{
+  "reg_key": {
+    "effect": "Laser03",
+    "inherit": false,
+    "scale": [0, 0, 0],
+    "rotate": [0, 0, 0],
+    "translate": [0, 0, 0]
+  }
+}

@@ -1,0 +1,97 @@
+
+ext.workDirectory = './run/spigot'
+
+configurations {
+    runMain
+    compileOnly.extendsFrom runMain
+}
+
+sourceSets {
+    high {}
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"}
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' } // This lets gradle find the BungeeCord files online
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT', {
+        exclude group: 'junit'
+    }
+    compileOnly 'net.md-5:bungeecord-api:1.18-R0.1-SNAPSHOT'
+    highImplementation 'org.spigotmc:spigot:1.18.2-R0.1-SNAPSHOT'
+//    highCompileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+
+//    implementation files('../../libs/spigot-1.12.2.jar')
+    runMain 'org.spigotmc:spigot:1.12.2-R0.1-SNAPSHOT'
+    implementation 'com.github.mrmks:indy-gen:0.1.2'
+    highImplementation 'com.github.mrmks:indy-gen:0.1.2'
+
+    shade project(':api')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('plugin.yml') {
+        expand version: "$project.version"
+    }
+}
+
+jar {
+    archiveClassifier.set 'spigot'
+    from( project.configurations.shade.collect { it.isDirectory() ? it : zipTree(it) } )
+}
+
+tasks.register('prepareRunServer', Copy) {
+    from './build/libs'
+    include "${archivesBaseName}-${project.version}-spigot.jar"
+    into "$workDirectory/plugins"
+
+    dependsOn jar
+}
+
+tasks.register('runServer', JavaExec) {
+    dependsOn prepareRunServer
+    finalizedBy 'clearRunServer'
+    group 'run'
+
+    javaLauncher.set(javaToolchains.launcherFor({
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }))
+
+    workingDir workDirectory
+//    classpath files('../../libs/spigot-1.12.2.jar')
+//    classpath files("$workDirectory/CatServer-dc1d7e6d-universal.jar")
+    classpath configurations.runMain
+//    jvmArgs '-Dmrmks.prepo.debug=true'
+
+    standardInput System.in
+}
+
+tasks.register('clearRunServer', Delete) {
+    delete "$workDirectory/plugins/${archivesBaseName}-${project.version}-spigot.jar"
+}
+
+tasks.register('runGen', JavaExec) {
+    dependsOn 'compileJava'
+
+    classpath sourceSets.main.runtimeClasspath
+    mainClass.set "com.github.mrmks.indygen.Transformer"
+
+    args sourceSets.main.output.classesDirs.asFileTree.collectNested { it }
+}
+
+jar {
+    dependsOn 'runGen'
+}
+
+test {
+    useJUnitPlatform()
+}

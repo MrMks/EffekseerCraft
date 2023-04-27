@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'com.github.mrmks.mc'
+version = '0.0.1.1'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    testImplementation "org.junit.jupiter:junit-jupiter:5.8.1"
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    compileOnly 'com.google.guava:guava:21.0'
+    compileOnly 'com.google.code.gson:gson:2.8.8'
+}
+
+jar {
+    archiveClassifier = 'api'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        register('api', MavenPublication) {
+            artifactId 'effekseer-craft-api'
+
+            from components.java
+        }
+    }
+}

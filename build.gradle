@@ -1,0 +1,16 @@
+subprojects {
+    apply plugin: 'java'
+
+    group = 'com.github.mrmks.mc'
+    version = '0.0.1.1'
+
+    java {
+        archivesBaseName = 'EffekseerCraft'
+        toolchain.languageVersion = JavaLanguageVersion.of(8)
+    }
+
+    configurations {
+        shade
+        implementation.extendsFrom shade
+    }
+}
