@@ -58,11 +58,23 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
                 public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
-                    if ((FMLLaunchHandler.isDeobfuscatedEnvironment() ? "shutdownMinecraftApplet" : "func_71405_e").equals(name)) {
+                    boolean deobf = FMLLaunchHandler.isDeobfuscatedEnvironment();
+
+                    if ((deobf ? "shutdownMinecraftApplet" : "func_71405_e").equals(name)) {
                         mv = new MethodVisitor(api, mv) {
                             @Override
                             public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
                                 if ("org/lwjgl/opengl/Display".equals(owner) && "destroy".equals(name)) {
+                                    super.visitMethodInsn(Opcodes.INVOKESTATIC, "com/github/mrmks/mc/efscraft/forge/EffekseerCraft", "callbackCleanup", "()V", false);
+                                }
+                                super.visitMethodInsn(opcode, owner, name, desc, itf);
+                            }
+                        };
+                    } else if ((deobf ? "displayCrashReport" : "func_71377_b").equals(name)) {
+                        mv = new MethodVisitor(api, mv) {
+                            @Override
+                            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                                if ("net/minecraftforge/fml/common/FMLCommonHandler".equals(owner) && "instance".equals(name)) {
                                     super.visitMethodInsn(Opcodes.INVOKESTATIC, "com/github/mrmks/mc/efscraft/forge/EffekseerCraft", "callbackCleanup", "()V", false);
                                 }
                                 super.visitMethodInsn(opcode, owner, name, desc, itf);

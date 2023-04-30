@@ -7,7 +7,14 @@ import java.util.UUID;
 
 public class SPacketPlayWith extends SPacketPlayAbstract {
 
+    public static final byte MASK2_INHERIT_X = 0x1;
+    public static final byte MASK2_INHERIT_Y = 0x2;
+    public static final byte MASK2_INHERIT_Z = 0x4;
+    public static final byte MASK2_INHERIT_YAW = 0x8;
+    public static final byte MASK2_INHERIT_PITCH = 0x10;
+
     private UUID target;
+    private byte mask2;
 
     public SPacketPlayWith() {}
 

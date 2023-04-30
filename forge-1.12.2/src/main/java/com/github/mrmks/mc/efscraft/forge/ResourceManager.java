@@ -3,6 +3,8 @@ package com.github.mrmks.mc.efscraft.forge;
 import com.github.mrmks.efkseer4j.EfsEffect;
 import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.resource.IResourceType;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 
 import javax.annotation.Nonnull;
@@ -17,10 +19,13 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class EffectResourceManager implements IResourceManagerReloadListener {
+class ResourceManager implements ISelectiveResourceReloadListener {
+
+    enum ResourceEffect implements IResourceType { INSTANCE }
 
     private static class ResourceLocator extends ResourceLocation {
         private final String path;
@@ -65,10 +70,6 @@ public class EffectResourceManager implements IResourceManagerReloadListener {
 
             return i;
         }
-    }
-
-    private static ResourceLocation locList() {
-        return new ResourceLocator("list.json");
     }
 
     private static ResourceLocation locEffect(String key) {
@@ -139,7 +140,7 @@ public class EffectResourceManager implements IResourceManagerReloadListener {
         GET_PACK_ZIP = tmp;
     }
 
-    private Map<String, EfsEffect> effects = new HashMap<>();
+    private final Map<String, EfsEffect> effects = new HashMap<>();
 
     private Set<String> searchPacks(IResourceManager rm) {
 
@@ -153,8 +154,6 @@ public class EffectResourceManager implements IResourceManagerReloadListener {
             tr.printStackTrace();
             return Collections.emptySet();
         }
-
-//        if (true) return Collections.emptySet();
 
         Set<String> keys = new HashSet<>();
         String searchPath = "assets/efscraft/effects/";
@@ -187,13 +186,13 @@ public class EffectResourceManager implements IResourceManagerReloadListener {
                         .forEach(it -> keys.add(it.substring(searchPath.length(), it.length() - 1)));
             } else {
                 // unsupported resource pack format;
+                continue;
             }
         }
         return keys;
     }
 
-    @Override
-    public void onResourceManagerReload(IResourceManager resourceManager) {
+    private void doReload(IResourceManager resourceManager) {
 
         effects.clear();
 
@@ -239,6 +238,16 @@ public class EffectResourceManager implements IResourceManagerReloadListener {
         }
     }
 
+    @Override
+    public void onResourceManagerReload(@Nonnull IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+        if (resourcePredicate.test(ResourceEffect.INSTANCE))
+            doReload(resourceManager);
+    }
+
+    EfsEffect get(String effectKey) {
+        return effects.get(effectKey);
+    }
+
     private static boolean loadResource(
             IResourceManager manager,
             String key,
@@ -266,11 +275,6 @@ public class EffectResourceManager implements IResourceManagerReloadListener {
         }
 
         return true;
-    }
-
-    synchronized void cleanUp() {
-        effects.values().forEach(EfsEffect::delete);
-        effects.clear();
     }
 
     private interface LoadPredicate {

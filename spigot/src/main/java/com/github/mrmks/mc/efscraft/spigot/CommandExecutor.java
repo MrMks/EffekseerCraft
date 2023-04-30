@@ -17,11 +17,11 @@ import java.util.function.Consumer;
 
 public class CommandExecutor implements TabExecutor {
 
-    MessengeCodecAdaptor wrapper;
+    MessageCodecAdaptor wrapper;
     EffectRegistry registry;
     EfsCraft plugin;
 
-    CommandExecutor(EfsCraft plugin, EffectRegistry registry, MessengeCodecAdaptor wrapper) {
+    CommandExecutor(EfsCraft plugin, EffectRegistry registry, MessageCodecAdaptor wrapper) {
         this.plugin = plugin;
         this.registry = registry;
         this.wrapper = wrapper;
@@ -80,7 +80,7 @@ public class CommandExecutor implements TabExecutor {
                     y = Float.parseFloat(args[4]);
                     z = Float.parseFloat(args[5]);
 
-                    packet = registry.createPlayAt(args[1], x, y, z);
+                    packet = registry.createPlayAt(args[1], null, x, y, z);
 
                 } else {
 
@@ -98,7 +98,7 @@ public class CommandExecutor implements TabExecutor {
                     z = location.getZ();
 
                     if ("play".equals(sub)) {
-                        packet = registry.createPlayWith(args[1], player.getUniqueId());
+                        packet = registry.createPlayWith(args[1], null, player.getUniqueId());
                     } else {
                         packet = registry.createStop(args[1]);
                     }

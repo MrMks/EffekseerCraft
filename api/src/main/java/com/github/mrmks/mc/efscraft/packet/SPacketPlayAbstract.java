@@ -13,7 +13,7 @@ abstract class SPacketPlayAbstract implements IMessage {
     public static final byte MASK_FOLLOW_PITCH = 0x20;
 
     private String effect, emitter;
-    private float[] rotLocal, posLocal, rotModel, scale;
+    private float[] posModel, rotLocal, posLocal, rotModel, scale;
     private int skip, lifespan;
     protected byte mask;
 
@@ -25,23 +25,57 @@ abstract class SPacketPlayAbstract implements IMessage {
         this.lifespan = lifespan;
     }
 
-    public final SPacketPlayAbstract rotateLocal(float yaw, float pitch) {
+    public final SPacketPlayAbstract rotateLocalTo(float yaw, float pitch) {
+        if (rotLocal == null || rotLocal.length < 2)
+            rotLocal = new float[] {yaw, pitch};
+        else {
+            rotLocal[0] = yaw;
+            rotLocal[1] = pitch;
+        }
+        return this;
+    }
+
+    public final SPacketPlayAbstract rotateModelTo(float yaw, float pitch) {
+        if (rotModel == null || rotModel.length < 2)
+            rotModel = new float[] {yaw, pitch};
+        else {
+            rotModel[0] = yaw;
+            rotModel[1] = pitch;
+        }
+        return this;
+    }
+
+    public final SPacketPlayAbstract translateLocalTo(float x, float y, float z) {
+        if (posLocal == null || posLocal.length < 3)
+            posLocal = new float[] {x, y, z};
+        else {
+            posLocal[0] = x;
+            posLocal[1] = y;
+            posLocal[2] = z;
+        }
+        return this;
+    }
+
+    public final SPacketPlayAbstract translateModelTo(float x, float y, float z) {
+        if (posModel == null || posModel.length < 3)
+            posModel = new float[] {x, y, z};
+        else {
+            posModel[0] = x;
+            posModel[1] = y;
+            posModel[2] = z;
+        }
 
         return this;
     }
 
-    public final SPacketPlayAbstract rotateModel(float yaw, float pitch) {
-
-        return this;
-    }
-
-    public final SPacketPlayAbstract translate(float x, float y, float z) {
-
-        return this;
-    }
-
-    public final SPacketPlayAbstract scale(float x, float y, float z) {
-
+    public final SPacketPlayAbstract scaleTo(float x, float y, float z) {
+        if (scale == null || scale.length < 3)
+            scale = new float[] {x, y, z};
+        else {
+            scale[0] = x;
+            scale[1] = y;
+            scale[2] = z;
+        }
         return this;
     }
 
@@ -81,6 +115,10 @@ abstract class SPacketPlayAbstract implements IMessage {
         return posLocal;
     }
 
+    public float[] getPositionModel() {
+        return posModel;
+    }
+
     public float[] getRotationLocal() {
         return rotLocal;
     }
@@ -100,10 +138,11 @@ abstract class SPacketPlayAbstract implements IMessage {
         this.lifespan = stream.readInt();
         this.skip = stream.readInt();
 
-        this.posLocal = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
-        this.rotLocal = new float[] {stream.readFloat(), stream.readFloat()};
-        this.rotModel = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
         this.scale = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
+        this.rotLocal = new float[] {stream.readFloat(), stream.readFloat()};
+        this.posLocal = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
+        this.rotModel = new float[] {stream.readFloat(), stream.readFloat()};
+        this.posModel = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
 
         this.mask = stream.readByte();
     }
@@ -115,20 +154,29 @@ abstract class SPacketPlayAbstract implements IMessage {
         stream.writeInt(lifespan);
         stream.writeInt(skip);
 
-        stream.writeFloat(posLocal[0]);
-        stream.writeFloat(posLocal[1]);
-        stream.writeFloat(posLocal[2]);
-
-        stream.writeFloat(rotLocal[0]);
-        stream.writeFloat(rotLocal[1]);
-
-        stream.writeFloat(rotModel[0]);
-        stream.writeFloat(rotModel[1]);
-
+        if (scale == null) scale = new float[] {1, 1, 1};
         stream.writeFloat(scale[0]);
         stream.writeFloat(scale[1]);
         stream.writeFloat(scale[2]);
 
-        stream.writeFloat(mask);
+        if (rotLocal == null) rotLocal = new float[2];
+        stream.writeFloat(rotLocal[0]);
+        stream.writeFloat(rotLocal[1]);
+
+        if (posLocal == null) posLocal = new float[3];
+        stream.writeFloat(posLocal[0]);
+        stream.writeFloat(posLocal[1]);
+        stream.writeFloat(posLocal[2]);
+
+        if (rotModel == null) rotModel = new float[2];
+        stream.writeFloat(rotModel[0]);
+        stream.writeFloat(rotModel[1]);
+
+        if (posModel == null) posModel = new float[3];
+        stream.writeFloat(posModel[0]);
+        stream.writeFloat(posModel[1]);
+        stream.writeFloat(posModel[2]);
+
+        stream.writeByte(mask);
     }
 }

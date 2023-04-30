@@ -23,13 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EffectRegistry {
     public static class Node {
         @SerializedName("effect") String effect = null;
-        @SerializedName("emitter") String emitter = null;
+//        @SerializedName("emitter") String emitter = null;
         @SerializedName("lifespan") int lifespan = -1;
         @SerializedName("skipframe") int skipFrame;
         @SerializedName("scale") float[] scale;
         @SerializedName("rotateLocal") float[] rotateLocal;
         @SerializedName("rotateModel") float[] rotateModel;
-        @SerializedName("translate") float[] translate;
+        @SerializedName("translateLocal") float[] posLocal;
+        @SerializedName("translateModel") float[] posModel;
         @SerializedName("followX") boolean followX;
         @SerializedName("followY") boolean followY;
         @SerializedName("followZ") boolean followZ;
@@ -38,12 +39,13 @@ public class EffectRegistry {
         @SerializedName("overwriteConflict") boolean overwriteConflict;
 
         boolean checkDefaults() {
-            if (effect == null || emitter == null || lifespan < 0) return false;
+            if (effect == null || lifespan < 0) return false;
 
             if (scale == null || scale.length < 3) scale = new float[3];
             if (rotateLocal == null || rotateLocal.length < 2) rotateLocal = new float[2];
             if (rotateModel == null || rotateModel.length < 2) rotateModel = new float[2];
-            if (translate == null || translate.length < 3) translate = new float[3];
+            if (posLocal == null || posLocal.length < 3) posLocal = new float[3];
+            if (posModel == null || posModel.length < 3) posModel = new float[3];
 
             return true;
         }
@@ -58,6 +60,7 @@ public class EffectRegistry {
 
     public EffectRegistry(File file) {
         this.file = file;
+        reload(() -> {});
     }
 
     public void reload(Runnable runnable) {
@@ -99,39 +102,45 @@ public class EffectRegistry {
     }
 
     public boolean isExist(String key) {
+        checkFuture();
         return map.containsKey(key);
     }
 
-    public SPacketPlayWith createPlayWith(String key, UUID uuid) {
+    public SPacketPlayWith createPlayWith(String key, String emitter, UUID uuid) {
         checkFuture();
 
         Node node = map.get(key);
         if (node == null) return null;
 
-        SPacketPlayWith packet = new SPacketPlayWith(node.effect, node.emitter, node.lifespan, uuid);
+        SPacketPlayWith packet = new SPacketPlayWith(node.effect, emitter, node.lifespan, uuid);
         if (node.skipFrame > 0) packet.skipFrame(node.skipFrame);
 
         if (node.followX) packet.markFollowX();
-        if (node.followY) packet.markFollowX();
+        if (node.followY) packet.markFollowY();
         if (node.followZ) packet.markFollowZ();
         if (node.followYaw) packet.markFollowYaw();
         if (node.followPitch) packet.markFollowPitch();
         if (node.overwriteConflict) packet.markConflictOverwrite();
 
-        packet.translate(node.translate[0], node.translate[1], node.translate[2]);
-        packet.rotateLocal(node.rotateLocal[0], node.rotateLocal[1]);
-        packet.rotateModel(node.rotateModel[0], node.rotateModel[1]);
-        packet.scale(node.scale[0], node.scale[1], node.scale[2]);
+        packet.scaleTo(node.scale[0], node.scale[1], node.scale[2]);
+        packet.rotateLocalTo(node.rotateLocal[0], node.rotateLocal[1]);
+        packet.translateLocalTo(node.posLocal[0], node.posLocal[1], node.posLocal[2]);
+        packet.rotateModelTo(node.rotateModel[0], node.rotateModel[1]);
+        packet.translateModelTo(node.posModel[0], node.posModel[1], node.posModel[2]);
         return packet;
     }
 
-    public SPacketPlayAt createPlayAt(String key, double x, double y, double z) {
+    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z) {
         checkFuture();
 
         return null; // todo
     }
 
     public SPacketStop createStop(String key) {
+        return createStop(key, null);
+    }
+
+    public SPacketStop createStop(String key, String emitter) {
         checkFuture();
 
         return null; // todo;

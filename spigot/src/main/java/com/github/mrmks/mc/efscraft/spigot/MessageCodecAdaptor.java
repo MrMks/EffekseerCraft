@@ -11,10 +11,10 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.io.*;
 
-class MessengeCodecAdaptor extends MessageCodec implements PluginMessageListener {
+class MessageCodecAdaptor extends MessageCodec implements PluginMessageListener {
 
     private final Plugin plugin;
-    MessengeCodecAdaptor(Plugin plugin) {
+    MessageCodecAdaptor(Plugin plugin) {
         this.plugin = plugin;
     }
 

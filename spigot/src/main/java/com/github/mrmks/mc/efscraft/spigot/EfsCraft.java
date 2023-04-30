@@ -39,7 +39,7 @@ public class EfsCraft extends JavaPlugin {
     public void onEnable() {
         if (forgeDetected) return;
 
-        MessengeCodecAdaptor listener = new MessengeCodecAdaptor(this);
+        MessageCodecAdaptor listener = new MessageCodecAdaptor(this);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
         getServer().getMessenger().registerIncomingPluginChannel(this, Constants.CHANNEL_KEY, listener);
