@@ -8,6 +8,8 @@ import io.netty.util.internal.ConcurrentSet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.server.permission.DefaultPermissionLevel;
+import net.minecraftforge.server.permission.PermissionAPI;
 
 import java.io.File;
 import java.util.Set;
@@ -61,6 +63,7 @@ public class CommonProxy {
             file = new File(server.getActiveAnvilConverter().getFile(server.getFolderName(), "efscraft"), "effects.json");
         }
         EffectRegistry registry = new EffectRegistry(file);
+        PermissionAPI.registerNode("efscraft.command", DefaultPermissionLevel.OP, "permissions to use efscraft's commands");
         event.registerServerCommand(new EffekCommands(wrapper, registry, modVersion, this::isClientCompatible));
     }
 

@@ -11,6 +11,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -18,6 +19,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.server.command.CommandTreeBase;
+import net.minecraftforge.server.permission.PermissionAPI;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -58,6 +60,14 @@ class EffekCommands extends CommandTreeBase {
     @Nonnull
     public String getUsage(@Nonnull ICommandSender sender) {
         return "commands.effek.usage";
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+        if (sender instanceof EntityPlayer) {
+            return PermissionAPI.hasPermission((EntityPlayer) sender, "efscraft.command");
+        }
+        return true;
     }
 
     private void sendAtPos(IMessage message, World world, double x, double y, double z) {

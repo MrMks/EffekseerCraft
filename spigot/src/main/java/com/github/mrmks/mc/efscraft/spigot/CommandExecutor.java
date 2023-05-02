@@ -1,30 +1,36 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
+import com.github.mrmks.mc.efscraft.Constants;
 import com.github.mrmks.mc.efscraft.EffectRegistry;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
 import com.github.mrmks.mc.efscraft.packet.SPacketClear;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class CommandExecutor implements TabExecutor {
 
     MessageCodecAdaptor wrapper;
     EffectRegistry registry;
-    EfsCraft plugin;
+    EffekseerCraft plugin;
+    Set<UUID> clients;
 
-    CommandExecutor(EfsCraft plugin, EffectRegistry registry, MessageCodecAdaptor wrapper) {
+    CommandExecutor(EffekseerCraft plugin, EffectRegistry registry, MessageCodecAdaptor wrapper, Set<UUID> clients) {
         this.plugin = plugin;
         this.registry = registry;
         this.wrapper = wrapper;
+        this.clients = clients;
     }
 
     @Override
@@ -51,96 +57,141 @@ public class CommandExecutor implements TabExecutor {
                 return true;
             }
             else if ("play".equals(sub) || "stop".equals(sub)) {
-                if (args.length < 2) {
-                    sender.sendMessage("You should input which effect to play/stop");
-                    return true;
-                } else if (args.length < 3) {
-                    sender.sendMessage("You should input which player you want play/stop at, or give a position(world, x, y, z).");
+
+                boolean isPlay = "play".equals(sub);
+
+                if (args.length < 3) {
+//                    sender.sendMessage("You should input which player you want play/stop at, or give a position(world, x, y, z).");
+                    String msg = String.format("/effek %s <effect> <emitter> <entity> or /effek %s <effect> <emitter> <world> <x> <y> <z>", sub, sub);
+                    if (isPlay) msg += " [yaw] [pitch]";
+                    sender.sendMessage(ChatColor.RED + msg);
                     return true;
                 }
 
                 if (!registry.isExist(args[1])) {
-                    sender.sendMessage("Such a effect name isn't exist, please check your registry file.");
+//                    sender.sendMessage("Such a effect name isn't exist, please check your registry file.");
+                    sender.sendMessage(ChatColor.RED + "Server side effect registry '" + args[1] + "' cannot be found");
                     return true;
                 }
 
                 IMessage packet;
 
-                World world;
-                double x, y, z;
-                if (args.length > 5) {
+                if (args.length > 6) {
 
-                    world = Bukkit.getWorld(args[2]);
+                    World world = Bukkit.getWorld(args[3]);
                     if (world == null) {
-                        sender.sendMessage("We can't find that world");
+                        sender.sendMessage(ChatColor.RED + "Cannot find world with name " + args[3]);
                         return true;
                     }
 
-                    x = Float.parseFloat(args[3]);
-                    y = Float.parseFloat(args[4]);
-                    z = Float.parseFloat(args[5]);
+                    double x = Double.parseDouble(args[4]);
+                    double y = Double.parseDouble(args[5]);
+                    double z = Double.parseDouble(args[6]);
 
-                    packet = registry.createPlayAt(args[1], null, x, y, z);
+                    if (isPlay) {
+                        if (args.length > 8) {
+                            float yaw = Float.parseFloat(args[7]);
+                            float pitch = Float.parseFloat(args[8]);
 
+                            packet = registry.createPlayAt(args[1], args[2], x, y, z, yaw, pitch);
+                        } else {
+                            packet = registry.createPlayAt(args[1], args[2], x, y, z);
+                        }
+                    } else {
+                        packet = registry.createStop(args[1], args[2]);
+                    }
+
+                    sendToNearby(world, x, y, z, packet);
                 } else {
 
-                    Player player = Bukkit.getPlayer(args[2]);
-                    if (player == null) {
-                        sender.sendMessage("Can't find target player");
+                    Entity entity = null;
+
+                    try {
+                        UUID uuid = UUID.fromString(args[3]);
+                        entity = Bukkit.getEntity(uuid);
+                    } catch (IllegalArgumentException e) {}
+
+                    if (entity == null) {
+                        entity = Bukkit.getPlayer(args[3]);
+                    }
+
+                    if (entity == null) {
+                        BaseComponent component = new TranslatableComponent("commands.generic.entity.notFound", args[3]);
+                        component.setColor(net.md_5.bungee.api.ChatColor.RED);
+                        sender.spigot().sendMessage(component);
                         return true;
                     }
 
-                    world = player.getWorld();
-                    Location location = player.getLocation();
+                    Location location = entity.getLocation();
 
-                    x = location.getX();
-                    y = location.getY();
-                    z = location.getZ();
-
-                    if ("play".equals(sub)) {
-                        packet = registry.createPlayWith(args[1], null, player.getEntityId());
+                    if (isPlay) {
+                        packet = registry.createPlayWith(args[1], args[2], entity.getEntityId());
                     } else {
-                        packet = registry.createStop(args[1]);
+                        packet = registry.createStop(args[1], args[2]);
                     }
+
+                    sendToNearby(entity.getWorld(), location.getX(), location.getY(), location.getZ(), packet);
                 }
 
-                sendToNearby(world, x, y, z, packet);
+                return true;
             }
             else if ("clear".equals(sub)) {
                 if (args.length < 2) {
-                    sender.sendMessage("You must specific which player to clear effects");
+                    sender.sendMessage(ChatColor.RED + "/effek clear <player>");
                     return true;
                 }
 
                 Player player = Bukkit.getPlayer(args[1]);
+
                 if (player == null) {
-                    sender.sendMessage("We can't find that player");
+                    try {
+                        UUID uuid = UUID.fromString(args[1]);
+                        player = Bukkit.getPlayer(uuid);
+                    } catch (IllegalArgumentException e) {}
+                }
+
+                if (player == null) {
+//                    sender.sendMessage("We can't find that player");
+                    BaseComponent component = new TranslatableComponent("commands.generic.player.notFound", args[1]);
+                    component.setColor(net.md_5.bungee.api.ChatColor.RED);
+                    sender.spigot().sendMessage(component);
                     return true;
                 }
 
-                wrapper.sendTo(player, new SPacketClear());
+                if (clients.contains(player.getUniqueId()))
+                    wrapper.sendTo(player, new SPacketClear());
+
+                return true;
+            } else if ("version".equals(sub)) {
+                if (sender instanceof Player && clients.contains(((Player) sender).getUniqueId())) {
+                    BaseComponent component = new TranslatableComponent("commands.effek.version.display",
+                            plugin.getDescription().getVersion(), String.valueOf(Constants.PROTOCOL_VERSION), "bukkit");
+
+                    sender.spigot().sendMessage(component);
+                } else {
+                    sender.sendMessage(String.format("version: %s, protocol: %d, port: bukkit", plugin.getDescription().getVersion(), Constants.PROTOCOL_VERSION));
+                }
+                return true;
             } else {
                 return false;
             }
         } else {
-            sender.sendMessage("EfsCraft(v. " + plugin.getDescription().getVersion() + ") running on Bukkit");
-            return true;
+            return false;
         }
 
-        return false;
     }
 
     private void sendToNearby(World world, double x, double y, double z, IMessage packet) {
-        long chunkX = ((long) x) >>> 5, chunkZ = ((long) z) >>> 5;
-        List<Player> players = world.getPlayers();
-        for (Player player : players) {
-            if (player != null && player.isValid()) {
+
+        long chunkX = Math.round(x - 0.5) >> 4, chunkZ = Math.round(z - 0.5) >> 4;
+
+        for (Player player : world.getPlayers()) {
+            if (player != null && player.isValid() && clients.contains(player.getUniqueId())) {
+
                 Location loc = player.getLocation();
-                long cx = loc.getChunk().getX(), cz = loc.getChunk().getZ();
+                long cx = loc.getBlockX() >> 4, cz = loc.getBlockZ() >> 4;
 
-                cx = Math.abs(cx - chunkX); cz = Math.abs(cz - chunkZ);
-
-                if (cx <= 10 && cz <= 10) {
+                if (Math.abs(cx - chunkX) <= 10 && Math.abs(cz - chunkZ) <= 10) {
                     wrapper.sendTo(player, packet);
                 }
             }
@@ -148,7 +199,37 @@ public class CommandExecutor implements TabExecutor {
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] strings) {
-        return null;
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        if (!"effek".equals(label)) return Collections.emptyList();
+
+        if (args.length == 1) return filterCompletes(args, "play", "stop", "clear", "reload", "version");
+        else {
+            String sub = args[0];
+            if ("play".equals(sub) || "stop".equals(sub)) {
+                if (args.length == 2) return filterCompletes(args, registry.keySets());
+                else if (args.length == 4) return null;
+                else return Collections.emptyList();
+            }
+            else if ("clear".equals(sub)) {
+                if (args.length == 2) return null;
+                else return Collections.emptyList();
+            }
+            else return Collections.emptyList();
+        }
+    }
+
+    private List<String> filterCompletes(String[] args, String... completes) {
+        return filterCompletes(args, Arrays.asList(completes));
+    }
+
+    private List<String> filterCompletes(String[] args, Collection<String> completes) {
+        String last = args[args.length - 1];
+        ArrayList<String> list = new ArrayList<>();
+        for (String str : completes)
+            if (str.startsWith(last)) list.add(str);
+
+        list.sort(String::compareTo);
+
+        return list;
     }
 }
