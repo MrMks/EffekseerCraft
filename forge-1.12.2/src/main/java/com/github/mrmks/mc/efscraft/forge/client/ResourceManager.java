@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.forge;
+package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
 import net.minecraft.client.resources.*;
@@ -194,6 +194,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
 
     private void doReload(IResourceManager resourceManager) {
 
+        effects.values().forEach(EfsEffect::delete);
         effects.clear();
 
         Set<String> registry = searchPacks(resourceManager);
@@ -246,6 +247,11 @@ class ResourceManager implements ISelectiveResourceReloadListener {
 
     EfsEffect get(String effectKey) {
         return effects.get(effectKey);
+    }
+
+    void cleanup() {
+        effects.values().forEach(EfsEffect::delete);
+        effects.clear();
     }
 
     private static boolean loadResource(

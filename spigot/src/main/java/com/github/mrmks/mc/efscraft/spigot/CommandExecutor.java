@@ -98,7 +98,7 @@ public class CommandExecutor implements TabExecutor {
                     z = location.getZ();
 
                     if ("play".equals(sub)) {
-                        packet = registry.createPlayWith(args[1], null, player.getUniqueId());
+                        packet = registry.createPlayWith(args[1], null, player.getEntityId());
                     } else {
                         packet = registry.createStop(args[1]);
                     }

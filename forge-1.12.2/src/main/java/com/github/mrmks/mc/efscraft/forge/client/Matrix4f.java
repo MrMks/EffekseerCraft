@@ -1,10 +1,16 @@
-package com.github.mrmks.mc.efscraft.forge;
+package com.github.mrmks.mc.efscraft.forge.client;
 
 
-// todo;
 class Matrix4f {
 
     private static final float PI = (float) Math.PI;
+    private static float sin(float rad) {
+        return (float) Math.sin(rad);
+    }
+
+    private static float cos(float rad) {
+        return (float) Math.cos(rad);
+    }
 
     private float m00, m01, m02, m03;
     private float m10, m11, m12, m13;
@@ -63,10 +69,10 @@ class Matrix4f {
 
         Matrix4f other = new Matrix4f();
 
-        other.m02 = (float) Math.sin(yaw);
-        other.m22 = (float) Math.cos(yaw);
-        other.m10 = (float) Math.sin(pitch);
-        other.m11 = (float) Math.cos(pitch);
+        other.m02 = sin(yaw);
+        other.m22 = cos(yaw);
+        other.m10 = sin(pitch);
+        other.m11 = cos(pitch);
 
         other.m00 =  other.m11 * other.m22;
         other.m01 = -other.m10 * other.m22;

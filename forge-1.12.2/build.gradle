@@ -2,6 +2,10 @@ plugins {
     id 'net.minecraftforge.gradle' version '5.1.68'
 }
 
+ext {
+    projectClasspath = file("$buildDir/bin/main")
+}
+
 minecraft {
     // The mappings can be changed at any time and must be in the following format.
     // Channel:   Version:
@@ -103,7 +107,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     shade rootProject.project(':api')
-    implementation 'com.github.mrmks.effekseer4j:effekseer4j:0.1.3-SNAPSHOT', {
+    implementation 'com.github.mrmks.effekseer4j:effekseer4j:0.1.4-SNAPSHOT', {
         transitive = false
     }
 
@@ -134,3 +138,23 @@ jar.finalizedBy('reobfJar')
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+
+// remove default classpath and add combined classpath
+sourceSets.main {
+    runtimeClasspath = files(projectClasspath) + runtimeClasspath - output
+}
+
+// copy classes and resources to combined folder, then java can find resources by relative path
+tasks.register 'makeBin', {
+    mustRunAfter processResources, compileJava
+    doLast {
+        delete projectClasspath
+        copy {
+            from compileJava.destinationDirectory
+            from processResources.destinationDir
+            into projectClasspath
+        }
+    }
+}
+
+tasks.configureEach { Task task -> if (task.name == 'prepareRuns') task.dependsOn 'makeBin' }

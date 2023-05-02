@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft;
 
+import com.github.mrmks.mc.efscraft.packet.SPacketPlayAbstract;
 import com.github.mrmks.mc.efscraft.packet.SPacketPlayAt;
 import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
 import com.github.mrmks.mc.efscraft.packet.SPacketStop;
@@ -13,19 +14,15 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EffectRegistry {
     public static class Node {
         @SerializedName("effect") String effect = null;
-//        @SerializedName("emitter") String emitter = null;
         @SerializedName("lifespan") int lifespan = -1;
-        @SerializedName("skipframe") int skipFrame;
+        @SerializedName("skipFrame") int skipFrame;
         @SerializedName("scale") float[] scale;
         @SerializedName("rotateLocal") float[] rotateLocal;
         @SerializedName("rotateModel") float[] rotateModel;
@@ -101,25 +98,60 @@ public class EffectRegistry {
         this.available = true;
     }
 
+    public Set<String> keySets() {
+        checkFuture();
+        return new HashSet<>(map.keySet());
+    }
+
     public boolean isExist(String key) {
         checkFuture();
         return map.containsKey(key);
     }
 
-    public SPacketPlayWith createPlayWith(String key, String emitter, UUID uuid) {
+    public SPacketPlayWith createPlayWith(String key, String emitter, int entityId) {
         checkFuture();
 
         Node node = map.get(key);
         if (node == null) return null;
 
-        SPacketPlayWith packet = new SPacketPlayWith(node.effect, emitter, node.lifespan, uuid);
-        if (node.skipFrame > 0) packet.skipFrame(node.skipFrame);
+        SPacketPlayWith packet = new SPacketPlayWith(node.effect, emitter, node.lifespan, entityId);
+        buildPacketFromNode(packet, node);
 
         if (node.followX) packet.markFollowX();
         if (node.followY) packet.markFollowY();
         if (node.followZ) packet.markFollowZ();
         if (node.followYaw) packet.markFollowYaw();
         if (node.followPitch) packet.markFollowPitch();
+
+        return packet;
+    }
+
+    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z) {
+        checkFuture();
+
+        Node node = map.get(key);
+        if (node == null) return null;
+
+        SPacketPlayAt packet = new SPacketPlayAt(node.effect, emitter, node.lifespan, x, y, z);
+        buildPacketFromNode(packet, node);
+
+        return packet;
+    }
+
+    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z, double yaw, double pitch) {
+        checkFuture();
+
+        Node node = map.get(key);
+        if (node == null) return null;
+
+        SPacketPlayAt packet = new SPacketPlayAt(node.effect, emitter, node.lifespan, x, y, z, (float) yaw, (float) pitch);
+        buildPacketFromNode(packet, node);
+
+        return packet;
+    }
+
+    private void buildPacketFromNode(SPacketPlayAbstract packet, Node node) {
+        if (node.skipFrame > 0) packet.skipFrame(node.skipFrame);
         if (node.overwriteConflict) packet.markConflictOverwrite();
 
         packet.scaleTo(node.scale[0], node.scale[1], node.scale[2]);
@@ -127,13 +159,6 @@ public class EffectRegistry {
         packet.translateLocalTo(node.posLocal[0], node.posLocal[1], node.posLocal[2]);
         packet.rotateModelTo(node.rotateModel[0], node.rotateModel[1]);
         packet.translateModelTo(node.posModel[0], node.posModel[1], node.posModel[2]);
-        return packet;
-    }
-
-    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z) {
-        checkFuture();
-
-        return null; // todo
     }
 
     public SPacketStop createStop(String key) {
@@ -143,6 +168,9 @@ public class EffectRegistry {
     public SPacketStop createStop(String key, String emitter) {
         checkFuture();
 
-        return null; // todo;
+        Node node = map.get(key);
+        if (node == null) return null;
+
+        return new SPacketStop(node.effect, emitter == null ? "" : emitter);
     }
 }

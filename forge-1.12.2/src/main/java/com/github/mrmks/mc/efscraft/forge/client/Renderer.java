@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.forge;
+package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EfsProgram;
 import net.minecraft.client.Minecraft;
@@ -18,10 +18,10 @@ class Renderer {
 
     private final EfsProgramContainer container = new EfsProgramContainer();
     private final FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-    private final MessageQueue instQueue;
+    private final IntentQueue instQueue;
     private long lastFrameTimer = -1;
 
-    Renderer(MessageQueue instQueue) {
+    Renderer(IntentQueue instQueue) {
         this.instQueue = instQueue;
     }
 
@@ -81,15 +81,6 @@ class Renderer {
 
         if (!Minecraft.getMinecraft().isGamePaused()) {
 
-            instQueue.update(partial, program);
-
-            if (count < 0) {
-                Entity entity = Minecraft.getMinecraft().player;
-                instQueue.createDebug(program, entity.posX, entity.posY, entity.posZ);
-                count = 300;
-            }
-            count -= partial;
-
             float frames;
             if (lastFrameTimer < 0) {
                 frames = 1;
@@ -97,6 +88,17 @@ class Renderer {
                 frames = current - lastFrameTimer;
                 frames *= 60 / 1000f;
             }
+
+            frames = Math.min(10, frames);
+
+            instQueue.update(frames, partial, program);
+
+            if (count < 0) {
+                instQueue.createDebug();
+                count = 300;
+            }
+            count -= frames;
+
             program.update(frames);
         }
         lastFrameTimer = current;

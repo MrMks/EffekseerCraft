@@ -4,7 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-abstract class SPacketPlayAbstract implements IMessage {
+public abstract class SPacketPlayAbstract implements IMessage {
     public static final byte MASK_CONFLICT = 0x01;
     public static final byte MASK_FOLLOW_X = 0x02;
     public static final byte MASK_FOLLOW_Y = 0x04;
@@ -13,7 +13,9 @@ abstract class SPacketPlayAbstract implements IMessage {
     public static final byte MASK_FOLLOW_PITCH = 0x20;
 
     private String effect, emitter;
-    private float[] posModel, rotLocal, posLocal, rotModel, scale;
+    private float[] rotModel, posModel;
+    private float[] rotLocal, posLocal;
+    private float[] scale;
     private int skip, lifespan;
     protected byte mask;
 
@@ -91,43 +93,43 @@ abstract class SPacketPlayAbstract implements IMessage {
         return this;
     }
 
-    public String getEffect() {
+    public final String getEffect() {
         return effect;
     }
 
-    public String getEmitter() {
+    public final String getEmitter() {
         return emitter;
     }
 
-    public int getLifespan() {
+    public final int getLifespan() {
         return lifespan;
     }
 
-    public boolean conflictOverwrite() {
+    public final boolean conflictOverwrite() {
         return (mask & MASK_CONFLICT) != 0;
     }
 
-    public int getFrameSkip() {
+    public final int getFrameSkip() {
         return skip;
     }
 
-    public float[] getPositionLocal() {
+    public final float[] getLocalPosition() {
         return posLocal;
     }
 
-    public float[] getPositionModel() {
+    public final float[] getModelPosition() {
         return posModel;
     }
 
-    public float[] getRotationLocal() {
+    public final float[] getLocalRotation() {
         return rotLocal;
     }
 
-    public float[] getRotationModel() {
+    public final float[] getModelRotation() {
         return rotModel;
     }
 
-    public float[] getScale() {
+    public final float[] getScale() {
         return scale;
     }
 

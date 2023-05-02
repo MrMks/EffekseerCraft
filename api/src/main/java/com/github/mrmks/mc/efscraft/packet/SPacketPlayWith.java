@@ -13,17 +13,17 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
     public static final byte MASK2_INHERIT_YAW = 0x8;
     public static final byte MASK2_INHERIT_PITCH = 0x10;
 
-    private UUID target;
+    private int target;
     private byte mask2;
 
     public SPacketPlayWith() {}
 
-    public SPacketPlayWith(String effect, String emitter, int lifespan, UUID uuid) {
+    public SPacketPlayWith(String effect, String emitter, int lifespan, int entityId) {
         super(effect, emitter, lifespan);
-        this.target = uuid;
+        this.target = entityId;
     }
 
-    public final UUID getTarget() {
+    public final int getTarget() {
         return target;
     }
 
@@ -75,12 +75,12 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
     @Override
     public void read(DataInput stream) throws IOException {
         super.read(stream);
-        this.target = UUID.fromString(stream.readUTF());
+        this.target = stream.readInt();
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
         super.write(stream);
-        stream.writeUTF(target.toString());
+        stream.writeInt(this.target);
     }
 }
