@@ -68,7 +68,7 @@ class Renderer {
         return program;
     }
 
-    private float count = -1;
+//    private float count = -1;
 
     @SubscribeEvent
     public void renderWorld(RenderWorldLastEvent event) {
@@ -93,11 +93,11 @@ class Renderer {
 
             instQueue.update(frames, partial, program);
 
-            if (count < 0) {
-                instQueue.createDebug();
-                count = 300;
-            }
-            count -= frames;
+//            if (count < 0) {
+//                instQueue.createDebug();
+//                count = 300;
+//            }
+//            count -= frames;
 
             program.update(frames);
         }

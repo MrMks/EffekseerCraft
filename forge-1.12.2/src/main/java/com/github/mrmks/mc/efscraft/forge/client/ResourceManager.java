@@ -210,7 +210,10 @@ class ResourceManager implements ISelectiveResourceReloadListener {
             }
 
             EfsEffect effect = new EfsEffect();
-            if (!effect.load(resource.getInputStream(), 1, true)) continue;
+            if (!effect.load(resource.getInputStream(), 1, true)) {
+                effect.delete();
+                continue;
+            }
 
             boolean flag = true;
             for (EfsEffect.Texture texture : EfsEffect.Texture.values()) {
@@ -221,21 +224,20 @@ class ResourceManager implements ISelectiveResourceReloadListener {
                 );
                 if (!flag) break;
             }
-            if (!flag) continue;
 
-            flag = loadResource(resourceManager, key, effect::curveCount, effect::getCurvePath,
+            flag = flag && loadResource(resourceManager, key, effect::curveCount, effect::getCurvePath,
                     (i, stream) -> effect.loadCurve(stream, i, true));
-            if (!flag) continue;
 
-            flag = loadResource(resourceManager, key, effect::materialCount, effect::getMaterialPath,
+            flag = flag && loadResource(resourceManager, key, effect::materialCount, effect::getMaterialPath,
                     (i, stream) -> effect.loadMaterial(stream, i, true));
-            if (!flag) continue;
 
-            flag = loadResource(resourceManager, key, effect::modelCount, effect::getModelPath,
+            flag = flag && loadResource(resourceManager, key, effect::modelCount, effect::getModelPath,
                     (i, stream) -> effect.loadModel(stream, i, true));
-            if (!flag) continue;
 
-            effects.putIfAbsent(key, effect);
+            if (flag)
+                effects.putIfAbsent(key, effect);
+            else
+                effect.delete();
         }
     }
 
