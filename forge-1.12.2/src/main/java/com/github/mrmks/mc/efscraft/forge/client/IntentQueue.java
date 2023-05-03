@@ -62,7 +62,7 @@ class IntentQueue {
 
         if (clearMark.get()) return;
 
-        Map<String, Entry> lookup = this.lookup.get(stop.getEffect());
+        Map<String, Entry> lookup = this.lookup.get(stop.getKey());
         if (lookup != null) {
             String emitter = stop.getEmitter();
             if (emitter.isEmpty()) {
@@ -130,7 +130,7 @@ class IntentQueue {
         float[] rotModel = new float[2];
         float[] posModel = new float[] {0, 10, 0};
 
-        Entry entry = new Entry("Laser03", "debug", 0, 203, local, rotModel, posModel) {
+        Entry entry = new Entry("Laser03", "Laser03", "debug", 0, 203, local, rotModel, posModel) {
             @Override
             Matrix4f initMatrix(float partial) {
                 return new Matrix4f().identity()
@@ -163,7 +163,7 @@ class IntentQueue {
 
         enum State { NEW, CREATED, RUNNING, STOPPING, STOPPED }
 
-        final String effect, emitter;
+        final String key, effect, emitter;
         private final int skipFrame, lifespan;
         private final Matrix4f local;
         protected final float[] rotModel, posModel;
@@ -173,6 +173,7 @@ class IntentQueue {
         transient State state;
 
         Entry(SPacketPlayAbstract play) {
+            this.key = play.getKey();
             this.effect = play.getEffect();
             this.emitter = play.getEmitter();
             this.skipFrame = play.getFrameSkip();
@@ -194,7 +195,8 @@ class IntentQueue {
             state = State.NEW;
         }
 
-        Entry(String effect, String emitter, int skip, int lifespan, Matrix4f local, float[] rotModel, float[] posModel) {
+        Entry(String key, String effect, String emitter, int skip, int lifespan, Matrix4f local, float[] rotModel, float[] posModel) {
+            this.key = key;
             this.effect = effect;
             this.emitter = emitter;
             this.skipFrame = skip;

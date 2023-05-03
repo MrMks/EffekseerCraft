@@ -12,7 +12,7 @@ public abstract class SPacketPlayAbstract implements IMessage {
     public static final byte MASK_FOLLOW_YAW = 0x10;
     public static final byte MASK_FOLLOW_PITCH = 0x20;
 
-    private String effect, emitter;
+    private String key, effect, emitter;
     private float[] rotModel, posModel;
     private float[] rotLocal, posLocal;
     private float[] scale;
@@ -21,7 +21,8 @@ public abstract class SPacketPlayAbstract implements IMessage {
 
     protected SPacketPlayAbstract() {}
 
-    protected SPacketPlayAbstract(String effect, String emitter, int lifespan) {
+    protected SPacketPlayAbstract(String key, String effect, String emitter, int lifespan) {
+        this.key = key;
         this.effect = effect;
         this.emitter = emitter;
         this.lifespan = lifespan;
@@ -93,6 +94,10 @@ public abstract class SPacketPlayAbstract implements IMessage {
         return this;
     }
 
+    public String getKey() {
+        return key;
+    }
+
     public final String getEffect() {
         return effect;
     }
@@ -135,6 +140,7 @@ public abstract class SPacketPlayAbstract implements IMessage {
 
     @Override
     public void read(DataInput stream) throws IOException {
+        this.key = stream.readUTF();
         this.effect = stream.readUTF();
         this.emitter = stream.readUTF();
         this.lifespan = stream.readInt();
@@ -151,6 +157,7 @@ public abstract class SPacketPlayAbstract implements IMessage {
 
     @Override
     public void write(DataOutput stream) throws IOException {
+        stream.writeUTF(key);
         stream.writeUTF(effect);
         stream.writeUTF(emitter);
         stream.writeInt(lifespan);

@@ -224,7 +224,7 @@ class EffekCommands extends CommandTreeBase {
     }
 
     void executeVersion(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        Object[] placeholders = new Object[] {version, Constants.PROTOCOL_VERSION};
+        Object[] placeholders = new Object[] {version, Constants.PROTOCOL_VERSION, "forge"};
         sender.sendMessage(new TextComponentTranslation("commands.effek.version.display", placeholders));
     }
 
@@ -284,7 +284,7 @@ class EffekCommands extends CommandTreeBase {
     }
     private static class WorldNotFountException extends CommandException {
         WorldNotFountException(int dim) {
-            super("commands.effek.world.notFound", dim);
+            super("commands.effek.world.notFound,dim", dim);
         }
     }
 }

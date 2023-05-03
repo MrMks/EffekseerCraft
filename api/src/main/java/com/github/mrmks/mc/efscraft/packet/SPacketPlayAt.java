@@ -11,12 +11,12 @@ public class SPacketPlayAt extends SPacketPlayAbstract {
 
     public SPacketPlayAt() {}
 
-    public SPacketPlayAt(String effect, String emitter, int lifespan, double x, double y, double z) {
-        this(effect, emitter, lifespan, x, y, z, 0, 0);
+    public SPacketPlayAt(String key, String effect, String emitter, int lifespan, double x, double y, double z) {
+        this(key, effect, emitter, lifespan, x, y, z, 0, 0);
     }
 
-    public SPacketPlayAt(String effect, String emitter, int lifespan, double x, double y, double z, float yaw,float pitch) {
-        super(effect, emitter, lifespan);
+    public SPacketPlayAt(String key, String effect, String emitter, int lifespan, double x, double y, double z, float yaw,float pitch) {
+        super(key, effect, emitter, lifespan);
         this.targetPos = new float[] {(float) x, (float) y, (float) z};
         this.targetRot = new float[] {yaw, pitch};
     }

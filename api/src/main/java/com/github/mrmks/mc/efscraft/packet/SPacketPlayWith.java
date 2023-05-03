@@ -18,8 +18,8 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
 
     public SPacketPlayWith() {}
 
-    public SPacketPlayWith(String effect, String emitter, int lifespan, int entityId) {
-        super(effect, emitter, lifespan);
+    public SPacketPlayWith(String key, String effect, String emitter, int lifespan, int entityId) {
+        super(key, effect, emitter, lifespan);
         this.target = entityId;
     }
 

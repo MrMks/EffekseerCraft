@@ -114,7 +114,7 @@ public class EffectRegistry {
         Node node = map.get(key);
         if (node == null) return null;
 
-        SPacketPlayWith packet = new SPacketPlayWith(node.effect, emitter, node.lifespan, entityId);
+        SPacketPlayWith packet = new SPacketPlayWith(key, node.effect, emitter, node.lifespan, entityId);
         buildPacketFromNode(packet, node);
 
         if (node.followX) packet.markFollowX();
@@ -132,7 +132,7 @@ public class EffectRegistry {
         Node node = map.get(key);
         if (node == null) return null;
 
-        SPacketPlayAt packet = new SPacketPlayAt(node.effect, emitter, node.lifespan, x, y, z);
+        SPacketPlayAt packet = new SPacketPlayAt(key, node.effect, emitter, node.lifespan, x, y, z);
         buildPacketFromNode(packet, node);
 
         return packet;
@@ -144,7 +144,7 @@ public class EffectRegistry {
         Node node = map.get(key);
         if (node == null) return null;
 
-        SPacketPlayAt packet = new SPacketPlayAt(node.effect, emitter, node.lifespan, x, y, z, (float) yaw, (float) pitch);
+        SPacketPlayAt packet = new SPacketPlayAt(key, node.effect, emitter, node.lifespan, x, y, z, (float) yaw, (float) pitch);
         buildPacketFromNode(packet, node);
 
         return packet;
@@ -168,9 +168,6 @@ public class EffectRegistry {
     public SPacketStop createStop(String key, String emitter) {
         checkFuture();
 
-        Node node = map.get(key);
-        if (node == null) return null;
-
-        return new SPacketStop(node.effect, emitter == null ? "" : emitter);
+        return new SPacketStop(key, emitter == null ? "" : emitter);
     }
 }

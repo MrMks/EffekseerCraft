@@ -6,7 +6,6 @@ import com.github.mrmks.mc.efscraft.packet.IMessage;
 import com.github.mrmks.mc.efscraft.packet.SPacketClear;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -44,15 +43,19 @@ public class CommandExecutor implements TabExecutor {
             if ("reload".equals(sub)) {
                 Runnable post;
                 Consumer<CommandSender> consumer = s -> {
-                    if (s != null) s.sendMessage("EfsCraft effect registry reload completed.");
+                    if (s instanceof Player && clients.contains(((Player) s).getUniqueId())) {
+                        s.spigot().sendMessage(new TranslatableComponent("commands.effek.reload.success"));
+                    } else if (s != null) {
+                        s.sendMessage("Server side effect registry reload completed.");
+                    }
                 };
                 if (sender instanceof Player) {
                     UUID uuid = ((Player) sender).getUniqueId();
-                    post = () -> consumer.accept(Bukkit.getPlayer(uuid));
+                    post = () -> consumer.accept(plugin.getServer().getPlayer(uuid));
                 } else {
-                    post = () -> consumer.accept(Bukkit.getConsoleSender());
+                    post = () -> consumer.accept(plugin.getServer().getConsoleSender());
                 }
-                registry.reload(() -> Bukkit.getScheduler().runTask(plugin, post));
+                registry.reload(() -> plugin.getServer().getScheduler().runTask(plugin, post));
 
                 return true;
             }
@@ -61,16 +64,20 @@ public class CommandExecutor implements TabExecutor {
                 boolean isPlay = "play".equals(sub);
 
                 if (args.length < 3) {
-//                    sender.sendMessage("You should input which player you want play/stop at, or give a position(world, x, y, z).");
                     String msg = String.format("/effek %s <effect> <emitter> <entity> or /effek %s <effect> <emitter> <world> <x> <y> <z>", sub, sub);
                     if (isPlay) msg += " [yaw] [pitch]";
                     sender.sendMessage(ChatColor.RED + msg);
                     return true;
                 }
 
-                if (!registry.isExist(args[1])) {
-//                    sender.sendMessage("Such a effect name isn't exist, please check your registry file.");
-                    sender.sendMessage(ChatColor.RED + "Server side effect registry '" + args[1] + "' cannot be found");
+                if (isPlay && !registry.isExist(args[1])) {
+                    if (sender instanceof Player && clients.contains(((Player) sender).getUniqueId())) {
+                        BaseComponent component = new TranslatableComponent("commands.effek.effect.notFound", args[1]);
+                        component.setColor(net.md_5.bungee.api.ChatColor.RED);
+                        sender.spigot().sendMessage(component);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Server side effect registry '" + args[1] + "' cannot be found");
+                    }
                     return true;
                 }
 
@@ -78,9 +85,15 @@ public class CommandExecutor implements TabExecutor {
 
                 if (args.length > 6) {
 
-                    World world = Bukkit.getWorld(args[3]);
+                    World world = plugin.getServer().getWorld(args[3]);
                     if (world == null) {
-                        sender.sendMessage(ChatColor.RED + "Cannot find world with name " + args[3]);
+                        if (sender instanceof Player && clients.contains(((Player) sender).getUniqueId())) {
+                            BaseComponent component = new TranslatableComponent("commands.effek.world.notFound.name", args[3]);
+                            component.setColor(net.md_5.bungee.api.ChatColor.RED);
+                            sender.spigot().sendMessage(component);
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "Cannot find world with name " + args[3]);
+                        }
                         return true;
                     }
 
@@ -108,11 +121,11 @@ public class CommandExecutor implements TabExecutor {
 
                     try {
                         UUID uuid = UUID.fromString(args[3]);
-                        entity = Bukkit.getEntity(uuid);
+                        entity = plugin.getServer().getEntity(uuid);
                     } catch (IllegalArgumentException e) {}
 
                     if (entity == null) {
-                        entity = Bukkit.getPlayer(args[3]);
+                        entity = plugin.getServer().getPlayer(args[3]);
                     }
 
                     if (entity == null) {
@@ -141,12 +154,12 @@ public class CommandExecutor implements TabExecutor {
                     return true;
                 }
 
-                Player player = Bukkit.getPlayer(args[1]);
+                Player player = plugin.getServer().getPlayer(args[1]);
 
                 if (player == null) {
                     try {
                         UUID uuid = UUID.fromString(args[1]);
-                        player = Bukkit.getPlayer(uuid);
+                        player = plugin.getServer().getPlayer(uuid);
                     } catch (IllegalArgumentException e) {}
                 }
 

@@ -5,17 +5,17 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class SPacketStop implements IMessage {
-    private String effect, emitter; // effect and emitter to search which emitter
+    private String key, emitter; // effect and emitter to search which emitter
 
     public SPacketStop() {}
 
-    public SPacketStop(String effect, String emitter) {
-        this.effect = effect;
+    public SPacketStop(String key, String emitter) {
+        this.key = key;
         this.emitter = emitter;
     }
 
-    public String getEffect() {
-        return effect;
+    public String getKey() {
+        return key;
     }
 
     public String getEmitter() {
@@ -24,13 +24,13 @@ public class SPacketStop implements IMessage {
 
     @Override
     public void read(DataInput stream) throws IOException {
-        this.effect = stream.readUTF();
+        this.key = stream.readUTF();
         this.emitter = stream.readUTF();
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeUTF(effect);
+        stream.writeUTF(key);
         stream.writeUTF(emitter);
     }
 }

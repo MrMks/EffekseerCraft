@@ -4,7 +4,7 @@ version: $version
 
 commands:
   effek:
-    usage: <command> <play|stop|clear|reload|reload> [sub...]
+    usage: §c/<command> <play|stop|clear|reload|reload> [sub...]
     permission: efscraft.command
 permissions:
   efscraft.command:
