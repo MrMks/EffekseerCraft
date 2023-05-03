@@ -65,7 +65,7 @@ class IntentQueue {
         Map<String, Entry> lookup = this.lookup.get(stop.getKey());
         if (lookup != null) {
             String emitter = stop.getEmitter();
-            if (emitter.isEmpty()) {
+            if (emitter.isEmpty() || "*".equals(emitter)) {
                 lookup.values().forEach(it -> it.state = Entry.State.STOPPING);
             } else {
                 Entry entry = lookup.get(emitter);
@@ -135,8 +135,7 @@ class IntentQueue {
             Matrix4f initMatrix(float partial) {
                 return new Matrix4f().identity()
                         .translatef(posModel[0], posModel[1], posModel[2])
-                        .rotateMC(rotModel[0] + 90, rotModel[1])
-                        ;
+                        .rotateMC(rotModel[0], rotModel[1]);
             }
 
             @Override
@@ -259,7 +258,7 @@ class IntentQueue {
             return new Matrix4f().identity()
                     .translatef(initPos[0], initPos[1], initPos[2])
                     .translatef(posModel[0], posModel[1], posModel[2])
-                    .rotateMC(rotModel[0] + 90, rotModel[1]);
+                    .rotateMC(rotModel[0], rotModel[1]);
 
         }
 
@@ -276,10 +275,13 @@ class IntentQueue {
 
     private static class EntryWith extends Entry {
         private final boolean followX, followY, followZ, followYaw, followPitch;
+        private final boolean useHead, useRender;
+        private final boolean inheritYaw, inheritPitch;
         private final int entityId;
         private final boolean asAt;
         private double[] initPos;
         private float[] initAngle;
+
         EntryWith(SPacketPlayWith play) {
             super(play);
 
@@ -288,6 +290,13 @@ class IntentQueue {
             followZ = play.followZ();
             followYaw = play.followYaw();
             followPitch = play.followPitch();
+
+            useHead = play.isUseHead();
+            useRender = play.isUseRender();
+
+            inheritYaw = play.isInheritYaw();
+            inheritPitch = play.isInheritPitch();
+
             entityId = play.getTarget();
 
             asAt = !(followX || followY || followZ || followYaw || followPitch);
@@ -298,23 +307,43 @@ class IntentQueue {
             return entity != null && entity.isEntityAlive() && entity.isAddedToWorld() ? entity : null;
         }
 
+        private float getYaw(Entity entity) {
+            if (entity instanceof EntityLivingBase) {
+                EntityLivingBase base = (EntityLivingBase) entity;
+
+                return useHead ? base.getRotationYawHead() : useRender ? base.renderYawOffset : base.rotationYaw;
+            } else {
+                return useHead ? entity.getRotationYawHead() : entity.rotationYaw;
+            }
+        }
+
+        private float getPitch(Entity entity) {
+            if (entity instanceof EntityLivingBase) {
+                EntityLivingBase base = (EntityLivingBase) entity;
+
+                return useRender ? base.cameraPitch : base.rotationPitch;
+            } else {
+                return entity.rotationPitch;
+            }
+        }
+
         @Override
         Matrix4f initMatrix(float partial) {
             Entity entity = findEntity();
             if (entity == null) return new Matrix4f().identity();
 
             initPos = new double[] {entity.posX, entity.posY, entity.posZ};
-            if (entity instanceof EntityLivingBase) {
-                EntityLivingBase base = (EntityLivingBase) entity;
-                initAngle = new float[] {base.renderYawOffset, base.cameraPitch};
-            } else {
-                initAngle = new float[] {entity.rotationYaw, entity.rotationPitch};
-            }
+            initAngle = new float[] {getYaw(entity), getPitch(entity)};
+
+            float[] rotationYaw = new float[] {
+                    rotModel[0] + (inheritYaw ? initAngle[0] + 90 : 0),
+                    rotModel[1] + (inheritPitch ? initAngle[1] : 0)
+            };
 
             return new Matrix4f().identity()
                     .translated(initPos[0], initPos[1], initPos[2])
                     .translated(posModel[0], posModel[1], posModel[2])
-                    .rotateMC(initAngle[0] + 90 + rotModel[0], initAngle[1] + rotModel[1]);
+                    .rotateMC(rotationYaw[0], rotationYaw[1]);
         }
 
         @Override
@@ -327,19 +356,50 @@ class IntentQueue {
             d0 = followX ? entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partial : initPos[0];
             d1 = followY ? entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partial : initPos[1];
             d2 = followZ ? entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partial : initPos[2];
-            d3 = followYaw ? (entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partial) : initAngle[0];
-            d4 = followPitch ? entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partial : initAngle[1];
 
-            if (entity instanceof EntityLivingBase) {
-                EntityLivingBase base = (EntityLivingBase) entity;
-                if (followYaw) d3 = base.prevRenderYawOffset + (base.renderYawOffset - base.prevRenderYawOffset) * partial;
-                if (followPitch) d4 = base.prevCameraPitch + (base.cameraPitch - base.prevCameraPitch) * partial;
+            if (followYaw) {
+                if (entity instanceof EntityLivingBase) {
+                    EntityLivingBase base = (EntityLivingBase) entity;
+
+                    if (useHead) {
+                        d3 = base.prevRotationYawHead + (base.rotationYawHead - base.prevRotationYawHead) * partial;
+                    } else if (useRender) {
+                        d3 = base.prevRenderYawOffset + (base.renderYawOffset - base.prevRenderYawOffset) * partial;
+                    } else {
+                        d3 = base.prevRotationYaw + (base.rotationYaw - base.prevRotationYaw) * partial;
+                    }
+                } else {
+                    d3 = entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partial;
+                }
+                if (!inheritYaw) d3 -= initAngle[0];
+
+                d3 += 90;
+            } else {
+                d3 = inheritYaw ? initAngle[0] + 90 : 0;
+            }
+
+            if (followPitch) {
+                if (entity instanceof EntityLivingBase) {
+                    EntityLivingBase base = (EntityLivingBase) entity;
+
+                    if (useRender) {
+                        d4 = base.prevCameraPitch + (base.cameraPitch - base.prevCameraPitch) * partial;
+                    } else {
+                        d4 = base.prevRotationPitch + (base.rotationPitch - base.prevRotationPitch) * partial;
+                    }
+
+                    if (!inheritPitch) d4 -= initAngle[1];
+                } else {
+                    d4 = inheritPitch ? initAngle[1] : 0;
+                }
+            } else {
+                d4 = initAngle[1];
             }
 
             return new Matrix4f().identity()
                     .translated(d0, d1, d2)
                     .translated(posModel[0], posModel[1], posModel[2])
-                    .rotateMC(d3 + rotModel[0] + 90, d4 + rotModel[1]);
+                    .rotateMC(d3 + rotModel[0], d4 + rotModel[1]);
         }
 
         @Override

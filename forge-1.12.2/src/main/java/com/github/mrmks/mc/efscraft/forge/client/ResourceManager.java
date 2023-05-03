@@ -92,7 +92,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
 
         try {
-            Field field = SimpleReloadableResourceManager.class.getDeclaredField(deobf ? "domainResourceManagers" : "");
+            Field field = SimpleReloadableResourceManager.class.getDeclaredField(deobf ? "domainResourceManagers" : "field_110548_a");
             field.setAccessible(true);
             tmp = lookup.unreflectGetter(field);
         } catch (Throwable tr) {
@@ -102,7 +102,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
         GET_DOMAIN_MANAGER = tmp;
 
         try {
-            Field field= FallbackResourceManager.class.getDeclaredField(deobf ? "resourcePacks" : "");
+            Field field= FallbackResourceManager.class.getDeclaredField(deobf ? "resourcePacks" : "field_110540_a");
             field.setAccessible(true);
             tmp = lookup.unreflectGetter(field);
         } catch (Throwable tr) {
@@ -120,7 +120,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
         MAP_INVOKE_GET = tmp;
 
         try {
-            Field field = AbstractResourcePack.class.getDeclaredField("resourcePackFile");
+            Field field = AbstractResourcePack.class.getDeclaredField(deobf ? "resourcePackFile" : "field_110597_b");
             field.setAccessible(true);
             tmp = lookup.unreflectGetter(field);
         } catch (Throwable tr) {
@@ -130,7 +130,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
         GET_PACK_FILE = tmp;
 
         try {
-            Method method = FileResourcePack.class.getDeclaredMethod("getResourcePackZipFile");
+            Method method = FileResourcePack.class.getDeclaredMethod(deobf ? "getResourcePackZipFile" : "func_110599_c");
             method.setAccessible(true);
             tmp = lookup.unreflect(method);
         } catch (Throwable tr) {

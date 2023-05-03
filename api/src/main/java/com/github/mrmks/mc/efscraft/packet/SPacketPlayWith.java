@@ -3,15 +3,19 @@ package com.github.mrmks.mc.efscraft.packet;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
 
 public class SPacketPlayWith extends SPacketPlayAbstract {
 
-    public static final byte MASK2_INHERIT_X = 0x1;
-    public static final byte MASK2_INHERIT_Y = 0x2;
-    public static final byte MASK2_INHERIT_Z = 0x4;
-    public static final byte MASK2_INHERIT_YAW = 0x8;
-    public static final byte MASK2_INHERIT_PITCH = 0x10;
+    public static final byte MASK_FOLLOW_X = 0x02;
+    public static final byte MASK_FOLLOW_Y = 0x04;
+    public static final byte MASK_FOLLOW_Z = 0x08;
+    public static final byte MASK_FOLLOW_YAW = 0x10;
+    public static final byte MASK_FOLLOW_PITCH = 0x20;
+    public static final byte MASK_USE_HEAD_ROTATION = 0x40;
+    public static final byte MASK_USE_RENDER_ROTATION = -0x80;
+
+    public static final byte MASK2_INHERIT_YAW = 0x1;
+    public static final byte MASK2_INHERIT_PITCH = 0x2;
 
     private int target;
     private byte mask2;
@@ -27,28 +31,48 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
         return target;
     }
 
-    public final SPacketPlayWith markFollowX() {
-        this.mask |= MASK_FOLLOW_X;
+    public final SPacketPlayWith markFollowX(boolean flag) {
+        if (flag) this.mask |= MASK_FOLLOW_X;
         return this;
     }
 
-    public final SPacketPlayWith markFollowY() {
-        this.mask |= MASK_FOLLOW_Y;
+    public final SPacketPlayWith markFollowY(boolean flag) {
+        if (flag) this.mask |= MASK_FOLLOW_Y;
         return this;
     }
 
-    public final SPacketPlayWith markFollowZ() {
-        this.mask |= MASK_FOLLOW_Z;
+    public final SPacketPlayWith markFollowZ(boolean flag) {
+        if (flag) this.mask |= MASK_FOLLOW_Z;
         return this;
     }
 
-    public final SPacketPlayWith markFollowYaw() {
-        this.mask |= MASK_FOLLOW_YAW;
+    public final SPacketPlayWith markFollowYaw(boolean flag) {
+        if (flag) this.mask |= MASK_FOLLOW_YAW;
         return this;
     }
 
-    public final SPacketPlayWith markFollowPitch() {
-        this.mask |= MASK_FOLLOW_PITCH;
+    public final SPacketPlayWith markFollowPitch(boolean flag) {
+        if (flag) this.mask |= MASK_FOLLOW_PITCH;
+        return this;
+    }
+
+    public final SPacketPlayWith markUseHead(boolean flag) {
+        if (flag) mask |= MASK_USE_HEAD_ROTATION;
+        return this;
+    }
+
+    public final SPacketPlayWith markUseRender(boolean flag) {
+        if (flag) mask |= MASK_USE_RENDER_ROTATION;
+        return this;
+    }
+
+    public final SPacketPlayWith markInheritYaw(boolean flag) {
+        if (flag) mask2 |= MASK2_INHERIT_YAW;
+        return this;
+    }
+
+    public final SPacketPlayWith markInheritPitch(boolean flag) {
+        if (flag) mask2 |= MASK2_INHERIT_PITCH;
         return this;
     }
 
@@ -72,15 +96,33 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
         return (mask & MASK_FOLLOW_PITCH) != 0;
     }
 
+    public final boolean isUseHead() {
+        return (mask & MASK_USE_HEAD_ROTATION) != 0;
+    }
+
+    public final boolean isUseRender() {
+        return (mask & MASK_USE_RENDER_ROTATION) != 0;
+    }
+
+    public final boolean isInheritYaw() {
+        return (mask2 & MASK2_INHERIT_YAW) != 0;
+    }
+
+    public final boolean isInheritPitch() {
+        return (mask2 & MASK2_INHERIT_PITCH) != 0;
+    }
+
     @Override
     public void read(DataInput stream) throws IOException {
         super.read(stream);
         this.target = stream.readInt();
+        this.mask2 = stream.readByte();
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
         super.write(stream);
         stream.writeInt(this.target);
+        stream.writeByte(this.mask2);
     }
 }

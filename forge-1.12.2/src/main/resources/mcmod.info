@@ -1,4 +1,5 @@
 [{
   "modid": "efscraft",
-  "name": "EffekseerCraft"
+  "name": "EffekseerCraft",
+  "version": "$version"
 }]

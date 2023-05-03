@@ -6,11 +6,6 @@ import java.io.IOException;
 
 public abstract class SPacketPlayAbstract implements IMessage {
     public static final byte MASK_CONFLICT = 0x01;
-    public static final byte MASK_FOLLOW_X = 0x02;
-    public static final byte MASK_FOLLOW_Y = 0x04;
-    public static final byte MASK_FOLLOW_Z = 0x08;
-    public static final byte MASK_FOLLOW_YAW = 0x10;
-    public static final byte MASK_FOLLOW_PITCH = 0x20;
 
     private String key, effect, emitter;
     private float[] rotModel, posModel;
@@ -88,9 +83,8 @@ public abstract class SPacketPlayAbstract implements IMessage {
         return this;
     }
 
-    public final SPacketPlayAbstract markConflictOverwrite() {
-        this.mask |= MASK_CONFLICT;
-
+    public final SPacketPlayAbstract markConflictOverwrite(boolean flag) {
+        if (flag) this.mask |= MASK_CONFLICT;
         return this;
     }
 

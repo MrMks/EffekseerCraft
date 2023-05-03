@@ -11,7 +11,8 @@ import java.util.List;
 @Mod(
         modid = "efscraft",
         name = "EffekseerCraft",
-        acceptableRemoteVersions = "*"
+        acceptableRemoteVersions = "*",
+        useMetadata = true
 )
 public class EffekseerCraft {
 
