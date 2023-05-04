@@ -15,6 +15,7 @@ import java.util.Map;
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 @IFMLLoadingPlugin.Name("efscraft_inject")
 @IFMLLoadingPlugin.TransformerExclusions("com.gituhb.mrmks.mc.efscraft.forge.core")
+@IFMLLoadingPlugin.SortingIndex(1001)
 public class LoadingPlugin implements IFMLLoadingPlugin {
 
     @Override
