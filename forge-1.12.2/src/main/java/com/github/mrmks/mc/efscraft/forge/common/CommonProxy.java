@@ -10,6 +10,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.Set;
@@ -21,10 +22,13 @@ public class CommonProxy {
     private final Set<UUID> compatibleClients = new ConcurrentSet<>();
     private String modVersion;
     private File configurationFolder;
+    protected Logger logger;
+    protected final boolean DEBUG_VERBOSE = System.getProperty("efscraft.debug_verbose", "false").equals("true");
 
     public void preInitialize(FMLPreInitializationEvent event) {
         configurationFolder = event.getModConfigurationDirectory();
         modVersion = event.getModMetadata().version;
+        logger = event.getModLog();
     }
 
     public void initialize(FMLInitializationEvent event) {

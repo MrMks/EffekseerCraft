@@ -91,12 +91,13 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
     shade rootProject.project(':api')
-    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.5-SNAPSHOT', {
+    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.6-SNAPSHOT', {
         transitive = false
     }
 }
 
 processResources {
+    inputs.property 'version', project.version
     filesMatching('mcmod.info') {
         expand 'version': project.version.toString()
     }
@@ -117,7 +118,7 @@ jar {
 //                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
                 "FMLCorePlugin": "com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin",
                 "FMLCorePluginContainsFMLMod": true,
-                "ContainedDeps": "effekseer4j-0.1.5-SNAPSHOT.jar"
+                "ContainedDeps": "effekseer4j-0.1.6-SNAPSHOT.jar"
         ])
     }
 

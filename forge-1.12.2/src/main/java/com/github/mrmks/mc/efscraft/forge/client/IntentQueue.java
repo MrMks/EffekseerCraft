@@ -371,29 +371,24 @@ class IntentQueue {
                 } else {
                     d3 = entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partial;
                 }
-                if (!inheritYaw) d3 -= initAngle[0];
 
-                d3 += 90;
+                d3 += inheritYaw ? 90 : -initAngle[0];
             } else {
                 d3 = inheritYaw ? initAngle[0] + 90 : 0;
             }
 
             if (followPitch) {
-                if (entity instanceof EntityLivingBase) {
+                if (entity instanceof EntityLivingBase && useRender) {
                     EntityLivingBase base = (EntityLivingBase) entity;
 
-                    if (useRender) {
-                        d4 = base.prevCameraPitch + (base.cameraPitch - base.prevCameraPitch) * partial;
-                    } else {
-                        d4 = base.prevRotationPitch + (base.rotationPitch - base.prevRotationPitch) * partial;
-                    }
-
-                    if (!inheritPitch) d4 -= initAngle[1];
+                    d4 = base.prevCameraPitch + (base.cameraPitch - base.prevCameraPitch) * partial;
                 } else {
-                    d4 = inheritPitch ? initAngle[1] : 0;
+                    d4 = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partial;
                 }
+
+                if (!inheritPitch) d4 -= initAngle[1];
             } else {
-                d4 = initAngle[1];
+                d4 = inheritPitch ? initAngle[1] : 0;
             }
 
             return new Matrix4f().identity()
