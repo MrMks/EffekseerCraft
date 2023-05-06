@@ -3,6 +3,7 @@ package com.github.mrmks.mc.efscraft.packet;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 
 public abstract class SPacketPlayAbstract implements IMessage {
     public static final byte MASK_CONFLICT = 0x01;
@@ -11,6 +12,7 @@ public abstract class SPacketPlayAbstract implements IMessage {
     private float[] rotModel, posModel;
     private float[] rotLocal, posLocal;
     private float[] scale;
+    private float[] dynamic;
     private int skip, lifespan;
     protected byte mask;
 
@@ -83,8 +85,31 @@ public abstract class SPacketPlayAbstract implements IMessage {
         return this;
     }
 
+    public final SPacketPlayAbstract setLifespan(int len) {
+        this.lifespan = len;
+
+        return this;
+    }
+
+    public final SPacketPlayAbstract setDynamic(int index, float value) {
+        if (dynamic == null)
+            dynamic = new float[index];
+        else if (dynamic.length < index)
+            dynamic = Arrays.copyOf(dynamic, index);
+
+        dynamic[index - 1] = value;
+        return this;
+    }
+
+    public final SPacketPlayAbstract setDynamics(float[] dynamic) {
+        this.dynamic = dynamic == null ? null : dynamic.clone();
+
+        return this;
+    }
+
     public final SPacketPlayAbstract markConflictOverwrite(boolean flag) {
-        if (flag) this.mask |= MASK_CONFLICT;
+        this.mask |= flag ? MASK_CONFLICT : ~MASK_CONFLICT;
+//        if (flag) this.mask |= MASK_CONFLICT;
         return this;
     }
 
@@ -113,23 +138,33 @@ public abstract class SPacketPlayAbstract implements IMessage {
     }
 
     public final float[] getLocalPosition() {
+        if (posLocal == null) posLocal = new float[3];
         return posLocal;
     }
 
     public final float[] getModelPosition() {
+        if (posModel == null) posModel = new float[3];
         return posModel;
     }
 
     public final float[] getLocalRotation() {
+        if (rotLocal == null) rotLocal = new float[2];
         return rotLocal;
     }
 
     public final float[] getModelRotation() {
+        if (rotModel == null) rotModel = new float[2];
         return rotModel;
     }
 
     public final float[] getScale() {
+        if (scale == null) scale = new float[] {1, 1, 1};
         return scale;
+    }
+
+    public final float[] getDynamics() {
+        if (dynamic == null) dynamic = new float[0];
+        return dynamic;
     }
 
     @Override
@@ -145,6 +180,11 @@ public abstract class SPacketPlayAbstract implements IMessage {
         this.posLocal = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
         this.rotModel = new float[] {stream.readFloat(), stream.readFloat()};
         this.posModel = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
+
+        int length = stream.readInt();
+        this.dynamic = new float[length];
+        for (int i = 0; i < length; i++)
+            this.dynamic[i] = stream.readFloat();
 
         this.mask = stream.readByte();
     }
@@ -179,6 +219,11 @@ public abstract class SPacketPlayAbstract implements IMessage {
         stream.writeFloat(posModel[0]);
         stream.writeFloat(posModel[1]);
         stream.writeFloat(posModel[2]);
+
+        int length = this.dynamic == null ? 0 : this.dynamic.length;
+        stream.writeInt(lifespan);
+        for (int i = 0; i < length; i++)
+            stream.writeFloat(this.dynamic[i]);
 
         stream.writeByte(mask);
     }

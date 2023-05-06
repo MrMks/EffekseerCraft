@@ -5,14 +5,19 @@ EffekseerCraft 由 客户端 和 服务端 两部分组成，两侧分别维护�
 ## 服务端
 
 ### 指令
+
+#### Usage
 使用特效的唯一方式是通过一组指令:  
-* /effek play \<effect> \<emitter> \<entity>
-* /effek play \<effect> \<emitter> \<world/dim> \<x> \<y> \<z> \[yaw] \[pitch]
+* /effek play \<effect> \<emitter> on \<entity> \[options]
+* /effek play \<effect> \<emitter> at \<world/dim> \<x> \<y> \<z> \[yaw] \[pitch] \[options]
 * /effek stop \<effect> \<emitter> \<entity>
 * /effek stop \<effect> \<emitter> \<world/dim> \<x> \<y> \<z>
+* /effek create \<key> \[options]
 * /effek clear \<player>
 * /effek reload
 * /effek version
+
+#### Description
 
 前四个指令用于在目标实体上播放或停止特效，或在目标坐标上播放或停止特效。  
 其中:
@@ -23,9 +28,41 @@ EffekseerCraft 由 客户端 和 服务端 两部分组成，两侧分别维护�
 若想主动结束这一段动画，则在 stop 中亦使用同样一组参数。  
 特殊的，stop 指令中若使用 "*" 作为 emitter，则会停止 effect 所指的全部特效动画。
 
-第五个指令则是停止指定玩家客户端上播放的全部特效动画。
+第五个指令用于创建服务端特效注册项。
+
+第六个指令则是停止指定玩家客户端上播放的全部特效动画。
 
 最后两个指令分别是 重载服务端注册表 和 显示当前服务端实现版本。
+
+
+#### Options
+common:
+* -s \<x> \<y> \<z>: scale
+* -lt \<x> \<y> \<z>: local translate
+* -mt \<x> \<y> \<z>: model translate
+* -lr \<yaw> \<pitch>: local rotate
+* -mr \<yaw> \<pitch>: model rotate
+* -fs <value>: frameSkip
+* -ls <value>: lifespan
+* --\[!]f\[xyzwp]: follow(or not) x, y, z, yaw or pitch;
+* --\[!]i\[wp]: inherit yaw or pitch
+* --\[!]u\[hr]: useHead or useRender
+* --\[!]o: overwrite(or not) if conflict on client;
+
+play:
+* -di.\<i> \<v>: set dynamic input i to v;
+
+create:
+* -p <key>: set parent for this entry;
+* -e <key>: set the client side effect name to use;
+
+对于 s, lt, mt, lr, mr 可以使用 key.<k> <v> 的形式单独指定某一分量  
+例如: "-s.x 0.2 -lr.w 30" 表示将scale的x分量设为0.2，将localRotate的yaw分量设为30
+
+#### Examples
+/effek play example world_0_10_0 at world 0 10 0 -s 0.1 0.1 0.1 -mt.y 1.6 --o  
+/effek play example emitter on Player203 -s 5 1 5 -lr.w 90 --!fxyzwp --!iwp --!o  
+/effek create example -e Laser03 -ls 200  
 
 ### 注册表
 服务端注册表写在一个名为 effects.json 的文件中，在不同服务端上，这个文件放置在不同的位置下。

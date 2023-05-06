@@ -47,9 +47,9 @@ minecraft {
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             property 'forge.logging.console.level', 'debug'
-            property 'effekseer.path', workingDirectory + '/EffekseerNativeForJava.dll'
+            property 'effekseer.path', "D:\\Workspaces\\EffekseerForMultiLanguages\\build\\src\\cpp\\Debug" + '/EffekseerNativeForJava.dll'
             property 'file.encoding', 'UTF-8'
-            property 'fml.coreMods.load', "com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin"
+            property 'fml.coreMods.load', 'com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin'
 
             mods {
                 grouparticle {
@@ -91,7 +91,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
     shade rootProject.project(':api')
-    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.6-SNAPSHOT', {
+    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.7-SNAPSHOT', {
         transitive = false
     }
 }

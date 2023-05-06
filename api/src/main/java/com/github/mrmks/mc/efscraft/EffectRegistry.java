@@ -41,6 +41,7 @@ public class EffectRegistry {
         @SerializedName("useRender") Boolean useRender = null;
         @SerializedName("inheritYaw") Boolean inheritYaw = null;
         @SerializedName("inheritPitch") Boolean inheritPitch = null;
+        @SerializedName("dynamicInput") float[] dynamics = null;
 
         boolean checkDefaults() {
             if (effect == null || lifespan == null || lifespan < 0) return false;
@@ -65,6 +66,8 @@ public class EffectRegistry {
 
             if (inheritYaw == null) inheritYaw = true;
             if (inheritPitch == null) inheritPitch = true;
+
+            if (dynamics == null) dynamics = new float[0];
 
             return true;
         }
@@ -92,6 +95,8 @@ public class EffectRegistry {
 
             if (inheritYaw == null) inheritYaw = parent.inheritYaw;
             if (inheritPitch == null) inheritPitch = parent.inheritPitch;
+
+            if (dynamics == null) dynamics = parent.dynamics;
         }
     }
 
@@ -218,7 +223,8 @@ public class EffectRegistry {
                 .rotateLocalTo(node.rotateLocal[0], node.rotateLocal[1])
                 .translateLocalTo(node.posLocal[0], node.posLocal[1], node.posLocal[2])
                 .rotateModelTo(node.rotateModel[0], node.rotateModel[1])
-                .translateModelTo(node.posModel[0], node.posModel[1], node.posModel[2]);
+                .translateModelTo(node.posModel[0], node.posModel[1], node.posModel[2])
+                .setDynamics(node.dynamics);
 
         return packet;
     }
