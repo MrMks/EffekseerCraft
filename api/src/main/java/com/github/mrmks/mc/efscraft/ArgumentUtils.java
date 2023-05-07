@@ -99,23 +99,23 @@ public class ArgumentUtils {
 
                 switch (sub) {
                     case "s": {
-                        i += has ? parseXYZ(sub, args[i + 1], scale) : fillXYZ(args, i + 1, scale);
+                        i += has ? parseXYZ(str, args[i + 1], scale) : fillXYZ(args, i + 1, scale);
                         break;
                     }
                     case "lt": {
-                        i += has ? parseXYZ(sub, args[i + 1], localTrans) : fillXYZ(args, i + 1, localTrans);
+                        i += has ? parseXYZ(str, args[i + 1], localTrans) : fillXYZ(args, i + 1, localTrans);
                         break;
                     }
                     case "mt": {
-                        i += has ? parseXYZ(sub, args[i + 1], modelTrans) : fillXYZ(args, i + 1, modelTrans);
+                        i += has ? parseXYZ(str, args[i + 1], modelTrans) : fillXYZ(args, i + 1, modelTrans);
                         break;
                     }
                     case "lr": {
-                        i += has ? parseWP(sub, args[i + 1], localRot) : fillWP(args, i + 1, localRot);
+                        i += has ? parseWP(str, args[i + 1], localRot) : fillWP(args, i + 1, localRot);
                         break;
                     }
                     case "mr": {
-                        i += has ? parseWP(sub, args[i + 1], modelRot) : fillWP(args, i + 1, modelRot);
+                        i += has ? parseWP(str, args[i + 1], modelRot) : fillWP(args, i + 1, modelRot);
                         break;
                     }
                     case "fs": {
@@ -146,22 +146,38 @@ public class ArgumentUtils {
     }
 
     private static int parseXYZ(String str, String p, float[] ary) {
-
+        int code = str.charAt(str.length() - 1);
+        float value = parseFloat(p);
+        if (code == 'x') {
+            ary[0] = value;
+        } else if (code == 'y') {
+            ary[1] = value;
+        } else if (code == 'z') {
+            ary[2] = value;
+        }
         return 1;
     }
 
     private static int fillXYZ(String[] arg, int bi, float[] ary) {
-
+        for (int i = 0; i < 3; i++)
+            ary[i] = parseFloat(arg[bi + i]);
         return 3;
     }
 
     private static int parseWP(String str, String p, float[] ary) {
-
+        int code = str.charAt(str.length() - 1);
+        float value = parseFloat(p);
+        if (code == 'w') {
+            ary[0] = value;
+        } else if (code == 'p') {
+            ary[1] = value;
+        }
         return 1;
     }
 
     private static int fillWP(String[] arg, int bi, float[] ary) {
-
+        for (int i = 0; i < 2; i++)
+            ary[i] = parseFloat(arg[bi + i]);
         return 2;
     }
 

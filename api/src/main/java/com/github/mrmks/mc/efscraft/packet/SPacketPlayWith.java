@@ -32,47 +32,47 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
     }
 
     public final SPacketPlayWith markFollowX(boolean flag) {
-        this.mask |= flag ? MASK_FOLLOW_X : ~MASK_FOLLOW_X;
+        if (flag) this.mask |= MASK_FOLLOW_X; else this.mask &= ~MASK_FOLLOW_X;
         return this;
     }
 
     public final SPacketPlayWith markFollowY(boolean flag) {
-        this.mask |= flag ? MASK_FOLLOW_Y : ~MASK_FOLLOW_Y;
+        if (flag) this.mask |= MASK_FOLLOW_Y; else this.mask &= ~MASK_FOLLOW_Y;
         return this;
     }
 
     public final SPacketPlayWith markFollowZ(boolean flag) {
-        this.mask |= flag ? MASK_FOLLOW_Z : ~MASK_FOLLOW_Z;
+        if (flag) this.mask |= MASK_FOLLOW_Z; else this.mask &= ~MASK_FOLLOW_Z;
         return this;
     }
 
     public final SPacketPlayWith markFollowYaw(boolean flag) {
-        this.mask |= flag ? MASK_FOLLOW_YAW : ~MASK_FOLLOW_YAW;
+        if (flag) this.mask |= MASK_FOLLOW_YAW; else this.mask &= ~MASK_FOLLOW_YAW;
         return this;
     }
 
     public final SPacketPlayWith markFollowPitch(boolean flag) {
-        this.mask |= flag ? MASK_FOLLOW_PITCH : ~MASK_FOLLOW_PITCH;
+        if (flag) this.mask |= MASK_FOLLOW_PITCH; else this.mask &= ~MASK_FOLLOW_PITCH;
         return this;
     }
 
     public final SPacketPlayWith markUseHead(boolean flag) {
-        this.mask |= flag ? MASK_USE_HEAD_ROTATION : ~MASK_USE_HEAD_ROTATION;
+        if (flag) this.mask |= MASK_USE_HEAD_ROTATION; else this.mask &= ~MASK_USE_HEAD_ROTATION;
         return this;
     }
 
     public final SPacketPlayWith markUseRender(boolean flag) {
-        this.mask |= flag ? MASK_USE_RENDER_ROTATION : ~MASK_USE_RENDER_ROTATION;
+        if (flag) this.mask |= MASK_USE_RENDER_ROTATION; else this.mask &= ~MASK_USE_RENDER_ROTATION;
         return this;
     }
 
     public final SPacketPlayWith markInheritYaw(boolean flag) {
-        this.mask2 |= flag ? MASK2_INHERIT_YAW : ~MASK2_INHERIT_YAW;
+        if (flag) this.mask2 |= MASK2_INHERIT_YAW; else this.mask2 &= ~MASK2_INHERIT_YAW;
         return this;
     }
 
     public final SPacketPlayWith markInheritPitch(boolean flag) {
-        this.mask2 |= flag ? MASK2_INHERIT_PITCH : ~MASK2_INHERIT_PITCH;
+        if (flag) this.mask2 |= MASK2_INHERIT_PITCH; else this.mask2 &= ~MASK2_INHERIT_PITCH;
         return this;
     }
 

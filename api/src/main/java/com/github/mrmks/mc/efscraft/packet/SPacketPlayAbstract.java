@@ -108,7 +108,7 @@ public abstract class SPacketPlayAbstract implements IMessage {
     }
 
     public final SPacketPlayAbstract markConflictOverwrite(boolean flag) {
-        this.mask |= flag ? MASK_CONFLICT : ~MASK_CONFLICT;
+        if (flag) this.mask |= MASK_CONFLICT; else this.mask &= ~MASK_CONFLICT;
 //        if (flag) this.mask |= MASK_CONFLICT;
         return this;
     }
