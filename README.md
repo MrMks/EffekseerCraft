@@ -9,10 +9,9 @@ EffekseerCraft 由 客户端 和 服务端 两部分组成，两侧分别维护�
 #### Usage
 使用特效的唯一方式是通过一组指令:  
 * /effek play \<effect> \<emitter> on \<entity> \[options]
-* /effek play \<effect> \<emitter> at \<world/dim> \<x> \<y> \<z> \[yaw] \[pitch] \[options]
-* /effek stop \<effect> \<emitter> \<entity>
-* /effek stop \<effect> \<emitter> \<world/dim> \<x> \<y> \<z>
-* /effek create \<key> \[options]
+* /effek play \<effect> \<emitter> at \<world/dim> \<x> \<y> \<z> \<yaw> \<pitch> \[options]
+* /effek stop \<effect> \<emitter> on \<entity>
+* /effek stop \<effect> \<emitter> at \<world/dim> \<x> \<y> \<z>
 * /effek clear \<player>
 * /effek reload
 * /effek version
@@ -37,7 +36,7 @@ EffekseerCraft 由 客户端 和 服务端 两部分组成，两侧分别维护�
 
 #### Options
 common:
-* -s \<x> \<y> \<z>: scale
+* -sc \<x> \<y> \<z>: scale
 * -lt \<x> \<y> \<z>: local translate
 * -mt \<x> \<y> \<z>: model translate
 * -lr \<yaw> \<pitch>: local rotate
@@ -48,20 +47,18 @@ common:
 * --\[!]i\[wp]: inherit yaw or pitch
 * --\[!]u\[hr]: useHead or useRender
 * --\[!]o: overwrite(or not) if conflict on client;
-
-play:
 * -di.\<i> \<v>: set dynamic input i to v;
 
 create:
 * -p <key>: set parent for this entry;
 * -e <key>: set the client side effect name to use;
 
-对于 s, lt, mt, lr, mr 可以使用 key.<k> <v> 的形式单独指定某一分量  
-例如: "-s.x 0.2 -lr.w 30" 表示将scale的x分量设为0.2，将localRotate的yaw分量设为30
+对于 sc, lt, mt, lr, mr 可以使用 key.<k> <v> 的形式单独指定某一分量  
+例如: "-sc.x 0.2 -lr.w 30" 表示将scale的x分量设为0.2，将localRotate的yaw分量设为30
 
 #### Examples
-/effek play example world_0_10_0 at world 0 10 0 -s 0.1 0.1 0.1 -mt.y 1.6 --o  
-/effek play example emitter on Player203 -s 5 1 5 -lr.w 90 --!fxyzwp --!iwp --!o  
+/effek play example world_0_10_0 at world 0 10 0 -sc 0.1 0.1 0.1 -mt.y 1.6 --o  
+/effek play example emitter on Player203 -sc 5 1 5 -lr.w 90 --!fxyzwp --!iwp --!o  
 /effek create example -e Laser03 -ls 200  
 
 ### 注册表

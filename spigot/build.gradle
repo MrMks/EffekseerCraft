@@ -8,6 +8,11 @@ configurations {
 
 sourceSets {
     high {}
+    main {
+        resources {
+            srcDir rootProject.file('lang')
+        }
+    }
 }
 
 repositories {
@@ -42,6 +47,8 @@ processResources {
     filesMatching('plugin.yml') {
         expand version: "$project.version"
     }
+
+    rename 'en_us.lang', 'lang/en_us.lang'
 }
 
 jar {

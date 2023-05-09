@@ -221,7 +221,7 @@ public abstract class SPacketPlayAbstract implements IMessage {
         stream.writeFloat(posModel[2]);
 
         int length = this.dynamic == null ? 0 : this.dynamic.length;
-        stream.writeInt(lifespan);
+        stream.writeInt(length);
         for (int i = 0; i < length; i++)
             stream.writeFloat(this.dynamic[i]);
 

@@ -3,13 +3,9 @@ package com.github.mrmks.mc.efscraft;
 import com.github.mrmks.mc.efscraft.packet.SPacketPlayAbstract;
 import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
 
-public class ArgumentUtils {
+class CommandUtils {
 
-    private interface Parser {
-        int consume(String leader, String[] args, int cur, float[] ary);
-    }
-
-    public static void parse(SPacketPlayAbstract packet, String[] args) {
+    static void parse(SPacketPlayAbstract packet, String[] args) {
 
         float[] scale = packet.getScale();
         float[] localTrans = packet.getLocalPosition();
@@ -98,7 +94,7 @@ public class ArgumentUtils {
                 String sub = has ? str.substring(1, dot) : str.substring(1);
 
                 switch (sub) {
-                    case "s": {
+                    case "sc": {
                         i += has ? parseXYZ(str, args[i + 1], scale) : fillXYZ(args, i + 1, scale);
                         break;
                     }

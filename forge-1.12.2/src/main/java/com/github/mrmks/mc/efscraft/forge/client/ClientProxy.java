@@ -1,7 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EffekSeer4J;
-import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.forge.EffekseerCraft;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
 import com.github.mrmks.mc.efscraft.packet.SPacketClear;
@@ -19,8 +18,7 @@ public class ClientProxy extends CommonProxy {
 
         super.initialize(event);
 
-        EfsProgram program = null;
-        if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL) && (program = new EfsProgram()).initialize(8000)) {
+        if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL)) {
 
             Minecraft mc = Minecraft.getMinecraft();
 
@@ -62,6 +60,5 @@ public class ClientProxy extends CommonProxy {
                 return null;
             });
         }
-        if (program != null) program.delete();
     }
 }

@@ -166,6 +166,7 @@ class IntentQueue {
         private final int skipFrame, lifespan;
         private final Matrix4f local;
         protected final float[] rotModel, posModel;
+        private final float[] dynamics;
 
         private EfsEffectHandle handle;
         private float lifeLength;
@@ -177,6 +178,7 @@ class IntentQueue {
             this.emitter = play.getEmitter();
             this.skipFrame = play.getFrameSkip();
             this.lifespan = play.getLifespan();
+            this.dynamics = play.getDynamics();
 
             float[] posLocal = play.getLocalPosition();
             float[] rotLocal = play.getLocalRotation();
@@ -200,6 +202,7 @@ class IntentQueue {
             this.emitter = emitter;
             this.skipFrame = skip;
             this.lifespan = lifespan;
+            this.dynamics = null;
 
             this.local = local;
             this.rotModel = rotModel;
@@ -213,6 +216,10 @@ class IntentQueue {
         void init(EfsEffectHandle handle) {
             this.handle = handle;
             handle.setProgress(skipFrame);
+            if (dynamics != null) {
+                for (int i = 0; i < dynamics.length; i++)
+                    handle.setDynamicInput(i, dynamics[i]);
+            }
             state = State.CREATED;
         }
 

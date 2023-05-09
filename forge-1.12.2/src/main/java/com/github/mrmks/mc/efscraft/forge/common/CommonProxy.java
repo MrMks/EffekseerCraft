@@ -1,7 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.EffectRegistry;
 import com.github.mrmks.mc.efscraft.packet.IMessageHandler;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import io.netty.util.internal.ConcurrentSet;
@@ -13,6 +12,7 @@ import net.minecraftforge.server.permission.PermissionAPI;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -66,9 +66,8 @@ public class CommonProxy {
             // on integrated server, read registries in ./saves/<world>/efscraft/effects.json
             file = new File(server.getActiveAnvilConverter().getFile(server.getFolderName(), "efscraft"), "effects.json");
         }
-        EffectRegistry registry = new EffectRegistry(file);
         PermissionAPI.registerNode("efscraft.command", DefaultPermissionLevel.OP, "permissions to use efscraft's commands");
-        event.registerServerCommand(new EffekCommands(wrapper, registry, modVersion, this::isClientCompatible));
+        event.registerServerCommand(new CommandAdaptor(wrapper, file, Collections.unmodifiableSet(compatibleClients), modVersion));
     }
 
     public void serverStarted(FMLServerStartedEvent event) {
