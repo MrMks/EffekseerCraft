@@ -1,20 +1,15 @@
 package com.github.mrmks.mc.efscraft;
 
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayAbstract;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
+import java.util.Arrays;
+
+import static java.lang.Float.parseFloat;
+import static java.lang.Integer.parseInt;
 
 class CommandUtils {
 
-    static void parse(SPacketPlayAbstract packet, String[] args) {
-
-        float[] scale = packet.getScale();
-        float[] localTrans = packet.getLocalPosition();
-        float[] localRot = packet.getLocalRotation();
-        float[] modelTrans = packet.getModelPosition();
-        float[] modelRot = packet.getModelRotation();
-
-        for (int i = 0; i < args.length; i++) {
-            String str = args[i];
+    static void doConsumeOptions(EffectEntry entry, String[] options) {
+        for (int i = 0; i < options.length; i++) {
+            String str = options[i];
             if (str.startsWith("--"))
             {
                 int cp = str.charAt(2), bi = 3;
@@ -26,60 +21,39 @@ class CommandUtils {
                     bi = 4;
                 }
 
-                if (cp == 'o') {
-                    packet.markConflictOverwrite(flag);
-                } else if (packet instanceof SPacketPlayWith) {
-                    SPacketPlayWith play = (SPacketPlayWith) packet;
-
-                    switch (cp) {
-                        case 'f': {
-                            for (int j = bi; j < str.length(); j++) {
-                                switch (str.charAt(j)) {
-                                    case 'x':
-                                        play.markFollowX(flag);
-                                        break;
-                                    case 'y':
-                                        play.markFollowY(flag);
-                                        break;
-                                    case 'z':
-                                        play.markFollowZ(flag);
-                                        break;
-                                    case 'w':
-                                        play.markFollowYaw(flag);
-                                        break;
-                                    case 'p':
-                                        play.markFollowPitch(flag);
-                                        break;
-                                }
+                switch (cp) {
+                    case 'o': entry.overwrite = flag; break;
+                    case 'f': {
+                        for (int j = bi; j < str.length(); j++) {
+                            switch (str.charAt(j)) {
+                                case 'x': entry.followX = flag; break;
+                                case 'y': entry.followY = flag; break;
+                                case 'z': entry.followZ = flag; break;
+                                case 'w': entry.followYaw = flag; break;
+                                case 'p': entry.followPitch = flag; break;
                             }
-                            break;
                         }
-                        case 'i': {
-                            for (int j = bi; j < str.length(); j++) {
-                                switch (str.charAt(j)) {
-                                    case 'w':
-                                        play.markInheritYaw(flag);
-                                        break;
-                                    case 'p':
-                                        play.markInheritPitch(flag);
-                                        break;
-                                }
-                            }
-                            break;
+                        break;
+                    }
+                    case 'u': {
+                        for (int j = bi; j < str.length(); j++) {
+                            int p = str.charAt(j);
+                            if (p == 'h')
+                                entry.useHead = flag;
+                            else if (p == 'r')
+                                entry.useRender = flag;
                         }
-                        case 'u': {
-                            for (int j = bi; j < str.length(); j++) {
-                                switch (str.charAt(j)) {
-                                    case 'h':
-                                        play.markUseHead(flag);
-                                        break;
-                                    case 'r':
-                                        play.markUseRender(flag);
-                                        break;
-                                }
-                            }
-                            break;
+                        break;
+                    }
+                    case 'i': {
+                        for (int j = bi; j < str.length(); j++) {
+                            int p = str.charAt(j);
+                            if (p == 'w')
+                                entry.inheritYaw = flag;
+                            else if (p == 'p')
+                                entry.inheritPitch = flag;
                         }
+                        break;
                     }
                 }
             }
@@ -95,50 +69,49 @@ class CommandUtils {
 
                 switch (sub) {
                     case "sc": {
-                        i += has ? parseXYZ(str, args[i + 1], scale) : fillXYZ(args, i + 1, scale);
+                        i += has ? parseXYZ(str, options[i + 1], entry.scale) : fillXYZ(options, i + 1, entry.scale);
                         break;
                     }
                     case "lt": {
-                        i += has ? parseXYZ(str, args[i + 1], localTrans) : fillXYZ(args, i + 1, localTrans);
+                        i += has ? parseXYZ(str, options[i + 1], entry.localPos) : fillXYZ(options, i + 1, entry.localPos);
                         break;
                     }
                     case "mt": {
-                        i += has ? parseXYZ(str, args[i + 1], modelTrans) : fillXYZ(args, i + 1, modelTrans);
+                        i += has ? parseXYZ(str, options[i + 1], entry.modelPos) : fillXYZ(options, i + 1, entry.modelPos);
                         break;
                     }
                     case "lr": {
-                        i += has ? parseWP(str, args[i + 1], localRot) : fillWP(args, i + 1, localRot);
+                        i += has ? parseWP(str, options[i + 1], entry.localRot) : fillWP(options, i + 1, entry.localRot);
                         break;
                     }
                     case "mr": {
-                        i += has ? parseWP(str, args[i + 1], modelRot) : fillWP(args, i + 1, modelRot);
+                        i += has ? parseWP(str, options[i + 1], entry.modelRot) : fillWP(options, i + 1, entry.modelRot);
                         break;
                     }
                     case "fs": {
-                        packet.skipFrame(parseInt(args[++i]));
-                        break;
+                        entry.skipFrames = parseInt(options[++i]); break;
                     }
                     case "ls": {
-                        packet.setLifespan(parseInt(args[++i]));
-                        break;
+                        entry.lifespan = parseInt(options[++i]); break;
                     }
                     case "di": {
                         if (has) {
                             int index = parseInt(str.substring(dot + 1));
-                            float value = parseFloat(args[++i]);
+                            float value = parseFloat(options[++i]);
 
-                            packet.setDynamic(index, value);
+                            if (index > 0) {
+                                if (entry.dynamic == null)
+                                    entry.dynamic = new float[index];
+                                else if (entry.dynamic.length < index)
+                                    entry.dynamic = Arrays.copyOf(entry.dynamic, index);
+
+                                entry.dynamic[index - 1] = value;
+                            }
                         }
                     }
                 }
             }
         }
-
-        packet.scaleTo(scale[0], scale[1], scale[2]);
-        packet.translateLocalTo(localTrans[0], localTrans[1], localTrans[2]);
-        packet.translateModelTo(modelTrans[0], modelTrans[1], modelTrans[2]);
-        packet.rotateLocalTo(localRot[0], localRot[1]);
-        packet.rotateModelTo(modelRot[0], modelRot[1]);
     }
 
     private static int parseXYZ(String str, String p, float[] ary) {
@@ -175,13 +148,5 @@ class CommandUtils {
         for (int i = 0; i < 2; i++)
             ary[i] = parseFloat(arg[bi + i]);
         return 2;
-    }
-
-    private static int parseInt(String p) {
-        return Integer.parseInt(p);
-    }
-
-    private static float parseFloat(String p) {
-        return Float.parseFloat(p);
     }
 }

@@ -33,7 +33,7 @@ public class ClientProxy extends CommonProxy {
             // on 1.12.2, it uses the same thread of main thread, so
             // we let Minecraft call us when the thread about to exit;
             // such a function is completed by runtime bytecode transform;
-            IntentQueue queue = new IntentQueue(resources::get);
+            RenderQueue queue = new RenderQueue(resources::get);
             Renderer renderer = new Renderer(queue);
             MinecraftForge.EVENT_BUS.register(renderer);
 
@@ -43,22 +43,15 @@ public class ClientProxy extends CommonProxy {
             EffekseerCraft.registerCleanup(EffekSeer4J::finish);
 
             // register packet handlers;
-            wrapper.register(SPacketPlayWith.class, (packetIn, context) -> {
-                if (versionCompatible) queue.processWith(packetIn);
-                return null;
-            });
-            wrapper.register(SPacketPlayAt.class, (packetIn, context) -> {
-                if (versionCompatible) queue.processAt(packetIn);
-                return null;
-            });
-            wrapper.register(SPacketStop.class, (packetIn, context) -> {
-                if (versionCompatible) queue.processStop(packetIn);
-                return null;
-            });
-            wrapper.register(SPacketClear.class, (packetIn, context) -> {
-                if (versionCompatible) queue.processClear(packetIn);
-                return null;
-            });
+            NetHandlerClient client = new NetHandlerClient(this, queue);
+            wrapper.register(SPacketPlayWith.class, client::handlePlayWith);
+            wrapper.register(SPacketPlayAt.class, client::handlePlayAt);
+            wrapper.register(SPacketStop.class, client::handleStop);
+            wrapper.register(SPacketClear.class, client::handleClear);
         }
+    }
+
+    boolean isVersionCompatible() {
+        return versionCompatible;
     }
 }

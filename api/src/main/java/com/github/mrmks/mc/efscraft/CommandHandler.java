@@ -70,12 +70,11 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
         if (p.length() > 0) {
 
             if (p.charAt(0) == '~') {
-                p = p.substring(1);
+                return base + (p.length() == 1 ? 0 : parseFloat(p.substring(1)));
             } else {
-                base = 0;
+                return parseFloat(p);
             }
 
-            return base + parseFloat(p);
         } else {
             throw new CommandException("commands.generic.num.invalid", p);
         }
@@ -141,7 +140,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
                     String[] options = Arrays.copyOfRange(args, 4, args.length);
 
 //                    IMessage message = registry.createPlayWith(effect, emitter, entityId, options);
-                    IMessage message = new PacketBuilder(registry.getEffect(effect))
+                    IMessage message = new PacketBuilder(registry.get(effect))
                             .consumeOptions(options)
                             .buildPlayWith(effect, emitter, entityId);
 
@@ -172,8 +171,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
                     String[] options = Arrays.copyOfRange(args, 9, args.length);
 
-//                    IMessage message = registry.createPlayAt(effect, emitter, x, y, z, yaw, pitch, options);
-                    IMessage message = new PacketBuilder(registry.getEffect(effect))
+                    IMessage message = new PacketBuilder(registry.get(effect))
                             .consumeOptions(options)
                             .buildPlayAt(effect, emitter, x, y, z, yaw, pitch);
 
@@ -188,21 +186,11 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     }
 
     private List<String> completePlay(String[] args, SERVER server, SENDER sender) {
-        if (args.length == 1) {
-            return getListMatchLastArg(args, registry.keySets());
-        } else if (args.length == 2) {
-            return args[1].isEmpty() ? Collections.singletonList("emitter") : Collections.emptyList();
-        } else if (args.length == 3) {
-            return getListMatchLastArg(args, "on", "at");
-        } else if (args.length == 4) {
-            if ("on".equals(args[2])) {
-                return getListMatchLastArg(args, adaptor.completePlayers(server));
-            } else if ("at".equals(args[2])) {
-                return getListMatchLastArg(args, adaptor.completeWorlds(server));
-            } else {
-                return Collections.emptyList();
-            }
-        } else return Collections.emptyList();
+        if (args.length < 5) {
+            return completePlayStop(args, server, sender);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     private void executeStop(String[] args, SERVER server, SENDER sender) throws CommandException {
@@ -254,6 +242,14 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     }
 
     private List<String> completeStop(String[] args, SERVER server, SENDER sender) {
+        if (args.length < 5) {
+            return completePlayStop(args, server, sender);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<String> completePlayStop(String[] args, SERVER server, SENDER sender) {
         if (args.length == 1) {
             return getListMatchLastArg(args, registry.keySets());
         } else if (args.length == 2) {

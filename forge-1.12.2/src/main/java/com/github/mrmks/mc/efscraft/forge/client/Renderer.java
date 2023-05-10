@@ -18,11 +18,11 @@ class Renderer {
 
     private final EfsProgramContainer container = new EfsProgramContainer();
     private final FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-    private final IntentQueue instQueue;
+    private final RenderQueue queue;
     private long lastFrameTimer = -1;
 
-    Renderer(IntentQueue instQueue) {
-        this.instQueue = instQueue;
+    Renderer(RenderQueue queue) {
+        this.queue = queue;
     }
 
     private EfsProgram getProgram(float partialTicks) {
@@ -91,7 +91,7 @@ class Renderer {
 
             frames = Math.min(10, frames);
 
-            instQueue.update(frames, partial, program);
+            queue.update(frames, partial, program);
 
 //            if (count < 0) {
 //                instQueue.createDebug();
@@ -118,7 +118,7 @@ class Renderer {
             program.stopEffects();
         }
 
-        instQueue.stopAll();
+        queue.stopAll();
     }
 
     void deleteProgram() {

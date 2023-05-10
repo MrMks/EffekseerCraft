@@ -1,6 +1,5 @@
 package com.github.mrmks.mc.efscraft;
 
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,24 +8,24 @@ public class TestParseArgument {
     @Test
     public void testParse() {
         String cmd = "-sc 0.1 0.1 0.1 -lt.y 10 -mr.w 30 --!fxyz --fwp --iw --!ip --o -ls 200 -fs 0";
-        SPacketPlayWith play = new SPacketPlayWith();
+        PacketBuilder builder = new PacketBuilder();
 
-        CommandUtils.parse(play, cmd.split(" "));
+        CommandUtils.doConsumeOptions(builder, cmd.split(" "));
 
-        Assertions.assertArrayEquals(play.getScale(), new float[]{ 0.1f, 0.1f, 0.1f });
-        Assertions.assertArrayEquals(play.getLocalPosition(), new float[] {0, 10, 0});
-        Assertions.assertArrayEquals(play.getModelRotation(), new float[] {30, 0});
+        Assertions.assertArrayEquals(builder.scale, new float[]{ 0.1f, 0.1f, 0.1f });
+        Assertions.assertArrayEquals(builder.localPos, new float[] {0, 10, 0});
+        Assertions.assertArrayEquals(builder.modelRot, new float[] {30, 0});
 
-        Assertions.assertFalse(play.followX());
-        Assertions.assertFalse(play.followY());
-        Assertions.assertFalse(play.followZ());
-        Assertions.assertTrue(play.followYaw());
-        Assertions.assertTrue(play.followPitch());
+        Assertions.assertFalse(builder.followX);
+        Assertions.assertFalse(builder.followY);
+        Assertions.assertFalse(builder.followZ);
+        Assertions.assertTrue(builder.followYaw);
+        Assertions.assertTrue(builder.followPitch);
 
-        Assertions.assertTrue(play.isInheritYaw());
-        Assertions.assertFalse(play.isInheritPitch());
+        Assertions.assertTrue(builder.inheritYaw);
+        Assertions.assertFalse(builder.inheritPitch);
 
-        Assertions.assertTrue(play.conflictOverwrite());
+        Assertions.assertTrue(builder.overwrite);
     }
 
 }

@@ -1,0 +1,18 @@
+commands.effek.effect.notFound=Server side effect registry '%s' cannot be found
+commands.effek.world.notFound.dim=Cannot find world with dimension id %d
+commands.effek.world.notFound.name=Cannot find world with name %s
+commands.effek.world.notFound=Cannot find world with name or dimension id %s
+
+commands.effek.usage=/effek <play|stop|clear|reload|version> [sub...]
+
+commands.effek.play.usage=/effek play <effect> <emitter> <entity> or /effek play <effect> <emitter> <dimension> <x> <y> <z> [yaw] [pitch]
+
+commands.effek.stop.usage=/effek stop <effect> <emitter> <entity> or /effek stop <effect> <emitter> <dimension> <x> <y> <z>
+
+commands.effek.clear.usage=/effek clear <player>
+
+commands.effek.reload.usage=/effek reload
+commands.effek.reload.success=Server side effect registry reloaded
+
+commands.effek.version.usage=/effek version
+commands.effek.version.display=version: %1$s, protocol: %2$d, port: %3$s

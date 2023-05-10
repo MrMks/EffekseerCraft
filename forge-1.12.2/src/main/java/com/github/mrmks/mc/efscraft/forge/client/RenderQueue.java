@@ -3,11 +3,12 @@ package com.github.mrmks.mc.efscraft.forge.client;
 import com.github.mrmks.efkseer4j.EfsEffect;
 import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
-import com.github.mrmks.mc.efscraft.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-class IntentQueue {
+class RenderQueue {
 
     private final Queue<Entry> present = new ConcurrentLinkedQueue<>();
     private final Map<String, Map<String, Entry>> lookup = new ConcurrentHashMap<>();
@@ -24,24 +25,8 @@ class IntentQueue {
 
     private final Function<String, EfsEffect> effects;
 
-    IntentQueue(Function<String, EfsEffect> effects) {
+    RenderQueue(Function<String, EfsEffect> effects) {
         this.effects = effects;
-    }
-
-    void processWith(SPacketPlayWith play) {
-
-        if (clearMark.get()) return;
-
-        Entry entry = new EntryWith(play);
-        putEntry(entry, play.conflictOverwrite());
-    }
-
-    void processAt(SPacketPlayAt play) {
-
-        if (clearMark.get()) return;
-
-        Entry entry = new EntryAt(play);
-        putEntry(entry, play.conflictOverwrite());
     }
 
     private void putEntry(Entry entry, boolean overwrite) {
@@ -53,30 +38,37 @@ class IntentQueue {
             present.add(entry);
             submap.put(entry.emitter, entry);
 
-            if (old != null) old.state = Entry.State.STOPPING;
+            if (old != null) old.state = State.STOPPING;
         }
-
     }
 
-    void processStop(SPacketStop stop) {
+    void commandPlay(String key, String effect, String emitter, int lifespan, int skip, Matrix4f local,
+                     float[] modelPos, float[] modelRot, float[] dynamic, Controller controller, boolean overwrite)
+    {
+        if (clearMark.get()) return;
+        Entry entry = new Entry(key, effect, emitter, lifespan, skip, local, modelPos, modelRot, dynamic);
+        entry.setController(controller);
 
+        putEntry(entry, overwrite);
+    }
+
+    void commandStop(String key, String emitter) {
         if (clearMark.get()) return;
 
-        Map<String, Entry> lookup = this.lookup.get(stop.getKey());
+        Map<String, Entry> lookup = this.lookup.get(key);
         if (lookup != null) {
-            String emitter = stop.getEmitter();
             if (emitter.isEmpty() || "*".equals(emitter)) {
-                lookup.values().forEach(it -> it.state = Entry.State.STOPPING);
+                lookup.values().forEach(it -> it.state = State.STOPPING);
             } else {
                 Entry entry = lookup.get(emitter);
                 if (entry != null) {
-                    entry.state = Entry.State.STOPPING;
+                    entry.state = State.STOPPING;
                 }
             }
         }
     }
 
-    void processClear(SPacketClear clear) {
+    void commandClear() {
         clearMark.set(true);
     }
 
@@ -90,24 +82,24 @@ class IntentQueue {
             clearMark.set(false);
         } else {
             present.removeIf(entry -> {
-                if (entry.state == Entry.State.NEW) {
+                if (entry.state == State.NEW) {
                     EfsEffect effect = effects.apply(entry.effect);
                     if (effect == null) {
-                        entry.state = Entry.State.STOPPED;
+                        entry.state = State.STOPPED;
                     } else {
                         entry.init(program.playEffect(effect));
                     }
                 }
 
-                if (entry.state == Entry.State.CREATED || entry.state == Entry.State.RUNNING) {
+                if (entry.state == State.CREATED || entry.state == State.RUNNING) {
                     entry.update(frameGap, partial);
                 }
 
-                if (entry.state == Entry.State.STOPPING) {
+                if (entry.state == State.STOPPING) {
                     entry.stop();
                 }
 
-                if (entry.state == Entry.State.STOPPED) {
+                if (entry.state == State.STOPPED) {
                     lookup.getOrDefault(entry.effect, Collections.emptyMap()).remove(entry.emitter);
                     return true;
                 }
@@ -127,40 +119,24 @@ class IntentQueue {
 
     void createDebug() {
         Matrix4f local = new Matrix4f().identity();
-        float[] rotModel = new float[2];
-        float[] posModel = new float[] {0, 10, 0};
 
-        Entry entry = new Entry("Laser03", "Laser03", "debug", 0, 203, local, rotModel, posModel) {
-            @Override
-            Matrix4f initMatrix(float partial) {
-                return new Matrix4f().identity()
-                        .translatef(posModel[0], posModel[1], posModel[2])
-                        .rotateMC(rotModel[0], rotModel[1]);
-            }
+        Entry entry = new Entry("Laser03", "Laser03", "debug", 203, 0, local, new float[3], new float[2], null);
+        Controller controller = new ControllerAt(new float[] {0, 10, 0}, new float[2]);
 
-            @Override
-            Matrix4f updateMatrix(float partial) {
-                return null;
-            }
-
-            @Override
-            boolean isAlive() {
-                return true;
-            }
-        };
+        entry.setController(controller);
 
         Map<String, Entry> submap = lookup.computeIfAbsent(entry.effect, it -> new ConcurrentHashMap<>());
         Entry old = submap.get(entry.emitter);
 
-        if (old != null) old.state = Entry.State.STOPPING;
+        if (old != null) old.state = State.STOPPING;
 
         submap.put(entry.emitter, entry);
         present.add(entry);
     }
 
-    private abstract static class Entry {
+    enum State { NEW, CREATED, RUNNING, STOPPING, STOPPED }
 
-        enum State { NEW, CREATED, RUNNING, STOPPING, STOPPED }
+    private static class Entry {
 
         final String key, effect, emitter;
         private final int skipFrame, lifespan;
@@ -168,41 +144,18 @@ class IntentQueue {
         protected final float[] rotModel, posModel;
         private final float[] dynamics;
 
+        private Controller controller;
+
         private EfsEffectHandle handle;
         private float lifeLength;
-        transient State state;
-
-        Entry(SPacketPlayAbstract play) {
-            this.key = play.getKey();
-            this.effect = play.getEffect();
-            this.emitter = play.getEmitter();
-            this.skipFrame = play.getFrameSkip();
-            this.lifespan = play.getLifespan();
-            this.dynamics = play.getDynamics();
-
-            float[] posLocal = play.getLocalPosition();
-            float[] rotLocal = play.getLocalRotation();
-            float[] scale = play.getScale();
-
-            local = new Matrix4f().identity()
-                    .translatef(posLocal[0], posLocal[1], posLocal[2])
-                    .rotateMC(rotLocal[0], rotLocal[1])
-                    .scale(scale[0], scale[1], scale[2]);
-            this.rotModel = play.getModelRotation();
-            this.posModel = play.getModelPosition();
-
-            this.lifeLength = 0;
-            this.handle = null;
-            state = State.NEW;
-        }
-
-        Entry(String key, String effect, String emitter, int skip, int lifespan, Matrix4f local, float[] rotModel, float[] posModel) {
+        transient RenderQueue.State state;
+        Entry(String key, String effect, String emitter, int lifespan, int skip, Matrix4f local, float[] posModel, float[] rotModel, float[] dynamics) {
             this.key = key;
             this.effect = effect;
             this.emitter = emitter;
             this.skipFrame = skip;
             this.lifespan = lifespan;
-            this.dynamics = null;
+            this.dynamics = dynamics;
 
             this.local = local;
             this.rotModel = rotModel;
@@ -210,7 +163,11 @@ class IntentQueue {
 
             this.lifeLength = 0;
             this.handle = null;
-            state = State.NEW;
+            state = RenderQueue.State.NEW;
+        }
+
+        void setController(Controller controller) {
+            this.controller = controller;
         }
 
         void init(EfsEffectHandle handle) {
@@ -220,20 +177,24 @@ class IntentQueue {
                 for (int i = 0; i < dynamics.length; i++)
                     handle.setDynamicInput(i, dynamics[i]);
             }
-            state = State.CREATED;
+            state = RenderQueue.State.CREATED;
         }
 
         void update(float frames, float partial) {
 
-            if (lifeLength >= lifespan || !handle.exists() || !isAlive())
-                state = State.STOPPING;
+            if (lifeLength >= lifespan || !handle.exists() || !controller.isAlive())
+                state = RenderQueue.State.STOPPING;
             else {
                 lifeLength += frames;
-                if (state == State.CREATED) {
-                    handle.setBaseTransformMatrix(initMatrix(partial).mul(local).getFloats());
-                    state = State.RUNNING;
+                if (state == RenderQueue.State.CREATED) {
+
+                    Matrix4f matrix4f = controller.initMatrix(partial, posModel[0], posModel[1], posModel[2], rotModel[0], rotModel[1]).mul(local);
+                    handle.setBaseTransformMatrix(matrix4f.getFloats());
+
+                    state = RenderQueue.State.RUNNING;
                 } else {
-                    Matrix4f matrix4f = updateMatrix(partial);
+                    Matrix4f matrix4f = controller.updateMatrix(partial, posModel[0], posModel[1], posModel[2], rotModel[0], rotModel[1]);
+
                     if (matrix4f != null) {
                         handle.setBaseTransformMatrix(matrix4f.mul(local).getFloats());
                     }
@@ -242,45 +203,49 @@ class IntentQueue {
 
         }
 
-        abstract Matrix4f initMatrix(float partial);
-        abstract Matrix4f updateMatrix(float partial);
-        abstract boolean isAlive();
-
         void stop() {
             if (handle != null)
                 handle.stop();
-            state = State.STOPPED;
+            state = RenderQueue.State.STOPPED;
         }
     }
 
-    private static class EntryAt extends Entry {
+    interface Controller {
+        @Nonnull Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch);
+        @Nullable Matrix4f updateMatrix(float partial, float x, float y, float z, float yaw, float pitch);
+
+        boolean isAlive();
+    }
+
+    static class ControllerAt implements Controller {
         private final float[] initPos;
-        EntryAt(SPacketPlayAt play) {
-            super(play);
-            initPos = play.getModelPos();
+        private final float[] initRot;
+        ControllerAt(float[] initPos, float[] initRot) {
+            this.initPos = initPos;
+            this.initRot = initRot;
         }
 
+        @Nonnull
         @Override
-        Matrix4f initMatrix(float partial) {
+        public Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
             return new Matrix4f().identity()
-                    .translatef(initPos[0], initPos[1], initPos[2])
-                    .translatef(posModel[0], posModel[1], posModel[2])
-                    .rotateMC(rotModel[0], rotModel[1]);
-
+                    .translatef(initPos[0] + x, initPos[1] + y, initPos[2] + z)
+                    .rotateMC( initRot[0] + yaw + 90, initRot[1] + pitch);
         }
 
+        @Nullable
         @Override
-        Matrix4f updateMatrix(float partial) {
+        public Matrix4f updateMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
             return null;
         }
 
         @Override
-        boolean isAlive() {
+        public boolean isAlive() {
             return true;
         }
     }
 
-    private static class EntryWith extends Entry {
+    static class ControllerWith implements Controller {
         private final boolean followX, followY, followZ, followYaw, followPitch;
         private final boolean useHead, useRender;
         private final boolean inheritYaw, inheritPitch;
@@ -289,24 +254,25 @@ class IntentQueue {
         private double[] initPos;
         private float[] initAngle;
 
-        EntryWith(SPacketPlayWith play) {
-            super(play);
+        ControllerWith(int entityId,
+                boolean followX, boolean followY, boolean followZ, boolean followYaw, boolean followPitch,
+                boolean inheritYaw, boolean inheritPitch, boolean useHead, boolean useRender)
+        {
+            this.entityId = entityId;
 
-            followX = play.followX();
-            followY = play.followY();
-            followZ = play.followZ();
-            followYaw = play.followYaw();
-            followPitch = play.followPitch();
+            this.followX = followX;
+            this.followY = followY;
+            this.followZ = followZ;
+            this.followYaw = followYaw;
+            this.followPitch = followPitch;
 
-            useHead = play.isUseHead();
-            useRender = play.isUseRender();
+            this.inheritYaw = inheritYaw;
+            this.inheritPitch = inheritPitch;
 
-            inheritYaw = play.isInheritYaw();
-            inheritPitch = play.isInheritPitch();
+            this.useHead = useHead;
+            this.useRender = useRender;
 
-            entityId = play.getTarget();
-
-            asAt = !(followX || followY || followZ || followYaw || followPitch);
+            this.asAt = !(followX || followY || followZ || followYaw || followPitch);
         }
 
         private Entity findEntity() {
@@ -334,8 +300,9 @@ class IntentQueue {
             }
         }
 
+        @Nonnull
         @Override
-        Matrix4f initMatrix(float partial) {
+        public Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
             Entity entity = findEntity();
             if (entity == null) return new Matrix4f().identity();
 
@@ -343,19 +310,18 @@ class IntentQueue {
             initAngle = new float[] {getYaw(entity), getPitch(entity)};
 
             float[] rotationYaw = new float[] {
-                    rotModel[0] + (inheritYaw ? initAngle[0] + 90 : 0),
-                    rotModel[1] + (inheritPitch ? initAngle[1] : 0)
+                    yaw + (inheritYaw ? initAngle[0] + 90 : 0),
+                    pitch + (inheritPitch ? initAngle[1] : 0)
             };
 
             return new Matrix4f().identity()
-                    .translated(initPos[0], initPos[1], initPos[2])
-                    .translated(posModel[0], posModel[1], posModel[2])
+                    .translated(initPos[0] + x, initPos[1] + y, initPos[2] + z)
                     .rotateMC(rotationYaw[0], rotationYaw[1]);
         }
 
+        @Nullable
         @Override
-        Matrix4f updateMatrix(float partial) {
-
+        public Matrix4f updateMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
             Entity entity = findEntity();
             if (asAt || entity == null) return null;
 
@@ -399,13 +365,12 @@ class IntentQueue {
             }
 
             return new Matrix4f().identity()
-                    .translated(d0, d1, d2)
-                    .translated(posModel[0], posModel[1], posModel[2])
-                    .rotateMC(d3 + rotModel[0], d4 + rotModel[1]);
+                    .translated(d0 + x, d1 + y, d2 + z)
+                    .rotateMC(d3 + yaw, d4 + pitch);
         }
 
         @Override
-        boolean isAlive() {
+        public boolean isAlive() {
             return asAt || findEntity() != null;
         }
     }

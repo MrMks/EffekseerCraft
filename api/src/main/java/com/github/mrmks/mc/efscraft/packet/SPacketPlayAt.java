@@ -21,8 +21,12 @@ public class SPacketPlayAt extends SPacketPlayAbstract {
         this.targetRot = new float[] {yaw, pitch};
     }
 
-    public float[] getModelPos() {
+    public float[] getTargetPos() {
         return targetPos.clone();
+    }
+
+    public float[] getTargetRot() {
+        return targetRot.clone();
     }
 
     public void read(DataInput stream) throws IOException {

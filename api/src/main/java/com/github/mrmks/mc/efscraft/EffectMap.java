@@ -1,9 +1,5 @@
 package com.github.mrmks.mc.efscraft;
 
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayAbstract;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayAt;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
-import com.github.mrmks.mc.efscraft.packet.SPacketStop;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
@@ -43,87 +39,16 @@ public class EffectMap {
         @SerializedName("inheritYaw") Boolean inheritYaw = null;
         @SerializedName("inheritPitch") Boolean inheritPitch = null;
         @SerializedName("dynamicInput") float[] dynamics = null;
-
-        boolean checkDefaults() {
-            if (effect == null || lifespan == null || lifespan < 0) return false;
-
-            if (skipFrame == null) skipFrame = 0;
-
-            if (scale == null || scale.length < 3) scale = new float[]{1, 1, 1};
-            if (rotateLocal == null || rotateLocal.length < 2) rotateLocal = new float[2];
-            if (rotateModel == null || rotateModel.length < 2) rotateModel = new float[2];
-            if (posLocal == null || posLocal.length < 3) posLocal = new float[3];
-            if (posModel == null || posModel.length < 3) posModel = new float[3];
-
-            if (overwriteConflict == null) overwriteConflict = false;
-            if (followX == null) followX = false;
-            if (followY == null) followY = false;
-            if (followZ == null) followZ = false;
-            if (followYaw == null) followYaw = false;
-            if (followPitch == null) followPitch = false;
-
-            if (useHead == null) useHead = false;
-            if (useRender == null) useRender = false;
-
-            if (inheritYaw == null) inheritYaw = true;
-            if (inheritPitch == null) inheritPitch = true;
-
-            if (dynamics == null) dynamics = new float[0];
-
-            return true;
-        }
-
-        void extendsFrom(Pojo parent) {
-            if (effect == null) effect = parent.effect;
-            if (lifespan == null) lifespan = parent.lifespan;
-            if (skipFrame == null) skipFrame = parent.skipFrame;
-
-            if (scale == null || scale.length < 3) scale = parent.scale;
-            if (rotateLocal == null || rotateLocal.length < 2) rotateLocal = parent.rotateLocal;
-            if (rotateModel == null || rotateModel.length < 2) rotateModel = parent.rotateModel;
-            if (posLocal == null || posLocal.length < 3) posLocal = parent.posLocal;
-            if (posModel == null || posModel.length < 3) posModel = parent.posModel;
-
-            if (overwriteConflict == null) overwriteConflict = parent.overwriteConflict;
-            if (followX == null) followX = parent.followX;
-            if (followY == null) followY = parent.followY;
-            if (followZ == null) followZ = parent.followZ;
-            if (followYaw == null) followYaw = parent.followYaw;
-            if (followPitch == null) followPitch = parent.followPitch;
-
-            if (useHead == null) useHead = parent.useHead;
-            if (useRender == null) useRender = parent.useRender;
-
-            if (inheritYaw == null) inheritYaw = parent.inheritYaw;
-            if (inheritPitch == null) inheritPitch = parent.inheritPitch;
-
-            if (dynamics == null) dynamics = parent.dynamics;
-        }
     }
 
     private static class Entry extends EffectEntry {
 
-        static final Entry DEFAULT = new Entry(null);
+        static final Entry DEFAULT = new Entry();
 
         final boolean valid;
 
-        private Entry(Void unused) {
-
+        private Entry() {
             this.valid = false;
-
-            this.effect = null;
-            this.lifespan = -1;
-            this.followX = this.followY = this.followZ = this.followYaw = this.followPitch = false;
-            this.inheritYaw = this.inheritPitch = true;
-            this.useHead = this.useRender = false;
-            this.overwrite = false;
-
-            this.skipFrames = 0;
-            this.dynamic = null;
-
-            this.localPos = this.modelPos = new float[3];
-            this.localRot = this.modelRot = new float[2];
-            this.scale = new float[] {1, 1, 1};
         }
 
         Entry(Entry parent, Pojo pojo) {
@@ -160,6 +85,7 @@ public class EffectMap {
             this.scale = getOrDefault(pojo.scale, parent.scale).clone();
 
             this.dynamic = pojo.dynamics != null ? pojo.dynamics : parent.dynamic;
+            if (this.dynamic != null) this.dynamic = this.dynamic.clone();
         }
 
         private static String getOrDefault(String a, String b) {
@@ -180,6 +106,7 @@ public class EffectMap {
     }
 
     private static final Type type = new TypeToken<HashMap<String, Pojo>>() {}.getType();
+    private static final Runnable EMPTY = () -> {};
     private final Map<String, Entry> map = new ConcurrentHashMap<>();
     private final File file;
     private CompletableFuture<Map<String, Entry>> future;
@@ -187,7 +114,11 @@ public class EffectMap {
 
     EffectMap(File file) {
         this.file = file;
-        reload(() -> {});
+        reload();
+    }
+
+    public void reload() {
+        reload(EMPTY);
     }
 
     public void reload(Runnable runnable) {
@@ -252,7 +183,7 @@ public class EffectMap {
         return new HashSet<>(map.keySet());
     }
 
-    public EffectEntry getEffect(String key) {
+    public EffectEntry get(String key) {
         return map.get(key);
     }
 
@@ -261,81 +192,4 @@ public class EffectMap {
         return map.containsKey(key);
     }
 
-//    public SPacketPlayWith createPlayWith(String key, String emitter, int entityId) {
-//        checkFuture();
-//
-//        Pojo node = map.get(key);
-//        if (node == null) return null;
-//
-//        SPacketPlayWith packet = new SPacketPlayWith(key, node.effect, emitter, node.lifespan, entityId);
-//        return buildPacketFromNode(packet, node)
-//                .markFollowX(node.followX)
-//                .markFollowY(node.followY)
-//                .markFollowZ(node.followZ)
-//                .markFollowYaw(node.followYaw)
-//                .markFollowPitch(node.followPitch)
-//                .markUseHead(node.useHead)
-//                .markUseRender(node.useRender)
-//                .markInheritYaw(node.inheritYaw)
-//                .markInheritPitch(node.inheritPitch);
-//    }
-
-//    public SPacketPlayWith createPlayWith(String key, String emitter, int entityId, String[] args) {
-//        SPacketPlayWith play = createPlayWith(key, emitter, entityId);
-//
-//        CommandUtils.parse(play, args);
-//        return play;
-//    }
-
-//    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z) {
-//        checkFuture();
-//
-//        Pojo node = map.get(key);
-//        if (node == null) return null;
-//
-//        SPacketPlayAt packet = new SPacketPlayAt(key, node.effect, emitter, node.lifespan, x, y, z);
-//        return buildPacketFromNode(packet, node);
-//    }
-
-//    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z, double yaw, double pitch) {
-//        checkFuture();
-//
-//        Pojo node = map.get(key);
-//        if (node == null) return null;
-//
-//        SPacketPlayAt packet = new SPacketPlayAt(key, node.effect, emitter, node.lifespan, x, y, z, (float) yaw, (float) pitch);
-//        buildPacketFromNode(packet, node);
-//
-//        return packet;
-//    }
-
-//    public SPacketPlayAt createPlayAt(String key, String emitter, double x, double y, double z, float yaw, float pitch, String[] args) {
-//        SPacketPlayAt play = createPlayAt(key, emitter, x, y, z, yaw, pitch);
-//
-//        CommandUtils.parse(play, args);
-//        return play;
-//    }
-
-//    private <T extends SPacketPlayAbstract> T buildPacketFromNode(T packet, Pojo node) {
-//        packet.skipFrame(node.skipFrame)
-//                .markConflictOverwrite(node.overwriteConflict)
-//                .scaleTo(node.scale[0], node.scale[1], node.scale[2])
-//                .rotateLocalTo(node.rotateLocal[0], node.rotateLocal[1])
-//                .translateLocalTo(node.posLocal[0], node.posLocal[1], node.posLocal[2])
-//                .rotateModelTo(node.rotateModel[0], node.rotateModel[1])
-//                .translateModelTo(node.posModel[0], node.posModel[1], node.posModel[2])
-//                .setDynamics(node.dynamics);
-//
-//        return packet;
-//    }
-
-//    public SPacketStop createStop(String key) {
-//        return createStop(key, null);
-//    }
-
-//    public SPacketStop createStop(String key, String emitter) {
-//        checkFuture();
-//
-//        return new SPacketStop(key, emitter == null ? "*" : emitter);
-//    }
 }

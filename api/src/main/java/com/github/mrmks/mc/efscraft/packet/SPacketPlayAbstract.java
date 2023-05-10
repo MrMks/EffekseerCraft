@@ -5,8 +5,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static com.github.mrmks.mc.efscraft.Constants.*;
+
 public abstract class SPacketPlayAbstract implements IMessage {
-    public static final byte MASK_CONFLICT = 0x01;
 
     private String key, effect, emitter;
     private float[] rotModel, posModel;
