@@ -1,5 +1,4 @@
-package com.github.mrmks.mc.efscraft.forge.client;
-
+package com.github.mrmks.mc.efscraft.client;
 
 class Matrix4f {
 

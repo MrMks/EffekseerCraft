@@ -37,18 +37,14 @@ public class EffekseerCraft extends JavaPlugin {
     public void onEnable() {
         if (forgeDetected) return;
 
-        MessageCodecAdaptor network = new MessageCodecAdaptor(this);
+        NetworkWrapper network = new NetworkWrapper(this);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
         getServer().getMessenger().registerIncomingPluginChannel(this, Constants.CHANNEL_KEY, network);
 
         ConcurrentSet<UUID> clients = new ConcurrentSet<>();
 
-        network.register(PacketHello.class, (packetIn, context) -> {
-            if (packetIn.getVersion() == Constants.PROTOCOL_VERSION)
-                clients.add(context.getSender());
-            return null;
-        });
+        network.register(PacketHello.class, new PacketHello.Handler(clients));
 
         Localize localize = new Localize();
         try (InputStream stream = getResource("lang/en_us.lang")) {
@@ -59,7 +55,7 @@ public class EffekseerCraft extends JavaPlugin {
 
         getCommand("effek").setExecutor(new CommandAdaptor(this, network, clients, localize));
 
-        EventListener listener = new EventListener(network, clients);
+        EventHandlerImpl listener = new EventHandlerImpl(network, clients);
         getServer().getPluginManager().registerEvents(listener, this);
         getServer().getScheduler().runTaskTimer(this, listener::tick, 0, 0);
     }

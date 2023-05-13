@@ -1,11 +1,8 @@
-package com.github.mrmks.mc.efscraft.forge.client;
+package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
 import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -17,16 +14,18 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-class RenderQueue {
+public final class RenderingQueue {
 
     private final Queue<Entry> present = new ConcurrentLinkedQueue<>();
     private final Map<String, Map<String, Entry>> lookup = new ConcurrentHashMap<>();
     private final AtomicBoolean clearMark = new AtomicBoolean(false);
 
     private final Function<String, EfsEffect> effects;
+    private final EntityConvert convert;
 
-    RenderQueue(Function<String, EfsEffect> effects) {
-        this.effects = effects;
+    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert convert) {
+        this.effects = getter;
+        this.convert = convert;
     }
 
     private void putEntry(Entry entry, boolean overwrite) {
@@ -42,14 +41,46 @@ class RenderQueue {
         }
     }
 
-    void commandPlay(String key, String effect, String emitter, int lifespan, int skip, Matrix4f local,
-                     float[] modelPos, float[] modelRot, float[] dynamic, Controller controller, boolean overwrite)
+    PlayBuilder commandPlay(String key, String effect, String emitter, int lifespan, int skip, Matrix4f local,
+                     float[] modelPos, float[] modelRot, float[] dynamic, boolean overwrite)
     {
-        if (clearMark.get()) return;
         Entry entry = new Entry(key, effect, emitter, lifespan, skip, local, modelPos, modelRot, dynamic);
-        entry.setController(controller);
 
-        putEntry(entry, overwrite);
+        return new PlayBuilder(entry, overwrite);
+    }
+
+    class PlayBuilder {
+        private final Entry entry;
+        private final boolean overwrite;
+        private boolean mark = false;
+
+        private PlayBuilder(Entry entry, boolean overwrite) {
+            this.entry = entry;
+            this.overwrite = overwrite;
+        }
+
+        void playAt(float[] initPos, float[] initRot) {
+            if (mark) return;
+            mark = true;
+
+            if (clearMark.get()) return;
+            ControllerAt controller = new ControllerAt(initPos, initRot);
+            entry.setController(controller);
+            putEntry(entry, overwrite);
+        }
+
+        void playWith(int target, boolean followX, boolean followY, boolean followZ, boolean followYaw, boolean followPitch,
+                      boolean inheritYaw, boolean inheritPitch, boolean useHead, boolean useRender) {
+            if (mark) return;
+            mark = true;
+
+            if (clearMark.get()) return;
+            ControllerWith controller = new ControllerWith(convert, target,
+                    followX, followY, followZ, followYaw, followPitch,
+                    inheritYaw, inheritPitch, useHead, useRender);
+            entry.setController(controller);
+            putEntry(entry, overwrite);
+        }
     }
 
     void commandStop(String key, String emitter) {
@@ -148,7 +179,7 @@ class RenderQueue {
 
         private EfsEffectHandle handle;
         private float lifeLength;
-        transient RenderQueue.State state;
+        transient RenderingQueue.State state;
         Entry(String key, String effect, String emitter, int lifespan, int skip, Matrix4f local, float[] posModel, float[] rotModel, float[] dynamics) {
             this.key = key;
             this.effect = effect;
@@ -163,7 +194,7 @@ class RenderQueue {
 
             this.lifeLength = 0;
             this.handle = null;
-            state = RenderQueue.State.NEW;
+            state = RenderingQueue.State.NEW;
         }
 
         void setController(Controller controller) {
@@ -177,21 +208,21 @@ class RenderQueue {
                 for (int i = 0; i < dynamics.length; i++)
                     handle.setDynamicInput(i, dynamics[i]);
             }
-            state = RenderQueue.State.CREATED;
+            state = RenderingQueue.State.CREATED;
         }
 
         void update(float frames, float partial) {
 
             if (lifeLength >= lifespan || !handle.exists() || !controller.isAlive())
-                state = RenderQueue.State.STOPPING;
+                state = RenderingQueue.State.STOPPING;
             else {
                 lifeLength += frames;
-                if (state == RenderQueue.State.CREATED) {
+                if (state == RenderingQueue.State.CREATED) {
 
                     Matrix4f matrix4f = controller.initMatrix(partial, posModel[0], posModel[1], posModel[2], rotModel[0], rotModel[1]).mul(local);
                     handle.setBaseTransformMatrix(matrix4f.getFloats());
 
-                    state = RenderQueue.State.RUNNING;
+                    state = RenderingQueue.State.RUNNING;
                 } else {
                     Matrix4f matrix4f = controller.updateMatrix(partial, posModel[0], posModel[1], posModel[2], rotModel[0], rotModel[1]);
 
@@ -206,20 +237,24 @@ class RenderQueue {
         void stop() {
             if (handle != null)
                 handle.stop();
-            state = RenderQueue.State.STOPPED;
+            state = RenderingQueue.State.STOPPED;
         }
     }
 
-    interface Controller {
-        @Nonnull Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch);
-        @Nullable Matrix4f updateMatrix(float partial, float x, float y, float z, float yaw, float pitch);
+    private abstract static class Controller {
+        @Nonnull
+        abstract Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch);
 
-        boolean isAlive();
+        @Nullable
+        abstract Matrix4f updateMatrix(float partial, float x, float y, float z, float yaw, float pitch);
+
+        abstract boolean isAlive();
     }
 
-    static class ControllerAt implements Controller {
+    private static class ControllerAt extends Controller {
         private final float[] initPos;
         private final float[] initRot;
+
         ControllerAt(float[] initPos, float[] initRot) {
             this.initPos = initPos;
             this.initRot = initRot;
@@ -230,7 +265,7 @@ class RenderQueue {
         public Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
             return new Matrix4f().identity()
                     .translatef(initPos[0] + x, initPos[1] + y, initPos[2] + z)
-                    .rotateMC( initRot[0] + yaw + 90, initRot[1] + pitch);
+                    .rotateMC(initRot[0] + yaw + 90, initRot[1] + pitch);
         }
 
         @Nullable
@@ -245,7 +280,7 @@ class RenderQueue {
         }
     }
 
-    static class ControllerWith implements Controller {
+    private static class ControllerWith extends Controller {
         private final boolean followX, followY, followZ, followYaw, followPitch;
         private final boolean useHead, useRender;
         private final boolean inheritYaw, inheritPitch;
@@ -254,10 +289,12 @@ class RenderQueue {
         private double[] initPos;
         private float[] initAngle;
 
-        ControllerWith(int entityId,
-                boolean followX, boolean followY, boolean followZ, boolean followYaw, boolean followPitch,
-                boolean inheritYaw, boolean inheritPitch, boolean useHead, boolean useRender)
-        {
+        private final EntityConvert convert;
+
+        ControllerWith(EntityConvert convert, int entityId,
+                       boolean followX, boolean followY, boolean followZ, boolean followYaw, boolean followPitch,
+                       boolean inheritYaw, boolean inheritPitch, boolean useHead, boolean useRender) {
+            this.convert = convert;
             this.entityId = entityId;
 
             this.followX = followX;
@@ -275,41 +312,36 @@ class RenderQueue {
             this.asAt = !(followX || followY || followZ || followYaw || followPitch);
         }
 
-        private Entity findEntity() {
-            Entity entity = Minecraft.getMinecraft().world.getEntityByID(entityId);
-            return entity != null && entity.isEntityAlive() && entity.isAddedToWorld() ? entity : null;
-        }
-
-        private float getYaw(Entity entity) {
-            if (entity instanceof EntityLivingBase) {
-                EntityLivingBase base = (EntityLivingBase) entity;
-
-                return useHead ? base.getRotationYawHead() : useRender ? base.renderYawOffset : base.rotationYaw;
+        private float[] getRotation() {
+            if (useHead && convert.canUseHead(entityId)) {
+                return convert.getHeadRotation(entityId);
+            } else if (useRender && convert.canUseRender(entityId)) {
+                return convert.getRenderRotation(entityId);
             } else {
-                return useHead ? entity.getRotationYawHead() : entity.rotationYaw;
+                return convert.getRotation(entityId);
             }
         }
 
-        private float getPitch(Entity entity) {
-            if (entity instanceof EntityLivingBase) {
-                EntityLivingBase base = (EntityLivingBase) entity;
-
-                return useRender ? base.cameraPitch : base.rotationPitch;
+        private float[] getPrevRotation() {
+            if (useHead && convert.canUseHead(entityId)) {
+                return convert.getPrevHeadRotation(entityId);
+            } else if (useRender && convert.canUseRender(entityId)) {
+                return convert.getPrevRenderRotation(entityId);
             } else {
-                return entity.rotationPitch;
+                return convert.getPrevRotation(entityId);
             }
         }
 
         @Nonnull
         @Override
         public Matrix4f initMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
-            Entity entity = findEntity();
-            if (entity == null) return new Matrix4f().identity();
+            if (!convert.isValid(entityId))
+                return new Matrix4f().identity();
 
-            initPos = new double[] {entity.posX, entity.posY, entity.posZ};
-            initAngle = new float[] {getYaw(entity), getPitch(entity)};
+            initPos = convert.getPosition(entityId);
+            initAngle = getRotation();
 
-            float[] rotationYaw = new float[] {
+            float[] rotationYaw = new float[]{
                     yaw + (inheritYaw ? initAngle[0] + 90 : 0),
                     pitch + (inheritPitch ? initAngle[1] : 0)
             };
@@ -322,46 +354,38 @@ class RenderQueue {
         @Nullable
         @Override
         public Matrix4f updateMatrix(float partial, float x, float y, float z, float yaw, float pitch) {
-            Entity entity = findEntity();
-            if (asAt || entity == null) return null;
 
-            double d0, d1, d2; float d3, d4;
-            d0 = followX ? entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partial : initPos[0];
-            d1 = followY ? entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partial : initPos[1];
-            d2 = followZ ? entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partial : initPos[2];
+            if (asAt || !convert.isValid(entityId))
+                return null;
 
-            if (followYaw) {
-                if (entity instanceof EntityLivingBase) {
-                    EntityLivingBase base = (EntityLivingBase) entity;
+            double d0, d1, d2;
+            float d3, d4;
 
-                    if (useHead) {
-                        d3 = base.prevRotationYawHead + (base.rotationYawHead - base.prevRotationYawHead) * partial;
-                    } else if (useRender) {
-                        d3 = base.prevRenderYawOffset + (base.renderYawOffset - base.prevRenderYawOffset) * partial;
-                    } else {
-                        d3 = base.prevRotationYaw + (base.rotationYaw - base.prevRotationYaw) * partial;
-                    }
-                } else {
-                    d3 = entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partial;
-                }
-
-                d3 += inheritYaw ? 90 : -initAngle[0];
-            } else {
-                d3 = inheritYaw ? initAngle[0] + 90 : 0;
+            // position
+            {
+                double[] curPos = convert.getPosition(entityId), prevPos = convert.getPrevPosition(entityId);
+                d0 = followX ? prevPos[0] + (curPos[0] - prevPos[0]) * partial : initPos[0];
+                d1 = followY ? prevPos[1] + (curPos[1] - prevPos[1]) * partial : initPos[1];
+                d2 = followZ ? prevPos[2] + (curPos[2] - prevPos[2]) * partial : initPos[2];
             }
 
-            if (followPitch) {
-                if (entity instanceof EntityLivingBase && useRender) {
-                    EntityLivingBase base = (EntityLivingBase) entity;
+            // rotation
+            {
+                float[] curRot = getRotation(), prevRot = getPrevRotation();
 
-                    d4 = base.prevCameraPitch + (base.cameraPitch - base.prevCameraPitch) * partial;
+                if (followYaw) {
+                    d3 = prevRot[0] + (curRot[0] - prevRot[0]) * partial;
+                    d3 += inheritYaw ? 90 : -initAngle[0];
                 } else {
-                    d4 = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partial;
+                    d3 = inheritYaw ? initAngle[0] + 90 : 0;
                 }
 
-                if (!inheritPitch) d4 -= initAngle[1];
-            } else {
-                d4 = inheritPitch ? initAngle[1] : 0;
+                if (followPitch) {
+                    d4 = prevRot[1] + (curRot[1] - prevRot[1]) * partial;
+                    if (!inheritPitch) d4 -= initAngle[1];
+                } else {
+                    d4 = inheritPitch ? initAngle[1] : 0;
+                }
             }
 
             return new Matrix4f().identity()
@@ -371,7 +395,7 @@ class RenderQueue {
 
         @Override
         public boolean isAlive() {
-            return asAt || findEntity() != null;
+            return asAt || convert.isValid(entityId) && convert.isAlive(entityId);
         }
     }
 }

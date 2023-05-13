@@ -43,7 +43,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
 
     @Override
     public void sendPacketTo(MinecraftServer server, EntityPlayer entityPlayer, IMessage message) {
-        wrapper.sendTo(message, entityPlayer);
+        wrapper.sendTo(entityPlayer, message);
     }
 
     @Override

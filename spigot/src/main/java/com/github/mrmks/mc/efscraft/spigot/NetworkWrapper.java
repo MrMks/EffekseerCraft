@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.Constants;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import com.github.mrmks.mc.efscraft.packet.IMessageHandler;
 import com.github.mrmks.mc.efscraft.packet.MessageCodec;
 import com.github.mrmks.mc.efscraft.packet.MessageContext;
 import com.google.common.io.ByteStreams;
@@ -11,24 +12,29 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.io.*;
 
-class MessageCodecAdaptor extends MessageCodec implements PluginMessageListener {
+class NetworkWrapper implements PluginMessageListener {
+
+    private final MessageCodec codec = new MessageCodec();
 
     private final Plugin plugin;
-    MessageCodecAdaptor(Plugin plugin) {
+    NetworkWrapper(Plugin plugin) {
         this.plugin = plugin;
+    }
+
+    <T extends IMessage> void register(Class<T> klass, IMessageHandler<T, ? extends IMessage> handler) {
+        codec.register(klass, handler);
     }
 
     void sendTo(Player player, IMessage packet) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         DataOutput output = ByteStreams.newDataOutput(stream);
         try {
-            writeOutput(packet, output);
+            codec.writeOutput(packet, output);
             player.sendPluginMessage(plugin, Constants.CHANNEL_KEY, stream.toByteArray());
             stream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -38,7 +44,7 @@ class MessageCodecAdaptor extends MessageCodec implements PluginMessageListener 
             DataInput input = new DataInputStream(new ByteArrayInputStream(bytes));
             try {
                 // convert it to Packet
-                IMessage out = writeInput(input, new MessageContext(player.getUniqueId()));
+                IMessage out = codec.writeInput(input, new MessageContext(player.getUniqueId()));
                 // send out reply;
                 if (out != null) sendTo(player, out);
             } catch (IOException e) {

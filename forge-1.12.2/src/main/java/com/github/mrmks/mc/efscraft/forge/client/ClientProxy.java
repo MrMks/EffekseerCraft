@@ -1,6 +1,9 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EffekSeer4J;
+import com.github.mrmks.mc.efscraft.client.MessageHandlerClient;
+import com.github.mrmks.mc.efscraft.client.Renderer;
+import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import com.github.mrmks.mc.efscraft.forge.EffekseerCraft;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
 import com.github.mrmks.mc.efscraft.packet.SPacketClear;
@@ -33,8 +36,8 @@ public class ClientProxy extends CommonProxy {
             // on 1.12.2, it uses the same thread of main thread, so
             // we let Minecraft call us when the thread about to exit;
             // such a function is completed by runtime bytecode transform;
-            RenderQueue queue = new RenderQueue(resources::get);
-            Renderer renderer = new Renderer(queue);
+            RenderingQueue queue = new RenderingQueue(resources::get, new EntityConvertImpl());
+            Renderer renderer = new RendererImpl(queue);
             MinecraftForge.EVENT_BUS.register(renderer);
 
             // register callbacks
@@ -43,7 +46,7 @@ public class ClientProxy extends CommonProxy {
             EffekseerCraft.registerCleanup(EffekSeer4J::finish);
 
             // register packet handlers;
-            NetHandlerClient client = new NetHandlerClient(this, queue);
+            MessageHandlerClient client = new MessageHandlerClient(this::isVersionCompatible, queue);
             wrapper.register(SPacketPlayWith.class, client::handlePlayWith);
             wrapper.register(SPacketPlayAt.class, client::handlePlayAt);
             wrapper.register(SPacketStop.class, client::handleStop);

@@ -26,6 +26,7 @@ import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static net.minecraftforge.fml.common.network.FMLIndexedMessageToMessageCodec.INBOUNDPACKETTRACKER;
 
@@ -109,7 +110,13 @@ public class NetworkWrapper {
         codec.register(klass, handler);
     }
 
-    public void sendTo(IMessage message, EntityPlayer player) {
+    public <T extends IMessage> void register(Class<T> klass, Consumer<T> handler) {
+        register(klass, (packetIn, context) -> {
+            handler.accept(packetIn); return null;
+        });
+    }
+
+    public void sendTo(EntityPlayer player, IMessage message) {
         FMLEmbeddedChannel channel = channels.get(Side.SERVER);
 
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.PLAYER);

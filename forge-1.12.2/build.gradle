@@ -91,6 +91,9 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
     shade rootProject.project(':api')
+    shade rootProject.project(':api-client'), {
+        transitive = false
+    }
     containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.7-SNAPSHOT', {
         transitive = false
     }

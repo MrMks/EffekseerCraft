@@ -1,7 +1,5 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.packet.IMessageHandler;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import io.netty.util.internal.ConcurrentSet;
 import net.minecraft.server.MinecraftServer;
@@ -34,27 +32,11 @@ public class CommonProxy {
     public void initialize(FMLInitializationEvent event) {
         this.wrapper = new NetworkWrapper();
         // handler of message hello
-        IMessageHandler<PacketHello, ?> handler = (packetIn, context) -> {
-            if (context.isRemote()) {
-                versionCompatible = packetIn.getVersion() == Constants.PROTOCOL_VERSION;
-                return versionCompatible ? new PacketHello() : null;
-            } else {
-                boolean flag = packetIn.getVersion() == Constants.PROTOCOL_VERSION;
-                if (flag) {
-                    compatibleClients.add(context.getSender());
-                } else {
-                    compatibleClients.remove(context.getSender());
-                }
-
-                return null;
-            }
-        };
-        this.wrapper.register(PacketHello.class, handler);
-        MinecraftForge.EVENT_BUS.register(new ServerEventListener(this));
+        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients));
+        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients));
     }
 
-    public void serverAboutToStart(FMLServerAboutToStartEvent event) {
-    }
+    public void serverAboutToStart(FMLServerAboutToStartEvent event) {}
 
     public void serverStarting(FMLServerStartingEvent event) {
         File file;

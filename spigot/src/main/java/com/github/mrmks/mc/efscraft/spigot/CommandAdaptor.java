@@ -24,7 +24,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
 
     private final Plugin plugin;
     private final Set<UUID> clients;
-    private final MessageCodecAdaptor wrapper;
+    private final NetworkWrapper wrapper;
     private final Localize localize;
     private final CommandHandler<Entity, Player, Server, CommandSender, World> handler;
 
@@ -134,7 +134,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
 
     // ====== ======
 
-    CommandAdaptor(Plugin plugin, MessageCodecAdaptor wrapper, Set<UUID> clients, Localize localize) {
+    CommandAdaptor(Plugin plugin, NetworkWrapper wrapper, Set<UUID> clients, Localize localize) {
         this.clients = clients;
         this.wrapper = wrapper;
         this.plugin = plugin;
