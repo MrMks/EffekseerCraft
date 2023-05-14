@@ -30,14 +30,15 @@ public final class RenderingQueue {
 
     private void putEntry(Entry entry, boolean overwrite) {
 
-        Map<String, Entry> submap = lookup.computeIfAbsent(entry.effect, it -> new ConcurrentHashMap<>());
+        Map<String, Entry> submap = lookup.computeIfAbsent(entry.key, it -> new ConcurrentHashMap<>());
         Entry old = submap.get(entry.emitter);
 
         if (overwrite || old == null) {
             present.add(entry);
             submap.put(entry.emitter, entry);
 
-            if (old != null) old.state = State.STOPPING;
+            if (old != null)
+                old.state = State.STOPPING_O;
         }
     }
 
@@ -47,40 +48,6 @@ public final class RenderingQueue {
         Entry entry = new Entry(key, effect, emitter, lifespan, skip, local, modelPos, modelRot, dynamic);
 
         return new PlayBuilder(entry, overwrite);
-    }
-
-    class PlayBuilder {
-        private final Entry entry;
-        private final boolean overwrite;
-        private boolean mark = false;
-
-        private PlayBuilder(Entry entry, boolean overwrite) {
-            this.entry = entry;
-            this.overwrite = overwrite;
-        }
-
-        void playAt(float[] initPos, float[] initRot) {
-            if (mark) return;
-            mark = true;
-
-            if (clearMark.get()) return;
-            ControllerAt controller = new ControllerAt(initPos, initRot);
-            entry.setController(controller);
-            putEntry(entry, overwrite);
-        }
-
-        void playWith(int target, boolean followX, boolean followY, boolean followZ, boolean followYaw, boolean followPitch,
-                      boolean inheritYaw, boolean inheritPitch, boolean useHead, boolean useRender) {
-            if (mark) return;
-            mark = true;
-
-            if (clearMark.get()) return;
-            ControllerWith controller = new ControllerWith(convert, target,
-                    followX, followY, followZ, followYaw, followPitch,
-                    inheritYaw, inheritPitch, useHead, useRender);
-            entry.setController(controller);
-            putEntry(entry, overwrite);
-        }
     }
 
     void commandStop(String key, String emitter) {
@@ -126,19 +93,17 @@ public final class RenderingQueue {
                     entry.update(frameGap, partial);
                 }
 
-                if (entry.state == State.STOPPING) {
+                if (entry.state == State.STOPPING || entry.state == State.STOPPING_O) {
                     entry.stop();
                 }
 
                 if (entry.state == State.STOPPED) {
-                    lookup.getOrDefault(entry.effect, Collections.emptyMap()).remove(entry.emitter);
+                    lookup.getOrDefault(entry.key, Collections.emptyMap()).remove(entry.emitter);
                     return true;
-                }
+                } else return entry.state == State.STOPPED_O;
 
-                return false;
             });
         }
-
     }
 
     void stopAll() {
@@ -156,7 +121,7 @@ public final class RenderingQueue {
 
         entry.setController(controller);
 
-        Map<String, Entry> submap = lookup.computeIfAbsent(entry.effect, it -> new ConcurrentHashMap<>());
+        Map<String, Entry> submap = lookup.computeIfAbsent(entry.key, it -> new ConcurrentHashMap<>());
         Entry old = submap.get(entry.emitter);
 
         if (old != null) old.state = State.STOPPING;
@@ -165,7 +130,41 @@ public final class RenderingQueue {
         present.add(entry);
     }
 
-    enum State { NEW, CREATED, RUNNING, STOPPING, STOPPED }
+    class PlayBuilder {
+        private final Entry entry;
+        private final boolean overwrite;
+        private boolean mark = false;
+
+        private PlayBuilder(Entry entry, boolean overwrite) {
+            this.entry = entry;
+            this.overwrite = overwrite;
+        }
+
+        void playAt(float[] initPos, float[] initRot) {
+            if (mark) return;
+            mark = true;
+
+            if (clearMark.get()) return;
+            ControllerAt controller = new ControllerAt(initPos, initRot);
+            entry.setController(controller);
+            putEntry(entry, overwrite);
+        }
+
+        void playWith(int target, boolean followX, boolean followY, boolean followZ, boolean followYaw, boolean followPitch,
+                      boolean inheritYaw, boolean inheritPitch, boolean useHead, boolean useRender) {
+            if (mark) return;
+            mark = true;
+
+            if (clearMark.get()) return;
+            ControllerWith controller = new ControllerWith(convert, target,
+                    followX, followY, followZ, followYaw, followPitch,
+                    inheritYaw, inheritPitch, useHead, useRender);
+            entry.setController(controller);
+            putEntry(entry, overwrite);
+        }
+    }
+
+    enum State { NEW, CREATED, RUNNING, STOPPING, STOPPING_O, STOPPED, STOPPED_O }
 
     private static class Entry {
 
@@ -237,7 +236,10 @@ public final class RenderingQueue {
         void stop() {
             if (handle != null)
                 handle.stop();
-            state = RenderingQueue.State.STOPPED;
+            if (state == State.STOPPING)
+                state = State.STOPPED;
+            else if (state == State.STOPPING_O)
+                state = State.STOPPED_O;
         }
     }
 

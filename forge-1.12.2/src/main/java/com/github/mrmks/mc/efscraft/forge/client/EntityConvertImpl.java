@@ -86,12 +86,12 @@ public class EntityConvertImpl implements EntityConvert {
     public float[] getRenderRotation(int entityId) {
         EntityLivingBase base = findEntityLivingBase(entityId);
 
-        return base == null ? EMPTY_FLOAT_2 : new float[] {base.renderYawOffset, base.rotationPitch};
+        return base == null ? EMPTY_FLOAT_2 : new float[] {base.renderYawOffset, 0};
     }
 
     @Override
     public float[] getPrevRenderRotation(int entityId) {
         EntityLivingBase base = findEntityLivingBase(entityId);
-        return base == null ? EMPTY_FLOAT_2 : new float[] {base.prevRenderYawOffset, base.prevRotationPitch};
+        return base == null ? EMPTY_FLOAT_2 : new float[] {base.prevRenderYawOffset, 0};
     }
 }

@@ -11,6 +11,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.io.*;
+import java.util.logging.Level;
 
 class NetworkWrapper implements PluginMessageListener {
 
@@ -33,7 +34,7 @@ class NetworkWrapper implements PluginMessageListener {
             player.sendPluginMessage(plugin, Constants.CHANNEL_KEY, stream.toByteArray());
             stream.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.WARNING, "Exception while send message(" + packet.getClass().getTypeName() + ") to a client", e);
         }
     }
 
@@ -48,7 +49,7 @@ class NetworkWrapper implements PluginMessageListener {
                 // send out reply;
                 if (out != null) sendTo(player, out);
             } catch (IOException e) {
-                e.printStackTrace();
+                plugin.getLogger().log(Level.WARNING, "Exception while receiving message from client(" + player.getName() + ")", e);
             }
         }
     }
