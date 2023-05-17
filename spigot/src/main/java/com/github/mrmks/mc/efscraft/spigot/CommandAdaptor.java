@@ -2,6 +2,8 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.CommandHandler;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import org.bukkit.Location;
 import org.bukkit.Server;
@@ -46,10 +48,12 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
     @Override
     public Player findPlayer(Server server, CommandSender sender, String toFound) throws CommandHandler.CommandException {
         Player player = server.getPlayer(toFound);
-        if (player == null) try {
-            UUID uuid = UUID.fromString(toFound);
-            player = server.getPlayer(uuid);
-        } catch (IllegalArgumentException e) {}
+        if (player == null) {
+            try {
+                UUID uuid = UUID.fromString(toFound);
+                player = server.getPlayer(uuid);
+            } catch (IllegalArgumentException ignored) {}
+        }
 
         if (player == null) throw new CommandHandler.CommandException("commands.generic.player.notFound", toFound) {};
 
@@ -62,7 +66,14 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
         try {
             UUID uuid = UUID.fromString(toFound);
             entity = server.getEntity(uuid);
-        } catch (IllegalArgumentException e) {}
+            if (entity == null) {
+                entity = server.getPlayer(uuid);
+            }
+        } catch (IllegalArgumentException ignored) {}
+
+        if (entity == null) {
+            entity = server.getPlayer(toFound);
+        }
 
         if (entity == null) throw new CommandHandler.CommandException("commands.generic.entity.notFound", toFound) {};
 
@@ -113,23 +124,31 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
     @Override
     public void sendMessage(CommandSender sender, String msg, Object[] objects, boolean schedule) {
         if (schedule) {
-            sender.getServer().getScheduler().runTaskLater(plugin, () -> sendMessage(sender, msg, objects, false), 1L);
+            sender.getServer().getScheduler().runTaskLater(plugin, () -> sendMessage0(sender, msg, objects, false), 1L);
         } else {
-            if (sender instanceof Entity) {
-                Entity entity = (Entity) sender;
-                if (entity.isValid()) {
-                    entity.spigot().sendMessage(new TranslatableComponent(msg, objects));
-                } else {
-                    sendTranslated(sender, msg, objects);
-                }
-            } else {
-                sendTranslated(sender, msg, objects);
-            }
+            sendMessage0(sender, msg, objects, false);
         }
     }
 
-    private void sendTranslated(CommandSender sender, String msg, Object[] objects) {
-        sender.sendMessage(localize.translate(msg, objects));
+    private void sendMessage0(CommandSender sender, String msg, Object[] objects, boolean exception) {
+        if (sender instanceof Entity) {
+            Entity entity = (Entity) sender;
+            if (entity.isValid()) {
+                BaseComponent component = new TranslatableComponent(msg, objects);
+                if (exception) component.setColor(ChatColor.RED);
+                entity.spigot().sendMessage(component);
+            } else {
+                sendTranslated(sender, msg, objects, exception);
+            }
+        } else {
+            sendTranslated(sender, msg, objects, exception);
+        }
+    }
+
+    private void sendTranslated(CommandSender sender, String msg, Object[] objects, boolean exception) {
+        msg = localize.translate(msg, objects);
+        if (exception) msg = org.bukkit.ChatColor.RED + msg;
+        sender.sendMessage(msg);
     }
 
     // ====== ======
@@ -148,7 +167,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
         try {
             handler.dispatchExecute(label, args, plugin.getServer(), sender);
         } catch (CommandHandler.CommandException e) {
-            sendMessage(sender, e.getMessage(), e.getParams(), false);
+            sendMessage0(sender, e.getMessage(), e.getParams(), true);
         }
         return true;
     }
