@@ -56,7 +56,7 @@ public class RendererImpl extends Renderer {
         this.camMat = event.getMatrixStack().last().pose();
         this.projMat = event.getProjectionMatrix();
 
-        updateAndRender(event.getPartialTicks(), event.getFinishTimeNano() / 1000, Minecraft.getInstance().isPaused());
+        updateAndRender(event.getPartialTicks(), event.getFinishTimeNano(), 1000_000_000, Minecraft.getInstance().isPaused());
     }
 
     @SubscribeEvent
