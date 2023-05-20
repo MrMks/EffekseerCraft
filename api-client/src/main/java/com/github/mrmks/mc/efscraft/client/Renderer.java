@@ -59,7 +59,7 @@ public abstract class Renderer {
         return program;
     }
 
-    protected void updateAndRender(float partial, long current, boolean isPaused) {
+    protected void updateAndRender(float partial, long current, long divider, boolean isPaused) {
 
         EfsProgram program = getProgram(partial);
 
@@ -72,7 +72,7 @@ public abstract class Renderer {
                 if (current < lastFrameTimer)
                     frames = 0;
                 else
-                    frames = Math.min((current - lastFrameTimer) * 60f / 1000, 10);
+                    frames = Math.min((current - lastFrameTimer) * 60f / divider, 10);
             }
 
             // strange enough, but we will not update when frames is 0

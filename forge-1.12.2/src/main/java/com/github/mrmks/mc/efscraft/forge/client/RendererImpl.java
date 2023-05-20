@@ -50,7 +50,7 @@ class RendererImpl extends Renderer {
 
     @SubscribeEvent
     public void renderWorld(RenderWorldLastEvent event) {
-        updateAndRender(event.getPartialTicks(), Minecraft.getSystemTime(), Minecraft.getMinecraft().isGamePaused());
+        updateAndRender(event.getPartialTicks(), Minecraft.getSystemTime(), 1000, Minecraft.getMinecraft().isGamePaused());
     }
 
     @SubscribeEvent
