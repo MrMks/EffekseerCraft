@@ -2,11 +2,13 @@ pluginManagement {
     repositories {
         maven { url = 'https://maven.minecraftforge.net' }
         maven { url = 'https://maven.parchmentmc.org' } // Add this line
+        maven { url = "https://repo.spongepowered.org/repository/maven-public" }
+        mavenCentral()
     }
 }
 
 System.setProperty("net.minecraftforge.gradle.check.certs", "false")
 
 rootProject.name = 'EffekseerCraft'
-include 'api', 'api-client', 'spigot', 'forge-1.12.2'
+include 'api', 'api-client', 'spigot', 'forge-1.12.2', 'forge-1.16.5'
 

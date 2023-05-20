@@ -1,0 +1,10 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="MIT"
+showAsResourcePack=false
+
+[[mods]]
+modId="efscraft"
+version="$version"
+displayName="EffeckseerCraft"
+description="Play effekseer effects in minecraft."
