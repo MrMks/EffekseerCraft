@@ -7,8 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.LogicalSidedProvider;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import java.util.Set;
 import java.util.UUID;
@@ -32,14 +31,14 @@ class EventHandlerImpl extends EventHandler {
     public void serverTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
 
-            MinecraftServer server = LogicalSidedProvider.INSTANCE.get(LogicalSide.SERVER);
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
             if (server != null) tickAndUpdate();
         }
     }
 
     @Override
     protected void sendMessage(UUID uuid, IMessage message) {
-        MinecraftServer server = LogicalSidedProvider.INSTANCE.get(LogicalSide.SERVER);
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             PlayerList list = server.getPlayerList();
             PlayerEntity player = list.getPlayer(uuid);

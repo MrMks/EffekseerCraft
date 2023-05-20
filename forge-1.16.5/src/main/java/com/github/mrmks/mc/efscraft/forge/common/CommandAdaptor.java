@@ -6,9 +6,11 @@ import com.google.common.base.Splitter;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandException;
@@ -16,6 +18,8 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.DimensionArgument;
 import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.command.arguments.RotationArgument;
+import net.minecraft.command.arguments.Vec3Argument;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -65,7 +69,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     @Override
     public PlayerEntity findPlayer(CommandContext<CommandSource> server, CommandSource sender, String toFound) throws CommandHandler.CommandException {
         try {
-            return EntityArgument.getPlayer(server, toFound);
+            return EntityArgument.getPlayer(server, "target");
         } catch (CommandSyntaxException e) {
             throw new ExceptionWrapper(e);
         }
@@ -74,7 +78,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     @Override
     public Entity findEntity(CommandContext<CommandSource> server, CommandSource iCommandSource, String toFound) throws CommandHandler.CommandException {
         try {
-            return EntityArgument.getEntity(server, toFound);
+            return EntityArgument.getEntity(server, "target");
         } catch (CommandSyntaxException e) {
             throw new ExceptionWrapper(e);
         }
@@ -109,7 +113,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     @Override
     public World findWorld(CommandContext<CommandSource> server, CommandSource sender, String str) throws CommandHandler.CommandException {
         try {
-            return DimensionArgument.getDimension(server, str);
+            return DimensionArgument.getDimension(server, "dim");
         } catch (CommandSyntaxException e) {
             throw new ExceptionWrapper(e);
         }
@@ -148,15 +152,70 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     void register(CommandDispatcher<CommandSource> dispatcher) {
+
+        Command<CommandSource> exec = this::execute;
+        SuggestionProvider<CommandSource> comp = this::complete;
+
         LiteralArgumentBuilder<CommandSource> builder = Commands.literal("effek")
                 .requires(source -> source.hasPermission(3))
-                .executes(this::execute)
-                .then(Commands.argument("args", StringArgumentType.greedyString()).suggests(this::complete).executes(this::execute));
+                .then(Commands.literal("play")
+                        .then(Commands.argument("effect", StringArgumentType.string()).suggests(comp)
+                                .then(Commands.argument("emitter", StringArgumentType.string()).suggests(comp)
+                                                .then(Commands.literal("on")
+                                                        .then(Commands.argument("target", EntityArgument.entity()).suggests(comp).executes(exec)
+                                                                .then(Commands.argument("options", StringArgumentType.greedyString()).executes(exec))
+                                                        )
+                                                )
+                                                .then(Commands.literal("at")
+                                                        .then(Commands.argument("dim", DimensionArgument.dimension()).suggests(comp)
+                                                                .then(Commands.argument("location", Vec3Argument.vec3()).suggests(comp)
+                                                                        .then(Commands.argument("rotation", RotationArgument.rotation()).suggests(comp).executes(exec)
+                                                                                .then(Commands.argument("options", StringArgumentType.greedyString()).executes(exec))
+                                                                        )
+                                                                )
+                                                        )
+                                                )
+                                        )
+                        )
+                )
+                .then(Commands.literal("stop")
+                        .then(Commands.argument("effect", StringArgumentType.string()).suggests(comp)
+                                .then(Commands.argument("emitter", StringArgumentType.string()).suggests(comp)
+                                        .then(Commands.literal("on")
+                                                .then(Commands.argument("target", EntityArgument.entity()).suggests(comp).executes(exec))
+                                        )
+                                        .then(Commands.literal("at")
+                                                .then(Commands.argument("dim", DimensionArgument.dimension()).suggests(comp)
+                                                        .then(Commands.argument("location", Vec3Argument.vec3()).suggests(comp).executes(exec))
+                                                )
+                                        )
+                                )
+                        )
+                )
+                .then(Commands.literal("clear")
+                        .then(Commands.argument("target", EntityArgument.player()).suggests(comp).executes(exec))
+                )
+                .then(Commands.literal("reload").executes(exec))
+                .then(Commands.literal("version").executes(exec));
+
         dispatcher.register(builder);
     }
 
+    private ArgumentBuilder<CommandSource, ?> builderEffect(ArgumentBuilder<CommandSource, ?> builder) {
+
+        SuggestionProvider<CommandSource> comp = this::complete;
+
+        ArgumentBuilder<CommandSource, ?> last;
+
+        builder.then(Commands.argument("effect", StringArgumentType.string()).suggests(comp)
+                .then(last = Commands.argument("emitter", StringArgumentType.string())).suggests(comp)
+        );
+
+        return last;
+    }
+
     Pair<String, String[]> parseInput(String commandLine) {
-        Iterator<String> it = Splitter.on(' ').split(commandLine).iterator();
+        Iterator<String> it = SPLITTER.split(commandLine).iterator();
 
         String label = it.hasNext() ? it.next() : null;
         List<String> list = new ArrayList<>();
@@ -166,7 +225,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        Pair<String, String[]> pair = parseInput(context.getInput());
+        Pair<String, String[]> pair = parseInput(context.getInput().substring(1));
         try {
             handler.dispatchExecute(pair.getLeft(), pair.getRight(), context, context.getSource());
         } catch (CommandHandler.CommandException e) {
@@ -180,7 +239,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     CompletableFuture<Suggestions> complete(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        Pair<String, String[]> pair = parseInput(context.getInput());
+        Pair<String, String[]> pair = parseInput(context.getInput().substring(1));
         Collection<String> results = handler.dispatchComplete(pair.getLeft(), pair.getRight(), context, context.getSource());
 
         builder = builder.createOffset(builder.getInput().lastIndexOf(32) + 1);
