@@ -116,7 +116,7 @@ public final class RenderingQueue {
     void createDebug() {
         Matrix4f local = new Matrix4f().identity();
 
-        Entry entry = new Entry("Laser03", "Laser03", "debug", 203, 0, local, new float[3], new float[2], null);
+        Entry entry = new Entry("laser03", "laser03", "debug", 203, 0, local, new float[3], new float[2], null);
         Controller controller = new ControllerAt(new float[] {0, 10, 0}, new float[2]);
 
         entry.setController(controller);

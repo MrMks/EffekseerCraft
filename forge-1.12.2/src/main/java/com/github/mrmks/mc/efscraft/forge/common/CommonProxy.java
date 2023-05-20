@@ -1,7 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
-import io.netty.util.internal.ConcurrentSet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.*;
@@ -13,11 +12,12 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CommonProxy {
     protected NetworkWrapper wrapper;
     protected transient boolean versionCompatible = false;
-    private final Set<UUID> compatibleClients = new ConcurrentSet<>();
+    private final Set<UUID> compatibleClients = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;

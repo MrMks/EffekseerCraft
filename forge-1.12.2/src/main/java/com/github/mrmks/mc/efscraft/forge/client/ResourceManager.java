@@ -1,11 +1,13 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
+import com.github.mrmks.mc.efscraft.client.ResourceLoader;
 import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.resource.IResourceType;
 import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -17,68 +19,15 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.IntFunction;
-import java.util.function.IntSupplier;
+import java.util.Locale;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-class ResourceManager implements ISelectiveResourceReloadListener {
+class ResourceManager extends ResourceLoader<IResourceManager, ResourceLocation> implements ISelectiveResourceReloadListener {
 
     enum ResourceEffect implements IResourceType { INSTANCE }
-
-    private static class ResourceLocator extends ResourceLocation {
-        private final String path;
-        public ResourceLocator(String pathIn) {
-            super("efscraft", pathIn);
-            this.path = pathIn;
-        }
-
-        @Override @Nonnull
-        public String getPath() {
-            return path;
-        }
-
-        @Override @Nonnull
-        public String toString() {
-            return namespace + ":" + path;
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * namespace.hashCode() + path.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object p_equals_1_) {
-            if (p_equals_1_ == this) return true;
-            else if (!(p_equals_1_ instanceof ResourceLocation)) return true;
-            else {
-                ResourceLocation rl = (ResourceLocation) p_equals_1_;
-
-                return this.namespace.equals(rl.getNamespace()) && this.path.equals(rl.getPath());
-            }
-        }
-
-        @Override
-        public int compareTo(ResourceLocation p_compareTo_1_) {
-            int i = namespace.compareTo(p_compareTo_1_.getNamespace());
-
-            if (i == 0) {
-                i = path.compareTo(p_compareTo_1_.getPath());
-            }
-
-            return i;
-        }
-    }
-
-    private static ResourceLocation locEffect(String key) {
-        return new ResourceLocator(String.format("effects/%s/%s.efkefc", key, key));
-    }
-
-    private static ResourceLocation locResources(String key, String path) {
-        return new ResourceLocator(String.format("effects/%s/%s", key, path));
-    }
 
     private static final MethodHandle GET_DOMAIN_MANAGER;
     private static final MethodHandle GET_RESOURCE_PACK;
@@ -87,7 +36,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
     private static final MethodHandle GET_PACK_ZIP;
 
     static {
-        MethodHandle tmp = null;
+        MethodHandle tmp;
         boolean deobf = FMLLaunchHandler.isDeobfuscatedEnvironment();
         MethodHandles.Lookup lookup = MethodHandles.lookup();
 
@@ -140,7 +89,11 @@ class ResourceManager implements ISelectiveResourceReloadListener {
         GET_PACK_ZIP = tmp;
     }
 
-    private final Map<String, EfsEffect> effects = new HashMap<>();
+    private final Logger logger;
+
+    ResourceManager(Logger logger) {
+        this.logger = logger;
+    }
 
     private Set<String> searchPacks(IResourceManager rm) {
 
@@ -184,67 +137,37 @@ class ResourceManager implements ISelectiveResourceReloadListener {
                 file.stream().filter(ZipEntry::isDirectory).map(ZipEntry::getName)
                         .filter(it -> it.startsWith(searchPath) && it.indexOf('/', searchPath.length()) == it.lastIndexOf('/'))
                         .forEach(it -> keys.add(it.substring(searchPath.length(), it.length() - 1)));
-            } else {
-                // unsupported resource pack format;
-                continue;
             }
         }
-        return keys;
-    }
-
-    private void doReload(IResourceManager resourceManager) {
-
-        effects.values().forEach(EfsEffect::delete);
-        effects.clear();
-
-        Set<String> registry = searchPacks(resourceManager);
-
-        for (String key : registry) {
-            // package is preferred;
-            IResource resource;
-            try {
-                resource = resourceManager.getResource(locEffect(key));
-            } catch (IOException e) {
-                e.printStackTrace();
-                continue;
-            }
-
-            EfsEffect effect = new EfsEffect();
-            if (!effect.load(resource.getInputStream(), 1, true)) {
-                effect.delete();
-                continue;
-            }
-
-            boolean flag = true;
-            for (EfsEffect.Texture texture : EfsEffect.Texture.values()) {
-                flag = loadResource(resourceManager, key,
-                        () -> effect.textureCount(texture),
-                        i -> effect.getTexturePath(i, texture),
-                        (i, in) -> effect.loadTexture(in, i, texture, true)
-                );
-                if (!flag) break;
-            }
-
-            flag = flag && loadResource(resourceManager, key, effect::curveCount, effect::getCurvePath,
-                    (i, stream) -> effect.loadCurve(stream, i, true));
-
-            flag = flag && loadResource(resourceManager, key, effect::materialCount, effect::getMaterialPath,
-                    (i, stream) -> effect.loadMaterial(stream, i, true));
-
-            flag = flag && loadResource(resourceManager, key, effect::modelCount, effect::getModelPath,
-                    (i, stream) -> effect.loadModel(stream, i, true));
-
-            if (flag)
-                effects.putIfAbsent(key, effect);
-            else
-                effect.delete();
-        }
+        return keys.stream().map(it -> it.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
     }
 
     @Override
     public void onResourceManagerReload(@Nonnull IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
-        if (resourcePredicate.test(ResourceEffect.INSTANCE))
-            doReload(resourceManager);
+        if (resourcePredicate.test(ResourceEffect.INSTANCE)) {
+            doClear();
+            Set<String> registry = searchPacks(resourceManager);
+            for (String key : registry)
+                doLoad(resourceManager, key);
+        }
+    }
+
+    @Override
+    protected ResourceLocation createLocation(String key, String path) {
+        return new ResourceLocation(key, path);
+    }
+
+    @Override
+    protected void logException(String msg, Throwable tr) {
+        if (tr == null)
+            logger.error(msg);
+        else
+            logger.error(msg, tr);
+    }
+
+    @Override
+    protected InputStream loadResource(IResourceManager resourceManager, ResourceLocation resourceLocation) throws IOException {
+        return resourceManager.getResource(resourceLocation).getInputStream();
     }
 
     EfsEffect get(String effectKey) {
@@ -252,40 +175,7 @@ class ResourceManager implements ISelectiveResourceReloadListener {
     }
 
     void cleanup() {
-        effects.values().forEach(EfsEffect::delete);
-        effects.clear();
+        doClear();
     }
 
-    private static boolean loadResource(
-            IResourceManager manager,
-            String key,
-            IntSupplier counter,
-            IntFunction<String> pathGetter,
-            LoadPredicate consumer) {
-
-        int count = counter.getAsInt();
-        String path;
-        IResource resource;
-        ResourceLocation loc;
-        for (int i = 0; i < count; i++) {
-            path = pathGetter.apply(i);
-            loc = locResources(key, path);
-            try {
-                resource = manager.getResource(loc);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-
-            if (!consumer.test(i, resource.getInputStream())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private interface LoadPredicate {
-        boolean test(int i, InputStream stream);
-    }
 }

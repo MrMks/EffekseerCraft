@@ -156,7 +156,8 @@ public class EffectMap {
                             iterator.remove();
 
                             Entry self = new Entry(parentNode, node);
-                            if (self.valid) baked.put(entry.getKey(), self);
+                            if (self.valid)
+                                baked.put(entry.getKey(), self);
                         }
                     }
                 } while (size != baked.size() && !tmp.isEmpty());

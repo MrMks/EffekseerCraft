@@ -95,7 +95,7 @@ dependencies {
     shade rootProject.project(':api-client'), {
         transitive = false
     }
-    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.8-SNAPSHOT', {
+    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.9-SNAPSHOT', {
         transitive = false
     }
 }

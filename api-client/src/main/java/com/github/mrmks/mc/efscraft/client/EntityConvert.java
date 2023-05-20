@@ -2,27 +2,27 @@ package com.github.mrmks.mc.efscraft.client;
 
 public interface EntityConvert {
 
-    boolean isValid(int entity);
+    boolean isValid(int entityId);
 
-    boolean isAlive(int entity);
+    boolean isAlive(int entityId);
 
-    double[] getPosition(int entity);
+    double[] getPosition(int entityId);
 
-    double[] getPrevPosition(int entity);
+    double[] getPrevPosition(int entityId);
 
-    float[] getRotation(int entity);
+    float[] getRotation(int entityId);
 
-    float[] getPrevRotation(int entity);
+    float[] getPrevRotation(int entityId);
 
-    boolean canUseHead(int entity);
+    boolean canUseHead(int entityId);
 
-    float[] getHeadRotation(int entity);
+    float[] getHeadRotation(int entityId);
 
-    float[] getPrevHeadRotation(int entity);
+    float[] getPrevHeadRotation(int entityId);
 
-    boolean canUseRender(int entity);
+    boolean canUseRender(int entityId);
 
-    float[] getRenderRotation(int entity);
+    float[] getRenderRotation(int entityId);
 
-    float[] getPrevRenderRotation(int entity);
+    float[] getPrevRenderRotation(int entityId);
 }

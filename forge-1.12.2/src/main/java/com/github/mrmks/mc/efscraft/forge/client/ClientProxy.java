@@ -26,7 +26,7 @@ public class ClientProxy extends CommonProxy {
             Minecraft mc = Minecraft.getMinecraft();
 
             // add resource loader to load effects;
-            ResourceManager resources = new ResourceManager();
+            ResourceManager resources = new ResourceManager(logger);
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(resources);
 
             // create program container, used to delete the program when thread exit;

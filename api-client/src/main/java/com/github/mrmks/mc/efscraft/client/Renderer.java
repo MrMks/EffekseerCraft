@@ -78,7 +78,7 @@ public abstract class Renderer {
             // strange enough, but we will not update when frames is 0
             if (frames > 0) {
                 queue.update(frames, partial, program);
-                program.update(partial);
+                program.update(frames);
             }
         }
 

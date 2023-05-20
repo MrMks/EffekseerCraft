@@ -103,6 +103,8 @@ create:
 | inheritPitch          |   boolean |     true | 特效生成时是否基于目标方向旋转                 |
 | dynamicInput          | float\[4] |  \<null> | Dynamic input support           |
 
+注: 自0.2.3.0版本起，effect字段需要满足 [a-z0-9/._-]
+
 ## 客户端
 
 ### 注册表
@@ -113,3 +115,5 @@ create:
 这一特效所需要的资源文件将在 assets/efscraft/effects/\<name>/ 中按相对路径加载。
 
 \<name>即为这一特效的客户端注册名。
+
+注意: 自0.2.3.0版本起, 资源的命名方式需要满足 [a-z0-9/._-]
