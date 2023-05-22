@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.EventHandler;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
@@ -10,6 +11,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,7 +19,7 @@ class EventHandlerImpl extends EventHandler {
 
     private final NetworkWrapper wrapper;
 
-    EventHandlerImpl(NetworkWrapper wrapper, Set<UUID> clients) {
+    EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients) {
         super(clients);
         this.wrapper = wrapper;
     }

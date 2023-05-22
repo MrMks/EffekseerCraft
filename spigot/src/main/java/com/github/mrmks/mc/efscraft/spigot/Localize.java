@@ -2,15 +2,18 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import org.apache.commons.io.IOUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Localize {
     private static final Pattern REGEX = Pattern.compile("%(\\d+\\$)?[\\d\\.]*[df]");
@@ -20,11 +23,11 @@ public class Localize {
     void onLoad(InputStream stream) throws IOException {
         if (stream == null) return;
 
-        for (String line : IOUtils.readLines(stream, StandardCharsets.UTF_8)) {
+        for (String line : readLines(stream)) {
             if (!line.isEmpty() && line.charAt(0) != '#') {
                 String[] pair = Iterables.toArray(SPLITTER.split(line), String.class);
 
-                if (pair != null && pair.length == 2) {
+                if (pair.length == 2) {
                     properties.put(pair[0], REGEX.matcher(pair[1]).replaceAll("%$1s"));
                 }
             }
@@ -38,5 +41,10 @@ public class Localize {
         } catch (IllegalFormatException e) {
             return "Format Error: " + value;
         }
+    }
+
+    private static List<String> readLines(InputStream stream) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        return reader.lines().collect(Collectors.toList());
     }
 }

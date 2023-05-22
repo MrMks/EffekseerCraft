@@ -2,12 +2,15 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.Constants;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
-import io.netty.util.internal.ConcurrentSet;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * We will not provide api for this, please use commands instead;
@@ -42,7 +45,7 @@ public class EffekseerCraft extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
         getServer().getMessenger().registerIncomingPluginChannel(this, Constants.CHANNEL_KEY, network);
 
-        ConcurrentSet<UUID> clients = new ConcurrentSet<>();
+        Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
 
         network.register(PacketHello.class, new PacketHello.Handler(clients));
 
@@ -58,6 +61,11 @@ public class EffekseerCraft extends JavaPlugin {
         EventHandlerImpl listener = new EventHandlerImpl(network, clients);
         getServer().getPluginManager().registerEvents(listener, this);
         getServer().getScheduler().runTaskTimer(this, listener::tick, 0, 0);
+        try {
+            getServer().getPluginManager().registerEvents(listener.channelListener(), this);
+        } catch (NoClassDefFoundError error) {
+            // do-nothing
+        }
     }
 
     @Override

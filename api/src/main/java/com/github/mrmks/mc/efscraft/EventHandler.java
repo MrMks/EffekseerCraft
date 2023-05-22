@@ -17,15 +17,16 @@ public abstract class EventHandler {
             return --count < 0;
         }
     }
-    private final Set<UUID> clients;
+    private final Map<UUID, PacketHello.State> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
-    protected EventHandler(Set<UUID> clients) {
+    protected EventHandler(Map<UUID, PacketHello.State> clients) {
         this.clients = clients;
     }
 
     protected final void onLogin(UUID uuid) {
-        pending.computeIfAbsent(uuid, it -> new Counter(10));
+        if (!clients.containsKey(uuid))
+            pending.computeIfAbsent(uuid, it -> new Counter(10));
     }
 
     protected final void onLogout(UUID uuid) {
@@ -34,6 +35,7 @@ public abstract class EventHandler {
     }
 
     protected final void tickAndUpdate() {
+        ArrayList<UUID> list = null;
         Iterator<Map.Entry<UUID, Counter>> iterator = pending.entrySet().iterator();
 
         while (iterator.hasNext()) {
@@ -42,9 +44,23 @@ public abstract class EventHandler {
             if (entry.getValue().update()) {
                 iterator.remove();
 
-                sendMessage(entry.getKey(), new PacketHello());
+                UUID uuid = entry.getKey();
+
+                PacketHello.State state = clients.get(uuid);
+                if (state == null) {
+                    sendMessage(entry.getKey(), new PacketHello());
+                    clients.put(uuid, PacketHello.State.WAITING_FOR_REPLY);
+
+                    if (list == null) list = new ArrayList<>();
+                    list.add(uuid);
+                } else if (state != PacketHello.State.COMPLETE) {
+                    clients.remove(uuid);
+                }
             }
         }
+
+        if (list != null)
+            list.forEach(uuid -> pending.put(uuid, new Counter(40)));
     }
 
     protected abstract void sendMessage(UUID uuid, IMessage message);

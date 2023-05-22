@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CommonProxy {
     protected NetworkWrapper wrapper;
     protected transient boolean versionCompatible = false;
-    private final Set<UUID> compatibleClients = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Map<UUID, PacketHello.State> compatibleClients = new ConcurrentHashMap<>();
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;
@@ -49,7 +50,7 @@ public class CommonProxy {
             file = new File(server.getActiveAnvilConverter().getFile(server.getFolderName(), "efscraft"), "effects.json");
         }
         PermissionAPI.registerNode("efscraft.command", DefaultPermissionLevel.OP, "permissions to use efscraft's commands");
-        event.registerServerCommand(new CommandAdaptor(wrapper, file, Collections.unmodifiableSet(compatibleClients), modVersion));
+        event.registerServerCommand(new CommandAdaptor(wrapper, file, compatibleClients, modVersion));
     }
 
     public void serverStarted(FMLServerStartedEvent event) {
@@ -59,19 +60,6 @@ public class CommonProxy {
     }
 
     public void serverStopped(FMLServerStoppedEvent event) {
-    }
-
-    public NetworkWrapper getNetwork() {
-        return wrapper;
-    }
-
-    // next two methods will be invoked from command handler or server event handler;
-    public boolean isClientCompatible(UUID uuid) {
-        return compatibleClients.contains(uuid);
-    }
-
-    public void logoutClient(UUID uuid) {
-        compatibleClients.remove(uuid);
     }
 
 }

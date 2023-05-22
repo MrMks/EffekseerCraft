@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.CommandHandler;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
@@ -16,16 +17,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entity, Player, Server, CommandSender, World> {
 
     private final Plugin plugin;
-    private final Set<UUID> clients;
+    private final Map<UUID, PacketHello.State> clients;
     private final NetworkWrapper wrapper;
     private final Localize localize;
     private final CommandHandler<Entity, Player, Server, CommandSender, World> handler;
@@ -36,8 +34,8 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
     }
 
     @Override
-    public boolean isClientValid(Player sender) {
-        return clients.contains(sender.getUniqueId());
+    public UUID getClientUUID(Player sender) {
+        return clients.get(sender.getUniqueId()) == PacketHello.State.COMPLETE;
     }
 
     @Override
@@ -153,7 +151,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
 
     // ====== ======
 
-    CommandAdaptor(Plugin plugin, NetworkWrapper wrapper, Set<UUID> clients, Localize localize) {
+    CommandAdaptor(Plugin plugin, NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, Localize localize) {
         this.clients = clients;
         this.wrapper = wrapper;
         this.plugin = plugin;

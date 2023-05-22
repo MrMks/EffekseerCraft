@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.CommandHandler;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -25,7 +26,6 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
 
     private final NetworkWrapper wrapper;
     private final CommandHandler<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> handler;
-    private final Set<UUID> compatibleClients;
 
     @Override
     public boolean hasPermission(MinecraftServer server, ICommandSender sender, String node) {
@@ -37,8 +37,8 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     }
 
     @Override
-    public boolean isClientValid(EntityPlayer sender) {
-        return compatibleClients.contains(sender.getPersistentID());
+    public UUID getClientUUID(EntityPlayer sender) {
+        return sender.getPersistentID();
     }
 
     @Override
@@ -135,10 +135,9 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
 
     // ====== ======
 
-    CommandAdaptor(NetworkWrapper wrapper, File file, Set<UUID> clients, String modVersion) {
+    CommandAdaptor(NetworkWrapper wrapper, File file, Map<UUID, PacketHello.State> clients, String modVersion) {
         this.wrapper = wrapper;
-        this.handler = new CommandHandler<>(this, file, "forge", modVersion);
-        this.compatibleClients = clients;
+        this.handler = new CommandHandler<>(this, file, "forge", modVersion, clients);
     }
 
     @Override @Nonnull

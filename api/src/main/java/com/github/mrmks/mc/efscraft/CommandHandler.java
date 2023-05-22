@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft;
 
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import com.github.mrmks.mc.efscraft.packet.SPacketClear;
 import com.github.mrmks.mc.efscraft.packet.SPacketStop;
 
@@ -12,11 +13,13 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     private final Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor;
     private final EffectMap registry;
     private final String port, portVersion;
-    public CommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion) {
+    private final Map<UUID, PacketHello.State> clients;
+    public CommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
         this.adaptor = adaptor;
         this.registry = new EffectMap(file);
         this.port = port;
         this.portVersion = portVersion;
+        this.clients = clients;
     }
 
     private static List<String> getListMatchLastArg(String[] args, Collection<String> collection) {
@@ -39,7 +42,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
         int chunkX = floorInt(x) >> 4, chunkY = floorInt(y) >> 4, chunkZ = floorInt(z) >> 4;
 
         for (PLAYER player : targets) {
-            if (player == null || !adaptor.isClientValid(player)) continue;
+            if (player == null || clients.get(adaptor.getClientUUID(player)) != PacketHello.State.COMPLETE) continue;
             float[] pos = adaptor.getEntityPosAngle(player);
             if (pos == null || pos.length < 3) continue;
 
@@ -300,7 +303,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
     public interface Adaptor<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD> {
         boolean hasPermission(SERVER server, SENDER sender, String node);
-        boolean isClientValid(PLAYER sender);
+        UUID getClientUUID(PLAYER sender);
         void sendPacketTo(SERVER server, PLAYER player, IMessage message);
         PLAYER findPlayer(SERVER server, SENDER sender, String toFound) throws CommandException;
         ENTITY findEntity(SERVER server, SENDER sender, String toFound) throws CommandException;

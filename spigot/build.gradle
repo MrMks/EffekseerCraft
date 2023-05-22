@@ -1,9 +1,8 @@
 
-ext.workDirectory = './run/spigot'
+ext.workDirectory = './run/spigot-1.12.2'
 
 configurations {
     runMain
-    compileOnly.extendsFrom runMain
 }
 
 sourceSets {
@@ -13,7 +12,10 @@ sourceSets {
             srcDir rootProject.file('lang')
         }
     }
+    ins {}
 }
+
+configurations.insCompileOnly.extendsFrom configurations.runMain
 
 repositories {
     mavenCentral()
@@ -23,15 +25,14 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT', {
+    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT', {
         exclude group: 'junit'
     }
     compileOnly 'net.md-5:bungeecord-api:1.18-R0.1-SNAPSHOT'
-    highImplementation 'org.spigotmc:spigot:1.18.2-R0.1-SNAPSHOT'
+    highImplementation 'org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT'
 //    highCompileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
 
 //    implementation files('../../libs/spigot-1.12.2.jar')
-    runMain 'org.spigotmc:spigot:1.12.2-R0.1-SNAPSHOT'
     implementation 'com.github.mrmks:indy-gen:0.1.2'
     highImplementation 'com.github.mrmks:indy-gen:0.1.2'
 
@@ -39,6 +40,8 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    runMain 'org.spigotmc:spigot:1.12.2-R0.1-SNAPSHOT'
 }
 
 processResources {

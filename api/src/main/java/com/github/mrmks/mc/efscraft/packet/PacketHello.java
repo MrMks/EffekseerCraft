@@ -5,9 +5,8 @@ import com.github.mrmks.mc.efscraft.Constants;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 public class PacketHello implements IMessage {
 
@@ -28,16 +27,20 @@ public class PacketHello implements IMessage {
         void accept(boolean flag);
     }
 
+    public enum State {
+        WAITING_FOR_REPLY, COMPLETE
+    }
+
     public static final class Handler implements IMessageHandler<PacketHello, PacketHello> {
 
         private final BooleanConsumer consumer;
-        private final Set<UUID> clients;
-        public Handler(BooleanConsumer validator, Set<UUID> clients) {
+        private final Map<UUID, State> clients;
+        public Handler(BooleanConsumer validator, Map<UUID, State> clients) {
             this.consumer = validator;
             this.clients = clients;
         }
 
-        public Handler(Set<UUID> clients) {
+        public Handler(Map<UUID, State> clients) {
             this.consumer = it -> {throw new UnsupportedOperationException();};
             this.clients = clients;
         }
@@ -49,7 +52,9 @@ public class PacketHello implements IMessage {
                     consumer.accept(true);
                     return new PacketHello();
                 } else {
-                    clients.add(context.getSender());
+                    if (clients.get(context.getSender()) == State.WAITING_FOR_REPLY) {
+                        clients.put(context.getSender(), State.COMPLETE);
+                    }
                     return null;
                 }
             } else {
