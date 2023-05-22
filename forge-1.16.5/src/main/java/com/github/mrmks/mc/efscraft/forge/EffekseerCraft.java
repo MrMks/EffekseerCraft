@@ -45,10 +45,6 @@ public class EffekseerCraft {
 
         if (proxy != null) {
             bus.addListener(proxy::onCommonSetup);
-
-            if (dist.isClient()) {
-                bus.addListener(((ClientProxy)proxy)::onClientSetup);
-            }
         }
     }
 }

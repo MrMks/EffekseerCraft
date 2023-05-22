@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.CommandHandler;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
+import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import com.google.common.base.Splitter;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -38,13 +39,11 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     private static final Splitter SPLITTER = Splitter.on(' ');
 
     private final NetworkWrapper wrapper;
-    private final Set<UUID> compatibleClients;
     private final CommandHandler<Entity, PlayerEntity, CommandContext<CommandSource>, CommandSource, World> handler;
 
-    CommandAdaptor(NetworkWrapper wrapper, File file, Set<UUID> clients, String modVersion) {
+    CommandAdaptor(NetworkWrapper wrapper, File file, Map<UUID, PacketHello.State> clients, String modVersion) {
         this.wrapper = wrapper;
-        this.handler = new CommandHandler<>(this, file, "forge", modVersion);
-        this.compatibleClients = clients;
+        this.handler = new CommandHandler<>(this, file, "forge", modVersion, clients);
     }
 
     @Override
@@ -57,8 +56,8 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     @Override
-    public boolean isClientValid(PlayerEntity sender) {
-        return compatibleClients.contains(sender.getUUID());
+    public UUID getClientUUID(PlayerEntity sender) {
+        return sender.getUUID();
     }
 
     @Override
