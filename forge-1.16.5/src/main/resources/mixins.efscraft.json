@@ -2,6 +2,7 @@
   "package": "com.github.mrmks.mc.efscraft.forge.core",
   "refmap": "mixins.efscraft.refmap.json",
   "client": [
-    "MixinMinecraft"
+    "MixinMinecraft",
+    "MixinWorldRenderer"
   ]
 }

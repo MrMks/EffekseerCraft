@@ -68,7 +68,7 @@ public class NetworkWrapper {
         IMessage reply = null;
         try {
             reply = codec.writeInput(input, ctx);
-            buffer.release();
+            if (ctx.isRemote()) buffer.release();
         } catch (IOException e) {
             LOGGER.error("Unable to decode and handle a message", e);
         }
