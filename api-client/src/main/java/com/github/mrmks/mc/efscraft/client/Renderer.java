@@ -18,7 +18,7 @@ public abstract class Renderer {
         this.queue = queue;
     }
 
-    private EfsProgram getProgram(float partialTicks) {
+    private EfsProgram getProgram() {
         synchronized (this) {
             if (program == null || createThread == null) {
                 if (program != null) program.delete();
@@ -32,6 +32,10 @@ public abstract class Renderer {
             }
         }
 
+        return program;
+    }
+
+    private void updateCamera(EfsProgram program, float partialTicks) {
         float[] floats = new float[16], trans = new float[3];
 
         double[] prevPos = getRenderViewEntityPrevPos(), curPos = getRenderViewEntityPos();
@@ -55,15 +59,20 @@ public abstract class Renderer {
         getProjectionMatrix(buffer);
         buffer.get(floats).clear();
         program.setProjectionMatrix(floats);
-
-        return program;
     }
 
     protected void updateAndRender(float partial, long current, long divider, boolean isPaused) {
+        update(partial, current, divider, isPaused);
+        program.draw();
+    }
 
-        EfsProgram program = getProgram(partial);
+    protected void update(float partial, long current, long divider, boolean isPaused) {
+        EfsProgram program = getProgram();
 
         if (!isPaused) {
+
+            updateCamera(program, partial);
+
             float frames;
 
             if (lastFrameTimer < 0) {
@@ -83,8 +92,10 @@ public abstract class Renderer {
         }
 
         lastFrameTimer = current;
+    }
 
-        program.draw();
+    protected void draw() {
+        getProgram().draw();
     }
 
     protected void unloadRender() {

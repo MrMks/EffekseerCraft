@@ -5,9 +5,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Mod(
         modid = "efscraft",
         name = "EffekseerCraft",
@@ -15,21 +12,6 @@ import java.util.List;
         useMetadata = true
 )
 public class EffekseerCraft {
-
-    /**
-     * The callback method, called from Minecraft#shutdownMinecraftApplet;
-     * This behavior is provided by runtime bytecode transform;
-     * So, do not change the method name.
-     */
-    private static final List<Runnable> callbacks = new ArrayList<>();
-    public static void callbackCleanup() {
-        callbacks.forEach(Runnable::run);
-        callbacks.clear();
-    }
-
-    public static void registerCleanup(Runnable runnable) {
-        callbacks.add(runnable);
-    }
 
     @SidedProxy(
             clientSide = "com.github.mrmks.mc.efscraft.forge.client.ClientProxy",

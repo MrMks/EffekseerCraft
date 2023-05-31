@@ -41,9 +41,9 @@ public class ClientProxy extends CommonProxy {
             MinecraftForge.EVENT_BUS.register(renderer);
 
             // register callbacks
-            EffekseerCraft.registerCleanup(resources::cleanup);
-            EffekseerCraft.registerCleanup(renderer::deleteProgram);
-            EffekseerCraft.registerCleanup(EffekSeer4J::finish);
+            ClientEventHooks.registerCleanup(resources::cleanup);
+            ClientEventHooks.registerCleanup(renderer::deleteProgram);
+            ClientEventHooks.registerCleanup(EffekSeer4J::finish);
 
             // register packet handlers;
             MessageHandlerClient client = new MessageHandlerClient(this::isVersionCompatible, queue);

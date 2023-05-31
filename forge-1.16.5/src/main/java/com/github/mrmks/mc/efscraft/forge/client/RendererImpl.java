@@ -4,6 +4,8 @@ import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.RenderState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IWorld;
@@ -60,7 +62,7 @@ public class RendererImpl extends Renderer {
     @SubscribeEvent
     public void renderParticle(RenderParticleEvent event) {
 
-        if (!Minecraft.useShaderTransparency()) return;
+//        if (!Minecraft.useShaderTransparency()) return;
 
         this.camMat = event.cam;
         this.projMat = event.proj;

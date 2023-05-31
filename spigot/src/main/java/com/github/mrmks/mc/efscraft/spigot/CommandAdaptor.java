@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entity, Player, Server, CommandSender, World> {
 
     private final Plugin plugin;
-    private final Map<UUID, PacketHello.State> clients;
     private final NetworkWrapper wrapper;
     private final Localize localize;
     private final CommandHandler<Entity, Player, Server, CommandSender, World> handler;
@@ -35,7 +34,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
 
     @Override
     public UUID getClientUUID(Player sender) {
-        return clients.get(sender.getUniqueId()) == PacketHello.State.COMPLETE;
+        return sender.getUniqueId();
     }
 
     @Override
@@ -152,12 +151,11 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
     // ====== ======
 
     CommandAdaptor(Plugin plugin, NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, Localize localize) {
-        this.clients = clients;
         this.wrapper = wrapper;
         this.plugin = plugin;
         this.localize = localize;
 
-        this.handler = new CommandHandler<>(this, new File(plugin.getDataFolder(), "effects.json"), "spigot", plugin.getDescription().getVersion());
+        this.handler = new CommandHandler<>(this, new File(plugin.getDataFolder(), "effects.json"), "spigot", plugin.getDescription().getVersion(), clients);
     }
 
     @Override
