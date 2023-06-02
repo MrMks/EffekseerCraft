@@ -16,16 +16,19 @@ import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static net.minecraft.client.renderer.OpenGlHelper.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL20.GL_INFO_LOG_LENGTH;
 
 class RendererImpl extends Renderer {
 
     private Framebuffer working = null, backup = null;
     private int lastFramebuffer = -1;
-    private final int vao;
+    private final int vbo;
     private final boolean translucent;
+    private final int program;
 
     RendererImpl(RenderingQueue queue, boolean translucent) {
         super(queue);
@@ -42,18 +45,49 @@ class RendererImpl extends Renderer {
         buffer.asFloatBuffer().put(data);
         buffer.position(0);
 
-        vao = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vao);
+        vbo = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        StringBuilder bd = new StringBuilder()
-                .append("#version 120\n")
-                .append("uniform sampler2D backupColor;\n")
-                .append("uniform sampler2D backupDepth;\n")
-                .append("uniform sampler2D workingDepth;\n")
-                .append("uniform sampler2D mainDepth;\n")
+        String fs = "#version 120\n" +
+                "uniform sampler2D backupColor;\n" +
+                "uniform sampler2D backupDepth;\n" +
+                "uniform sampler2D workingDepth;\n" +
+                "uniform sampler2D overlayDepth;\n" +
+                '\n' +
+                "void main() {\n" +
+                "    float d0 = texture2D(backupDepth, gl_FragCoord.xy).r;\n" +
+                "    float d1 = texture2D(workingDepth, gl_FragCoord.xy).r;\n" +
+                "    float d2 = texture2D(overlayDepth, gl_FragCoord.xy).r;\n" +
+                "    gl_FragColor = texture2D(backupColor, gl_FragCoord.xy);\n" +
+                "    if (d1 < d2) {\n" +
+                "        gl_FragDepth = d1;\n" +
+                "    } else {\n" +
+                "        gl_FragDepth = d0;\n" +
+                "    }\n" +
+                "}\n"
                 ;
+
+        int fragShader = OpenGlHelper.glCreateShader(GL_FRAGMENT_SHADER);
+        OpenGlHelper.glShaderSource(fragShader, ByteBuffer.wrap(fs.getBytes(StandardCharsets.UTF_8)));
+        OpenGlHelper.glCompileShader(fragShader);
+
+        if (glGetShaderi(fragShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println(glGetShaderInfoLog(fragShader, GL_INFO_LOG_LENGTH));
+        }
+
+        int program = OpenGlHelper.glCreateProgram();
+        OpenGlHelper.glAttachShader(program, fragShader);
+        OpenGlHelper.glLinkProgram(program);
+
+        if (glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) {
+            System.out.println(glGetProgramInfoLog(program, GL_INFO_LOG_LENGTH));
+        }
+
+        OpenGlHelper.glDeleteShader(fragShader);
+
+        this.program = program;
     }
 
     @Override
@@ -227,7 +261,7 @@ class RendererImpl extends Renderer {
         if (textureNext >= 0)
             GlStateManager.bindTexture(textureNext);
 
-        OpenGlHelper.glBindBuffer(GL_ARRAY_BUFFER, vao);
+        OpenGlHelper.glBindBuffer(GL_ARRAY_BUFFER, vbo);
         GlStateManager.glVertexPointer(3, GL_FLOAT, 20, 0);
         OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
         GlStateManager.glTexCoordPointer(2, GL_FLOAT, 20, 12);
@@ -268,8 +302,8 @@ class RendererImpl extends Renderer {
             backup.deleteFramebuffer();
         if (working != null)
             working.deleteFramebuffer();
-        if (vao >= 0)
-            glDeleteBuffers(vao);
+        if (vbo >= 0)
+            glDeleteBuffers(vbo);
     }
 
     public static class RenderParticleEvent extends Event {
