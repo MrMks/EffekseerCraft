@@ -20,15 +20,21 @@ import java.nio.charset.StandardCharsets;
 
 import static net.minecraft.client.renderer.OpenGlHelper.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
+import static org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM;
 import static org.lwjgl.opengl.GL20.GL_INFO_LOG_LENGTH;
 
 class RendererImpl extends Renderer {
 
-    private Framebuffer working = null, backup = null;
+    private Framebuffer working = null, overlay = null;
     private int lastFramebuffer = -1;
     private final int vbo;
-    private final boolean translucent;
     private final int program;
+    private final int attrPos, attrUV;
+    private final int texColorBackup, texDepthBackup, texDepthWorking, texDepthOverlay;
+    private final boolean translucent;
+
+    private int lastWidth = -1, lastHeight = -1;
 
     RendererImpl(RenderingQueue queue, boolean translucent) {
         super(queue);
@@ -50,17 +56,27 @@ class RendererImpl extends Renderer {
         glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+        String vs = "#version 120\n" +
+                "attribute vec3 Position;\n" +
+                "attribute vec2 UV;\n" +
+                "varying vec2 texCoord;\n" +
+                "void main() {\n" +
+                "    gl_Position = vec4(Position, 1);\n" +
+                "    texCoord = UV;\n" +
+                "}\n";
+
         String fs = "#version 120\n" +
                 "uniform sampler2D backupColor;\n" +
                 "uniform sampler2D backupDepth;\n" +
                 "uniform sampler2D workingDepth;\n" +
                 "uniform sampler2D overlayDepth;\n" +
+                "varying vec2 texCoord;\n" +
                 '\n' +
                 "void main() {\n" +
-                "    float d0 = texture2D(backupDepth, gl_FragCoord.xy).r;\n" +
-                "    float d1 = texture2D(workingDepth, gl_FragCoord.xy).r;\n" +
-                "    float d2 = texture2D(overlayDepth, gl_FragCoord.xy).r;\n" +
-                "    gl_FragColor = texture2D(backupColor, gl_FragCoord.xy);\n" +
+                "    float d0 = texture2D(backupDepth, texCoord.xy).r;\n" +
+                "    float d1 = texture2D(workingDepth, texCoord.xy).r;\n" +
+                "    float d2 = texture2D(overlayDepth, texCoord.xy).r;\n" +
+                "    gl_FragColor = texture2D(backupColor, texCoord.xy);\n" +
                 "    if (d1 < d2) {\n" +
                 "        gl_FragDepth = d1;\n" +
                 "    } else {\n" +
@@ -69,8 +85,22 @@ class RendererImpl extends Renderer {
                 "}\n"
                 ;
 
+        int vertShader = glCreateShader(GL_VERTEX_SHADER);
+        byte[] bytes = vs.getBytes(StandardCharsets.UTF_8);
+        buffer = BufferUtils.createByteBuffer(bytes.length).put(bytes);
+        buffer.position(0);
+        OpenGlHelper.glShaderSource(vertShader, buffer);
+        OpenGlHelper.glCompileShader(vertShader);
+
+        if (glGetShaderi(vertShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println(glGetShaderInfoLog(vertShader, GL_INFO_LOG_LENGTH));
+        }
+
         int fragShader = OpenGlHelper.glCreateShader(GL_FRAGMENT_SHADER);
-        OpenGlHelper.glShaderSource(fragShader, ByteBuffer.wrap(fs.getBytes(StandardCharsets.UTF_8)));
+        bytes = fs.getBytes(StandardCharsets.UTF_8);
+        buffer = BufferUtils.createByteBuffer(bytes.length).put(bytes);
+        buffer.position(0);
+        OpenGlHelper.glShaderSource(fragShader, buffer);
         OpenGlHelper.glCompileShader(fragShader);
 
         if (glGetShaderi(fragShader, GL_COMPILE_STATUS) == GL_FALSE) {
@@ -78,6 +108,7 @@ class RendererImpl extends Renderer {
         }
 
         int program = OpenGlHelper.glCreateProgram();
+        OpenGlHelper.glAttachShader(program, vertShader);
         OpenGlHelper.glAttachShader(program, fragShader);
         OpenGlHelper.glLinkProgram(program);
 
@@ -86,8 +117,45 @@ class RendererImpl extends Renderer {
         }
 
         OpenGlHelper.glDeleteShader(fragShader);
+        OpenGlHelper.glDeleteShader(vertShader);
+
+        int prevProgram = GlStateManager.glGetInteger(GL_CURRENT_PROGRAM);
 
         this.program = program;
+        glUseProgram(program);
+        glUniform1i(glGetUniformLocation(program, "backupColor"), 0);
+        glUniform1i(glGetUniformLocation(program, "backupDepth"), 1);
+        glUniform1i(glGetUniformLocation(program, "workingDepth"), 2);
+        glUniform1i(glGetUniformLocation(program, "overlayDepth"), 3);
+        glUseProgram(prevProgram);
+
+        this.attrPos = glGetAttribLocation(program, "Position");
+        this.attrUV = glGetAttribLocation(program, "UV");
+
+        texColorBackup = GlStateManager.generateTexture();
+        texDepthBackup = GlStateManager.generateTexture();
+        texDepthOverlay = GlStateManager.generateTexture();
+        texDepthWorking = GlStateManager.generateTexture();
+
+        int current = GlStateManager.glGetInteger(GL_TEXTURE_BINDING_2D);
+
+        GlStateManager.bindTexture(texColorBackup);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        GlStateManager.bindTexture(texDepthBackup);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        GlStateManager.bindTexture(texDepthOverlay);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        GlStateManager.bindTexture(texDepthWorking);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        GlStateManager.bindTexture(current);
     }
 
     @Override
@@ -120,20 +188,57 @@ class RendererImpl extends Renderer {
         GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, buffer);
     }
 
-    @SubscribeEvent
-    public void resizeFramebuffer(ResizeFramebufferEvent event) {
-        if (OpenGlHelper.isFramebufferEnabled() && FramebufferHelper.apiSupported && working != null) {
+    private void tryResize(int w, int h) {
 
-            int current = FramebufferHelper.getCurrentFramebuffer();
+        if (lastWidth == w && lastHeight == h)
+            return;
 
-            Minecraft mc = Minecraft.getMinecraft();
-            working.createFramebuffer(mc.displayWidth, mc.displayHeight);
+        lastWidth = w;
+        lastHeight = h;
+
+        if (isFramebufferEnabled() && FramebufferHelper.apiSupported) {
+
+            int current;
+
+            current = FramebufferHelper.getCurrentFramebuffer();
+
+            if (working == null) {
+                working = new Framebuffer(w, h, true);
+                working.enableStencil();
+                working.setFramebufferColor(0, 0, 0, 0);
+            } else {
+                working.deleteFramebuffer();
+                working.createFramebuffer(w, h);
+            }
             working.bindFramebuffer(true);
 
-            backup.createFramebuffer(mc.displayWidth, mc.displayHeight);
-            backup.bindFramebuffer(true);
-
+            if (overlay == null) {
+                overlay = new Framebuffer(w, h, true);
+                overlay.setFramebufferColor(0, 0, 0, 0);
+            } else {
+                overlay.deleteFramebuffer();
+                overlay.createFramebuffer(w, h);
+            }
+            overlay.bindFramebuffer(true);
             glBindFramebuffer(GL_FRAMEBUFFER, current);
+
+            current = glGetInteger(GL_TEXTURE_BINDING_2D);
+
+            GlStateManager.bindTexture(texColorBackup);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            GlStateManager.bindTexture(texDepthBackup);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
+            GlStateManager.bindTexture(texDepthWorking);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
+            GlStateManager.bindTexture(texDepthOverlay);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
+
+            GlStateManager.bindTexture(current);
+
+            int error = glGetError();
+            if (error != GL_NO_ERROR) {
+                System.out.println("error after efscraft resize: " + error );
+            }
         }
     }
 
@@ -142,97 +247,130 @@ class RendererImpl extends Renderer {
 
         Minecraft minecraft = Minecraft.getMinecraft();
 
-        if (OpenGlHelper.isFramebufferEnabled() && FramebufferHelper.apiSupported && translucent)
+        int width, height;
+        tryResize(width = minecraft.displayWidth, height = minecraft.displayHeight);
+
+        if (translucent && isFramebufferEnabled() && FramebufferHelper.apiSupported)
         {
-
-            int current = FramebufferHelper.getCurrentFramebuffer();
-
-            if (working == null) {
-                working = new Framebuffer(minecraft.displayWidth, minecraft.displayHeight, true);
-                working.setFramebufferColor(0, 0, 0, 0);
-                working.bindFramebuffer(true);
-
-                backup = new Framebuffer(minecraft.displayWidth, minecraft.displayHeight, true);
-                backup.bindFramebuffer(true);
-                backup.enableStencil();
-
-                glBindFramebuffer(GL_FRAMEBUFFER, current);
-            }
-
-            int width = working.framebufferWidth, height = working.framebufferHeight;
+            int current;
 
             if (event.prev)
             {
+                current = FramebufferHelper.getCurrentFramebuffer();
+                lastFramebuffer = current;
+
                 update(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
 
-                working.framebufferClear();
-                backup.framebufferClear();
-
-                // mask sure that current framebuffer has a stencil buffer;
-                Framebuffer fbo = Minecraft.getMinecraft().getFramebuffer();
-                if (fbo.framebufferObject == current) {
-                    if (!fbo.isStencilEnabled()) fbo.enableStencil();
-                }
-
-                FramebufferHelper.copyDepthFrom(current, working.framebufferObject, width, height);
-                FramebufferHelper.copyFrom(current, backup.framebufferObject, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, width, height);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
                 GlStateManager.depthMask(true);
-                lastFramebuffer = current;
+                glStencilMask(0xff);
+                working.framebufferClear();
+                working.bindFramebuffer(false);
+                glClear(GL_STENCIL_BUFFER_BIT);
+                overlay.framebufferClear();
+
+                FramebufferHelper.copyFrom(current, working.framebufferObject, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, width, height);
+                FramebufferHelper.copyFrom(current, overlay.framebufferObject, GL_DEPTH_BUFFER_BIT, width, height);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
+                GlStateManager.depthMask(true);
             }
             else
             {
-                GlStateManager.depthMask(false);
-
                 current = lastFramebuffer;
                 lastFramebuffer = -1;
-                glBindFramebuffer(GL_FRAMEBUFFER, current);
-                FramebufferHelper.copyDepthFrom(working.framebufferObject, current, width, height);
+
+                GlStateManager.depthMask(false);
+
+                FramebufferHelper.copyDepthFrom(overlay.framebufferObject, working.framebufferObject, width, height);
+                glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                drawTexture(overlay.framebufferTexture);
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
                 // generate stencil buffer
                 glEnable(GL_STENCIL_TEST);
                 glStencilMask(0xff);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
-                glStencilOp(GL_KEEP, GL_REPLACE, GL_KEEP);
-
-                GlStateManager.colorMask(false, false, false, false);
-                draw();
-                GlStateManager.colorMask(true, true, true, true);
-
-                // restore depth buffer
-                FramebufferHelper.copyDepthFrom(backup.framebufferObject, current, width, height);
-
-                // render effects with greater depth;
-                glStencilMask(0x00);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                glStencilFunc(GL_EQUAL, 1, 0xff);
+                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
                 draw();
 
-                // render working texture to main framebuffer
-                glDisable(GL_STENCIL_TEST);
-
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                drawTexture(working.framebufferTexture);
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-
-                // render effects with less depth
-                GlStateManager.enableDepth();
-                GlStateManager.depthMask(false);
-                glBindFramebuffer(GL_FRAMEBUFFER, current);
-
-                glEnable(GL_STENCIL_TEST);
+                // use stencil test;
                 glStencilMask(0x00);
                 glStencilFunc(GL_NOTEQUAL, 1, 0xff);
                 glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
+                int[] restoreTex = new int[4];
+                GlStateManager.setActiveTexture(defaultTexUnit);
+                restoreTex[0] = glGetInteger(GL_TEXTURE_BINDING_2D);
+                GlStateManager.bindTexture(texColorBackup);
+                glBindFramebuffer(GL_FRAMEBUFFER, current);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+                GlStateManager.setActiveTexture(defaultTexUnit + 1);
+                restoreTex[1] = glGetInteger(GL_TEXTURE_BINDING_2D);
+                GlStateManager.bindTexture(texDepthBackup);
+                glBindFramebuffer(GL_FRAMEBUFFER, current);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+                GlStateManager.setActiveTexture(defaultTexUnit + 2);
+                restoreTex[2] = glGetInteger(GL_TEXTURE_BINDING_2D);
+                GlStateManager.bindTexture(texDepthWorking);
+                glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+                GlStateManager.setActiveTexture(defaultTexUnit + 3);
+                restoreTex[3] = glGetInteger(GL_TEXTURE_BINDING_2D);
+                GlStateManager.bindTexture(texDepthOverlay);
+                glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+                // draw texture from main to working use program;
+                glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
+                glUseProgram(program);
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                GL20.glVertexAttribPointer(attrPos, 3, GL_FLOAT, false, 20, 0);
+                GL20.glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 20, 12);
+                GL20.glEnableVertexAttribArray(attrPos);
+                GL20.glEnableVertexAttribArray(attrUV);
+
+                prevDrawTex();
+                GlStateManager.enableDepth();
+                GlStateManager.disableBlend();
+                int depthFunc = GlStateManager.glGetInteger(GL_DEPTH_FUNC);
+                GlStateManager.depthFunc(GL_ALWAYS);
+                GlStateManager.depthMask(true);
+
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                GlStateManager.depthMask(false);
+                GlStateManager.depthFunc(depthFunc);
+                GlStateManager.enableBlend();
+
+                postDrawTex();
+
+                GL20.glDisableVertexAttribArray(attrPos);
+                GL20.glDisableVertexAttribArray(attrUV);
+                glUseProgram(0);
+
+                for (int i = 0; i < 4; i++) {
+                    GlStateManager.setActiveTexture(defaultTexUnit + i);
+                    GlStateManager.bindTexture(restoreTex[i]);
+                }
+                GlStateManager.setActiveTexture(defaultTexUnit);
+
                 draw();
+
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                drawTexture(overlay.framebufferTexture);
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
                 glDisable(GL_STENCIL_TEST);
 
                 // restore stencil buffer
-                FramebufferHelper.copyFrom(backup.framebufferObject, current, GL_STENCIL_BUFFER_BIT, width, height);
+                FramebufferHelper.copyFrom(working.framebufferObject, current, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, width, height);
+                glBindFramebuffer(GL_FRAMEBUFFER, current);
             }
         }
         else
@@ -243,7 +381,7 @@ class RendererImpl extends Renderer {
         }
     }
 
-    private void drawTexture(int textureNext) {
+    private void prevDrawTex() {
         GlStateManager.disableAlpha();
         GlStateManager.disableCull();
         GlStateManager.disableDepth();
@@ -256,6 +394,24 @@ class RendererImpl extends Renderer {
         GlStateManager.matrixMode(GL_MODELVIEW);
         GlStateManager.pushMatrix();
         GlStateManager.loadIdentity();
+    }
+
+    private void postDrawTex() {
+        GlStateManager.matrixMode(GL_PROJECTION);
+        GlStateManager.popMatrix();
+
+        GlStateManager.matrixMode(GL_MODELVIEW);
+        GlStateManager.popMatrix();
+
+        GlStateManager.enableFog();
+        GlStateManager.enableDepth();
+        GlStateManager.enableCull();
+        GlStateManager.enableAlpha();
+    }
+
+    private void drawTexture(int textureNext) {
+
+        prevDrawTex();
 
         int textureId = GlStateManager.glGetInteger(GL_TEXTURE_BINDING_2D);
         if (textureNext >= 0)
@@ -280,15 +436,7 @@ class RendererImpl extends Renderer {
 
         OpenGlHelper.glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        GlStateManager.matrixMode(GL_PROJECTION);
-        GlStateManager.popMatrix();
-        GlStateManager.matrixMode(GL_MODELVIEW);
-        GlStateManager.popMatrix();
-
-        GlStateManager.enableAlpha();
-        GlStateManager.enableCull();
-        GlStateManager.enableDepth();
-        GlStateManager.enableFog();
+        postDrawTex();
     }
 
     @SubscribeEvent
@@ -298,12 +446,22 @@ class RendererImpl extends Renderer {
     }
 
     public void deleteFramebuffer() {
-        if (backup != null)
-            backup.deleteFramebuffer();
+        if (overlay != null)
+            overlay.deleteFramebuffer();
         if (working != null)
             working.deleteFramebuffer();
         if (vbo >= 0)
             glDeleteBuffers(vbo);
+        if (program >= 0)
+            glDeleteProgram(program);
+        if (texColorBackup >= 0)
+            GlStateManager.deleteTexture(texColorBackup);
+        if (texDepthBackup >= 0)
+            GlStateManager.deleteTexture(texDepthBackup);
+        if (texDepthWorking >= 0)
+            GlStateManager.deleteTexture(texDepthWorking);
+        if (texDepthOverlay >= 0)
+            GlStateManager.deleteTexture(texDepthOverlay);
     }
 
     public static class RenderParticleEvent extends Event {
@@ -319,8 +477,6 @@ class RendererImpl extends Renderer {
             this.prev = prev;
         }
     }
-
-    public static class ResizeFramebufferEvent extends Event {}
 
     private static class FramebufferHelper {
 

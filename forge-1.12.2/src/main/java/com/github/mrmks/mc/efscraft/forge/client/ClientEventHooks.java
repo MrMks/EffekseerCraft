@@ -17,9 +17,7 @@ public class ClientEventHooks {
         callbacks.add(task);
     }
 
-    public static void resizeFramebuffers() {
-        MinecraftForge.EVENT_BUS.post(new RendererImpl.ResizeFramebufferEvent());
-    }
+    public static void resizeFramebuffers() {}
 
     public static void dispatchRendererEventPrev(int pass, float partial, long finishNano) {
         MinecraftForge.EVENT_BUS.post(new RendererImpl.RenderParticleEvent(pass, partial, finishNano, true));
