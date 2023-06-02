@@ -9,9 +9,7 @@ import net.minecraftforge.server.permission.PermissionAPI;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,12 +20,13 @@ public class CommonProxy {
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;
-    protected final boolean DEBUG_VERBOSE = System.getProperty("efscraft.debug_verbose", "false").equals("true");
+    protected File configFile;
 
     public void preInitialize(FMLPreInitializationEvent event) {
         configurationFolder = event.getModConfigurationDirectory();
         modVersion = event.getModMetadata().version;
         logger = event.getModLog();
+        configFile = event.getSuggestedConfigurationFile();
     }
 
     public void initialize(FMLInitializationEvent event) {

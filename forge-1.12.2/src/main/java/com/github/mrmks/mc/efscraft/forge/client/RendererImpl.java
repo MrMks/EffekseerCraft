@@ -25,9 +25,11 @@ class RendererImpl extends Renderer {
     private Framebuffer working = null, backup = null;
     private int lastFramebuffer = -1;
     private final int vao;
+    private final boolean translucent;
 
-    RendererImpl(RenderingQueue queue) {
+    RendererImpl(RenderingQueue queue, boolean translucent) {
         super(queue);
+        this.translucent = translucent;
 
         float[] data = {
                 -1f, -1f,  0,      0, 0,        // left-bottom
@@ -36,7 +38,7 @@ class RendererImpl extends Renderer {
                 +1f, -1f,  0,      1, 0,        // right-bottom
         };
 
-        ByteBuffer buffer = BufferUtils.createByteBuffer(100);
+        ByteBuffer buffer = BufferUtils.createByteBuffer(data.length * 4);
         buffer.asFloatBuffer().put(data);
         buffer.position(0);
 
@@ -45,6 +47,13 @@ class RendererImpl extends Renderer {
         glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+        StringBuilder bd = new StringBuilder()
+                .append("#version 120\n")
+                .append("uniform sampler2D backupColor;\n")
+                .append("uniform sampler2D backupDepth;\n")
+                .append("uniform sampler2D workingDepth;\n")
+                .append("uniform sampler2D mainDepth;\n")
+                ;
     }
 
     @Override
@@ -97,13 +106,16 @@ class RendererImpl extends Renderer {
     @SubscribeEvent
     public void renderWorld(RenderParticleEvent event) {
 
-        if (OpenGlHelper.isFramebufferEnabled() && FramebufferHelper.apiSupported) {
+        Minecraft minecraft = Minecraft.getMinecraft();
+
+        if (OpenGlHelper.isFramebufferEnabled() && FramebufferHelper.apiSupported && translucent)
+        {
 
             int current = FramebufferHelper.getCurrentFramebuffer();
 
             if (working == null) {
-                Minecraft minecraft = Minecraft.getMinecraft();
                 working = new Framebuffer(minecraft.displayWidth, minecraft.displayHeight, true);
+                working.setFramebufferColor(0, 0, 0, 0);
                 working.bindFramebuffer(true);
 
                 backup = new Framebuffer(minecraft.displayWidth, minecraft.displayHeight, true);
@@ -115,7 +127,8 @@ class RendererImpl extends Renderer {
 
             int width = working.framebufferWidth, height = working.framebufferHeight;
 
-            if (event.prev) {
+            if (event.prev)
+            {
                 update(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
 
                 working.framebufferClear();
@@ -133,12 +146,14 @@ class RendererImpl extends Renderer {
                 glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
                 GlStateManager.depthMask(true);
                 lastFramebuffer = current;
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-            } else {
+            }
+            else
+            {
+                GlStateManager.depthMask(false);
+
                 current = lastFramebuffer;
                 lastFramebuffer = -1;
                 glBindFramebuffer(GL_FRAMEBUFFER, current);
-                GlStateManager.depthMask(false);
                 FramebufferHelper.copyDepthFrom(working.framebufferObject, current, width, height);
 
                 // generate stencil buffer
@@ -146,6 +161,7 @@ class RendererImpl extends Renderer {
                 glStencilMask(0xff);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilOp(GL_KEEP, GL_REPLACE, GL_KEEP);
+
                 GlStateManager.colorMask(false, false, false, false);
                 draw();
                 GlStateManager.colorMask(true, true, true, true);
@@ -163,8 +179,9 @@ class RendererImpl extends Renderer {
                 // render working texture to main framebuffer
                 glDisable(GL_STENCIL_TEST);
 
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
                 drawTexture(working.framebufferTexture);
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
                 // render effects with less depth
                 GlStateManager.enableDepth();
@@ -183,7 +200,9 @@ class RendererImpl extends Renderer {
                 // restore stencil buffer
                 FramebufferHelper.copyFrom(backup.framebufferObject, current, GL_STENCIL_BUFFER_BIT, width, height);
             }
-        } else {
+        }
+        else
+        {
             if (!event.prev) {
                 updateAndRender(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
             }
@@ -242,6 +261,15 @@ class RendererImpl extends Renderer {
     public void onWorldUnload(WorldEvent.Unload event) {
         World world = event.getWorld();
         if (world != null && world.isRemote) unloadRender();
+    }
+
+    public void deleteFramebuffer() {
+        if (backup != null)
+            backup.deleteFramebuffer();
+        if (working != null)
+            working.deleteFramebuffer();
+        if (vao >= 0)
+            glDeleteBuffers(vao);
     }
 
     public static class RenderParticleEvent extends Event {
