@@ -7,7 +7,6 @@ buildscript {
 plugins {
     id 'net.minecraftforge.gradle' version '5.1.68'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
-//    id 'org.spongepowered.mixingradle' version '0.7-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -22,6 +21,8 @@ apply plugin: 'org.spongepowered.mixin'
 // archivesBaseName = 'modid'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+
+project.version += '.1'
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
@@ -171,6 +172,7 @@ processResources {
 
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
+    archiveClassifier.set 'forge-1.16.5'
     manifest {
         attributes([
             "Specification-Title": "efscraft",
