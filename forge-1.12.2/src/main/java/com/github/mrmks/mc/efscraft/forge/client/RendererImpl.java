@@ -3,8 +3,6 @@ package com.github.mrmks.mc.efscraft.forge.client;
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
@@ -12,17 +10,12 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.charset.StandardCharsets;
 
-import static net.minecraft.client.renderer.OpenGlHelper.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
-import static org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM;
-import static org.lwjgl.opengl.GL20.GL_INFO_LOG_LENGTH;
+import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
 class RendererImpl extends Renderer {
 
@@ -86,40 +79,32 @@ class RendererImpl extends Renderer {
                 ;
 
         int vertShader = glCreateShader(GL_VERTEX_SHADER);
-        byte[] bytes = vs.getBytes(StandardCharsets.UTF_8);
-        buffer = BufferUtils.createByteBuffer(bytes.length).put(bytes);
-        buffer.position(0);
-        OpenGlHelper.glShaderSource(vertShader, buffer);
-        OpenGlHelper.glCompileShader(vertShader);
+        glShaderSource(vertShader, vs);
+        glCompileShader(vertShader);
 
         if (glGetShaderi(vertShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println(glGetShaderInfoLog(vertShader, GL_INFO_LOG_LENGTH));
+            System.out.println(glGetShaderInfoLog(vertShader));
         }
 
-        int fragShader = OpenGlHelper.glCreateShader(GL_FRAGMENT_SHADER);
-        bytes = fs.getBytes(StandardCharsets.UTF_8);
-        buffer = BufferUtils.createByteBuffer(bytes.length).put(bytes);
-        buffer.position(0);
-        OpenGlHelper.glShaderSource(fragShader, buffer);
-        OpenGlHelper.glCompileShader(fragShader);
+        int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragShader, fs);
+        glCompileShader(fragShader);
 
         if (glGetShaderi(fragShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println(glGetShaderInfoLog(fragShader, GL_INFO_LOG_LENGTH));
+            System.out.println(glGetShaderInfoLog(fragShader));
         }
 
-        int program = OpenGlHelper.glCreateProgram();
-        OpenGlHelper.glAttachShader(program, vertShader);
-        OpenGlHelper.glAttachShader(program, fragShader);
-        OpenGlHelper.glLinkProgram(program);
+        int program = glCreateProgram();
+        glAttachShader(program, vertShader);
+        glAttachShader(program, fragShader);
+        glLinkProgram(program);
 
         if (glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) {
-            System.out.println(glGetProgramInfoLog(program, GL_INFO_LOG_LENGTH));
+            System.out.println(glGetProgramInfoLog(program));
         }
 
-        OpenGlHelper.glDeleteShader(fragShader);
-        OpenGlHelper.glDeleteShader(vertShader);
-
-        int prevProgram = GlStateManager.glGetInteger(GL_CURRENT_PROGRAM);
+        glDeleteShader(fragShader);
+        glDeleteShader(vertShader);
 
         this.program = program;
         glUseProgram(program);
@@ -127,35 +112,34 @@ class RendererImpl extends Renderer {
         glUniform1i(glGetUniformLocation(program, "backupDepth"), 1);
         glUniform1i(glGetUniformLocation(program, "workingDepth"), 2);
         glUniform1i(glGetUniformLocation(program, "overlayDepth"), 3);
-        glUseProgram(prevProgram);
 
         this.attrPos = glGetAttribLocation(program, "Position");
         this.attrUV = glGetAttribLocation(program, "UV");
 
-        texColorBackup = GlStateManager.generateTexture();
-        texDepthBackup = GlStateManager.generateTexture();
-        texDepthOverlay = GlStateManager.generateTexture();
-        texDepthWorking = GlStateManager.generateTexture();
+        texColorBackup = glGenTextures();
+        texDepthBackup = glGenTextures();
+        texDepthOverlay = glGenTextures();
+        texDepthWorking = glGenTextures();
 
-        int current = GlStateManager.glGetInteger(GL_TEXTURE_BINDING_2D);
+        int current = glGetInteger(GL_TEXTURE_BINDING_2D);
 
-        GlStateManager.bindTexture(texColorBackup);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        GlStateManager.bindTexture(texDepthBackup);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        GlStateManager.bindTexture(texDepthOverlay);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        GlStateManager.bindTexture(texDepthWorking);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        GlStateManager.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        GlStateManager.bindTexture(current);
+        glBindTextureMC(GL_TEXTURE_2D, current);
     }
 
     @Override
@@ -180,12 +164,12 @@ class RendererImpl extends Renderer {
 
     @Override
     protected void getModelviewMatrix(FloatBuffer buffer) {
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, buffer);
+        glGetFloat(GL_MODELVIEW_MATRIX, buffer);
     }
 
     @Override
     protected void getProjectionMatrix(FloatBuffer buffer) {
-        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, buffer);
+        glGetFloat(GL_PROJECTION_MATRIX, buffer);
     }
 
     private void tryResize(int w, int h) {
@@ -196,11 +180,11 @@ class RendererImpl extends Renderer {
         lastWidth = w;
         lastHeight = h;
 
-        if (isFramebufferEnabled() && FramebufferHelper.apiSupported) {
+        if (openglSupported()) {
 
             int current;
 
-            current = FramebufferHelper.getCurrentFramebuffer();
+            current = glGetInteger(GL_FRAMEBUFFER_BINDING);
 
             if (working == null) {
                 working = new Framebuffer(w, h, true);
@@ -224,16 +208,16 @@ class RendererImpl extends Renderer {
 
             current = glGetInteger(GL_TEXTURE_BINDING_2D);
 
-            GlStateManager.bindTexture(texColorBackup);
+            glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-            GlStateManager.bindTexture(texDepthBackup);
+            glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
-            GlStateManager.bindTexture(texDepthWorking);
+            glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
-            GlStateManager.bindTexture(texDepthOverlay);
+            glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
 
-            GlStateManager.bindTexture(current);
+            glBindTextureMC(GL_TEXTURE_2D, current);
 
             int error = glGetError();
             if (error != GL_NO_ERROR) {
@@ -250,45 +234,45 @@ class RendererImpl extends Renderer {
         int width, height;
         tryResize(width = minecraft.displayWidth, height = minecraft.displayHeight);
 
-        if (translucent && isFramebufferEnabled() && FramebufferHelper.apiSupported)
+        if (translucent && openglSupported())
         {
             int current;
 
             if (event.prev)
             {
-                current = FramebufferHelper.getCurrentFramebuffer();
+                current = glGetInteger(GL_FRAMEBUFFER_BINDING);
                 lastFramebuffer = current;
 
                 update(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
 
-                GlStateManager.depthMask(true);
+                glDepthMaskMC(true);
                 glStencilMask(0xff);
                 working.framebufferClear();
                 working.bindFramebuffer(false);
                 glClear(GL_STENCIL_BUFFER_BIT);
                 overlay.framebufferClear();
 
-                FramebufferHelper.copyFrom(current, working.framebufferObject, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, width, height);
-                FramebufferHelper.copyFrom(current, overlay.framebufferObject, GL_DEPTH_BUFFER_BIT, width, height);
+                blitFramebuffer(current, working.framebufferObject, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                blitFramebuffer(current, overlay.framebufferObject, width, height, GL_DEPTH_BUFFER_BIT);
 
                 glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
-                GlStateManager.depthMask(true);
+                glDepthMaskMC(true);
             }
             else
             {
                 current = lastFramebuffer;
                 lastFramebuffer = -1;
 
-                GlStateManager.depthMask(false);
+                glDepthMaskMC(false);
 
-                FramebufferHelper.copyDepthFrom(overlay.framebufferObject, working.framebufferObject, width, height);
+                blitFramebuffer(overlay.framebufferObject, working.framebufferObject, width, height, GL_DEPTH_BUFFER_BIT);
                 glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                glBlendFuncMC(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 drawTexture(overlay.framebufferTexture);
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                glBlendFuncMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                 // generate stencil buffer
-                glEnable(GL_STENCIL_TEST);
+                glEnableMC(GL_STENCIL_TEST);
                 glStencilMask(0xff);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -301,27 +285,27 @@ class RendererImpl extends Renderer {
                 glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
                 int[] restoreTex = new int[4];
-                GlStateManager.setActiveTexture(defaultTexUnit);
+                glActiveTexture(GL_TEXTURE0);
                 restoreTex[0] = glGetInteger(GL_TEXTURE_BINDING_2D);
-                GlStateManager.bindTexture(texColorBackup);
+                glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
                 glBindFramebuffer(GL_FRAMEBUFFER, current);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
-                GlStateManager.setActiveTexture(defaultTexUnit + 1);
+                glActiveTexture(GL_TEXTURE0 + 1);
                 restoreTex[1] = glGetInteger(GL_TEXTURE_BINDING_2D);
-                GlStateManager.bindTexture(texDepthBackup);
+                glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
                 glBindFramebuffer(GL_FRAMEBUFFER, current);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
-                GlStateManager.setActiveTexture(defaultTexUnit + 2);
+                glActiveTexture(GL_TEXTURE0 + 2);
                 restoreTex[2] = glGetInteger(GL_TEXTURE_BINDING_2D);
-                GlStateManager.bindTexture(texDepthWorking);
+                glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
                 glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
-                GlStateManager.setActiveTexture(defaultTexUnit + 3);
+                glActiveTexture(GL_TEXTURE0 + 3);
                 restoreTex[3] = glGetInteger(GL_TEXTURE_BINDING_2D);
-                GlStateManager.bindTexture(texDepthOverlay);
+                glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
                 glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
@@ -330,46 +314,46 @@ class RendererImpl extends Renderer {
                 glUseProgram(program);
 
                 glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                GL20.glVertexAttribPointer(attrPos, 3, GL_FLOAT, false, 20, 0);
-                GL20.glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 20, 12);
-                GL20.glEnableVertexAttribArray(attrPos);
-                GL20.glEnableVertexAttribArray(attrUV);
+                glVertexAttribPointer(attrPos, 3, GL_FLOAT, false, 20, 0);
+                glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 20, 12);
+                glEnableVertexAttribArray(attrPos);
+                glEnableVertexAttribArray(attrUV);
 
                 prevDrawTex();
-                GlStateManager.enableDepth();
-                GlStateManager.disableBlend();
-                int depthFunc = GlStateManager.glGetInteger(GL_DEPTH_FUNC);
-                GlStateManager.depthFunc(GL_ALWAYS);
-                GlStateManager.depthMask(true);
+                glEnableMC(GL_DEPTH_TEST);
+                glDisableMC(GL_BLEND);
+                int depthFunc = glGetInteger(GL_DEPTH_FUNC);
+                glDepthFuncMC(GL_ALWAYS);
+                glDepthMaskMC(true);
 
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-                GlStateManager.depthMask(false);
-                GlStateManager.depthFunc(depthFunc);
-                GlStateManager.enableBlend();
+                glDepthMaskMC(false);
+                glDepthFuncMC(depthFunc);
+                glEnableMC(GL_BLEND);
 
                 postDrawTex();
 
-                GL20.glDisableVertexAttribArray(attrPos);
-                GL20.glDisableVertexAttribArray(attrUV);
+                glDisableVertexAttribArray(attrPos);
+                glDisableVertexAttribArray(attrUV);
                 glUseProgram(0);
 
                 for (int i = 0; i < 4; i++) {
-                    GlStateManager.setActiveTexture(defaultTexUnit + i);
-                    GlStateManager.bindTexture(restoreTex[i]);
+                    glActiveTexture(GL_TEXTURE0 + i);
+                    glBindTextureMC(GL_TEXTURE_2D, restoreTex[i]);
                 }
-                GlStateManager.setActiveTexture(defaultTexUnit);
+                glActiveTexture(GL_TEXTURE0);
 
                 draw();
 
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                glBlendFuncMC(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 drawTexture(overlay.framebufferTexture);
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                glBlendFuncMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                glDisable(GL_STENCIL_TEST);
+                glDisableMC(GL_STENCIL_TEST);
 
                 // restore stencil buffer
-                FramebufferHelper.copyFrom(working.framebufferObject, current, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, width, height);
+                blitFramebuffer(working.framebufferObject, current, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 glBindFramebuffer(GL_FRAMEBUFFER, current);
             }
         }
@@ -382,59 +366,59 @@ class RendererImpl extends Renderer {
     }
 
     private void prevDrawTex() {
-        GlStateManager.disableAlpha();
-        GlStateManager.disableCull();
-        GlStateManager.disableDepth();
-        GlStateManager.disableFog();
+        glDisableMC(GL_ALPHA_TEST);
+        glDisableMC(GL_CULL_FACE);
+        glDisableMC(GL_DEPTH_TEST);
+        glDisableMC(GL_FOG);
 
-        GlStateManager.matrixMode(GL_PROJECTION);
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
 
-        GlStateManager.matrixMode(GL_MODELVIEW);
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
     }
 
     private void postDrawTex() {
-        GlStateManager.matrixMode(GL_PROJECTION);
-        GlStateManager.popMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
 
-        GlStateManager.matrixMode(GL_MODELVIEW);
-        GlStateManager.popMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
 
-        GlStateManager.enableFog();
-        GlStateManager.enableDepth();
-        GlStateManager.enableCull();
-        GlStateManager.enableAlpha();
+        glEnableMC(GL_FOG);
+        glEnableMC(GL_DEPTH_TEST);
+        glEnableMC(GL_CULL_FACE);
+        glEnableMC(GL_ALPHA_TEST);
     }
 
     private void drawTexture(int textureNext) {
 
         prevDrawTex();
 
-        int textureId = GlStateManager.glGetInteger(GL_TEXTURE_BINDING_2D);
+        int textureId = glGetInteger(GL_TEXTURE_BINDING_2D);
         if (textureNext >= 0)
-            GlStateManager.bindTexture(textureNext);
+            glBindTexture(GL_TEXTURE_2D, textureNext);
 
-        OpenGlHelper.glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        GlStateManager.glVertexPointer(3, GL_FLOAT, 20, 0);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-        GlStateManager.glTexCoordPointer(2, GL_FLOAT, 20, 12);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glVertexPointer(3, GL_FLOAT, 20, 0);
+        glClientActiveTexture(GL_TEXTURE0);
+        glTexCoordPointer(2, GL_FLOAT, 20, 12);
 
-        GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-        GlStateManager.glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-        GlStateManager.glDisableClientState(GL_VERTEX_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-        GlStateManager.glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glClientActiveTexture(GL_TEXTURE0);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
         if (textureNext >= 0)
-            GlStateManager.bindTexture(textureId);
+            glBindTextureMC(GL_TEXTURE_2D, textureId);
 
-        OpenGlHelper.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         postDrawTex();
     }
@@ -455,13 +439,13 @@ class RendererImpl extends Renderer {
         if (program >= 0)
             glDeleteProgram(program);
         if (texColorBackup >= 0)
-            GlStateManager.deleteTexture(texColorBackup);
+            glDeleteTextures(texColorBackup);
         if (texDepthBackup >= 0)
-            GlStateManager.deleteTexture(texDepthBackup);
+            glDeleteTextures(texDepthBackup);
         if (texDepthWorking >= 0)
-            GlStateManager.deleteTexture(texDepthWorking);
+            glDeleteTextures(texDepthWorking);
         if (texDepthOverlay >= 0)
-            GlStateManager.deleteTexture(texDepthOverlay);
+            glDeleteTextures(texDepthOverlay);
     }
 
     public static class RenderParticleEvent extends Event {
@@ -478,77 +462,15 @@ class RendererImpl extends Renderer {
         }
     }
 
-    private static class FramebufferHelper {
+    private static void blitFramebuffer(int src, int tar, int width, int height, int masks) {
+        int current = glGetInteger(GL_FRAMEBUFFER_BINDING);
 
-        static final boolean apiSupported;
-        static final boolean apiGL30;
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, src);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, tar);
 
-        static final int GL_FRAMEBUFFER_BINDING;
-        static final int GL_READ_FRAMEBUFFER;
-        static final int GL_DRAW_FRAMEBUFFER;
+        glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, masks, GL_NEAREST);
 
-        static final int GL_STENCIL_ATTACHMENT;
-        static final int GL_DEPTH_STENCIL_ATTACHMENT;
-        static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
-
-        static final int GL_STENCIL_INDEX8;
-
-        static {
-            ContextCapabilities cap = GLContext.getCapabilities();
-
-            apiGL30 = cap.OpenGL30;
-            apiSupported = OpenGlHelper.framebufferSupported && (cap.OpenGL30 || cap.GL_ARB_framebuffer_object);
-
-            GL_FRAMEBUFFER_BINDING = apiSupported ? (apiGL30 ? GL30.GL_FRAMEBUFFER_BINDING : ARBFramebufferObject.GL_FRAMEBUFFER_BINDING) : -1;
-            GL_READ_FRAMEBUFFER = apiSupported ? (apiGL30 ? GL30.GL_READ_FRAMEBUFFER : ARBFramebufferObject.GL_READ_FRAMEBUFFER) : -1;
-            GL_DRAW_FRAMEBUFFER = apiSupported ? (apiGL30 ? GL30.GL_DRAW_FRAMEBUFFER : ARBFramebufferObject.GL_DRAW_FRAMEBUFFER) : -1;
-
-            GL_STENCIL_ATTACHMENT = apiSupported ? (apiGL30 ? GL30.GL_STENCIL_ATTACHMENT : ARBFramebufferObject.GL_STENCIL_ATTACHMENT) : -1;
-            GL_DEPTH_STENCIL_ATTACHMENT = apiSupported ? (apiGL30 ? GL30.GL_DEPTH_STENCIL_ATTACHMENT : ARBFramebufferObject.GL_DEPTH_STENCIL_ATTACHMENT) : -1;
-            GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME =
-                    apiSupported ? (apiGL30 ? GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME : ARBFramebufferObject.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME) : -1;
-
-            GL_STENCIL_INDEX8 = apiSupported ? (apiGL30 ? GL30.GL_STENCIL_INDEX8 : ARBFramebufferObject.GL_STENCIL_INDEX8) : -1;
-        }
-
-        static void copyDepthFrom(int src, int tar, int width, int height) {
-            copyFrom(src, tar, GL_DEPTH_BUFFER_BIT, width, height);
-        }
-
-        static void copyColorDepthFrom(int src, int tar, int width, int height) {
-            copyFrom(src, tar, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT, width, height);
-        }
-
-        static void copyFrom(int src, int tar, int masks, int width, int height) {
-
-            int id;
-            if (apiGL30) {
-                id = GlStateManager.glGetInteger(GL_FRAMEBUFFER_BINDING);
-                GL30.glBindFramebuffer(GL_READ_FRAMEBUFFER, src);
-                GL30.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, tar);
-
-                GL30.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, masks, GL_NEAREST);
-            } else {
-                id = GlStateManager.glGetInteger(GL_FRAMEBUFFER_BINDING);
-                ARBFramebufferObject.glBindFramebuffer(GL_READ_FRAMEBUFFER, src);
-                ARBFramebufferObject.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, tar);
-
-                ARBFramebufferObject.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, masks, GL_NEAREST);
-            }
-            OpenGlHelper.glBindFramebuffer(GL_FRAMEBUFFER, id);
-        }
-
-        static int getCurrentFramebuffer() {
-            return apiSupported ? GlStateManager.glGetInteger(GL_FRAMEBUFFER_BINDING) : -1;
-        }
-
-        static int glGetFramebufferAttachmentParameteri(int target, int attachment, int pname) {
-            if (apiSupported) {
-                return apiGL30 ? GL30.glGetFramebufferAttachmentParameteri(target, attachment, pname) : ARBFramebufferObject.glGetFramebufferAttachmentParameteri(target, attachment, pname);
-            } else {
-                return -1;
-            }
-        }
+        glBindFramebuffer(GL_FRAMEBUFFER, current);
     }
 
 }
