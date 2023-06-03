@@ -256,6 +256,7 @@ class RendererImpl extends Renderer {
                 blitFramebuffer(current, overlay.framebufferObject, width, height, GL_DEPTH_BUFFER_BIT);
 
                 glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
+                glBlendFuncSeparateMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 glDepthMaskMC(true);
             }
             else

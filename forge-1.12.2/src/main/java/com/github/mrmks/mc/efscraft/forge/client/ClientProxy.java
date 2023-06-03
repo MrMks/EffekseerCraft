@@ -21,7 +21,7 @@ public class ClientProxy extends CommonProxy {
         super.initialize(event);
 
         Configuration cfg = new Configuration(configFile);
-        boolean translucent = cfg.getBoolean("renderTranslucent", "client", false, "Apply some kind of translucent effects, this will significantly affect fps");
+        boolean translucent = cfg.getBoolean("renderTranslucent", "client", true, "Apply some kind of translucent effects, this will significantly affect fps");
         cfg.save();
 
         if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL)) {
