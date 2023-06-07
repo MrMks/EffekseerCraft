@@ -213,7 +213,14 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
             ActionOn actionOn = (effect, emitter, id, followings) -> new SPacketTrigger(effect, emitter, triggerId);
             ActionAt actionAt = (effect, emitter, posAngle, followings) -> new SPacketTrigger(effect, emitter, triggerId);
 
-            executeBasic(args, 1, server, sender, false, actionAt, actionOn);
+            try {
+                executeBasic(args, 1, server, sender, false, actionAt, actionOn);
+            } catch (WrongUsageException wue) {
+                if (wue == WrongUsageException.PLACEHOLDER)
+                    throw new WrongUsageException("commands.effek.trigger.usage");
+
+                throw wue;
+            }
         }
     }
 
