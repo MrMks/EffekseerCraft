@@ -2,7 +2,7 @@ package com.github.mrmks.mc.efscraft;
 
 public class Constants {
     public static final String CHANNEL_KEY = "efscraft:main";
-    public static final int PROTOCOL_VERSION = 2;
+    public static final int PROTOCOL_VERSION = 3;
 
     public static final byte MASK_CONFLICT = 0x01;
     public static final byte MASK_FOLLOW_X = 0x02;
