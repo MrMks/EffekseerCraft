@@ -9,13 +9,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-import static org.lwjgl.opengl.GL11.*;
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
+import static org.lwjgl.opengl.GL11.*;
 
 class RendererImpl extends Renderer {
 
@@ -40,13 +39,9 @@ class RendererImpl extends Renderer {
                 +1f, -1f,  0,      1, 0,        // right-bottom
         };
 
-        ByteBuffer buffer = BufferUtils.createByteBuffer(data.length * 4);
-        buffer.asFloatBuffer().put(data);
-        buffer.position(0);
-
         vbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         String vs = "#version 120\n" +
@@ -66,10 +61,10 @@ class RendererImpl extends Renderer {
                 "varying vec2 texCoord;\n" +
                 '\n' +
                 "void main() {\n" +
-                "    float d0 = texture2D(backupDepth, texCoord.xy).r;\n" +
-                "    float d1 = texture2D(workingDepth, texCoord.xy).r;\n" +
-                "    float d2 = texture2D(overlayDepth, texCoord.xy).r;\n" +
-                "    gl_FragColor = texture2D(backupColor, texCoord.xy);\n" +
+                "    float d0 = texture2D(backupDepth, texCoord).r;\n" +
+                "    float d1 = texture2D(workingDepth, texCoord).r;\n" +
+                "    float d2 = texture2D(overlayDepth, texCoord).r;\n" +
+                "    gl_FragColor = texture2D(backupColor, texCoord);\n" +
                 "    if (d1 < d2) {\n" +
                 "        gl_FragDepth = d1;\n" +
                 "    } else {\n" +

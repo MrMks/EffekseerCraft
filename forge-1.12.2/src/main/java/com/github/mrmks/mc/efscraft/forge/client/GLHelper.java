@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
@@ -115,8 +116,12 @@ class GLHelper {
         OpenGlHelper.glBindBuffer(target, buffer);
     }
 
-    static void glBufferData(int target, ByteBuffer data, int usage) {
-        OpenGlHelper.glBufferData(target, data, usage);
+    static void glBufferData(int target, float[] data, int usage) {
+        ByteBuffer buffer = BufferUtils.createByteBuffer(data.length * 4);
+        buffer.asFloatBuffer().put(data);
+        buffer.position(0);
+
+        OpenGlHelper.glBufferData(target, buffer, usage);
     }
 
     static void glDeleteBuffers(int buffer) {
