@@ -51,6 +51,11 @@ public final class MessageHandlerClient {
 
     }
 
+    public void handleTrigger(SPacketTrigger packet) {
+        if (isVersionCompatible.getAsBoolean())
+            queue.commandTrigger(packet.getKey(), packet.getEmitter(), packet.getTrigger());
+    }
+
     public void handleClear(SPacketClear clear) {
         if (isVersionCompatible.getAsBoolean())
             queue.commandClear();

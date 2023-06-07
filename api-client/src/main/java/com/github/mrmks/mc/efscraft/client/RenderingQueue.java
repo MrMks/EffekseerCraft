@@ -19,6 +19,7 @@ public final class RenderingQueue {
     private final Queue<Entry> present = new ConcurrentLinkedQueue<>();
     private final Map<String, Map<String, Entry>> lookup = new ConcurrentHashMap<>();
     private final AtomicBoolean clearMark = new AtomicBoolean(false);
+    private final Queue<Trigger> triggers = new ConcurrentLinkedQueue<>();
 
     private final Function<String, EfsEffect> effects;
     private final EntityConvert convert;
@@ -66,6 +67,12 @@ public final class RenderingQueue {
         }
     }
 
+    void commandTrigger(String key, String emitter, int id) {
+        if (clearMark.get()) return;
+
+        triggers.add(new Trigger(key, emitter, id));
+    }
+
     void commandClear() {
         clearMark.set(true);
     }
@@ -101,8 +108,23 @@ public final class RenderingQueue {
                     lookup.getOrDefault(entry.key, Collections.emptyMap()).remove(entry.emitter);
                     return true;
                 } else return entry.state == State.STOPPED_O;
-
             });
+
+            triggers.forEach(trigger -> {
+                String key = trigger.key, emitter = trigger.emitter;
+                int id = trigger.id;
+                Map<String, Entry> lookup = this.lookup.get(key);
+                if (lookup != null) {
+                    if (emitter.isEmpty() || "*".equals(emitter)) {
+                        lookup.values().forEach(it -> it.handle.sendTrigger(id));
+                    } else {
+                        Entry entry = lookup.get(emitter);
+                        if (entry != null)
+                            entry.handle.sendTrigger(id);
+                    }
+                }
+            });
+            triggers.clear();
         }
     }
 
@@ -398,6 +420,16 @@ public final class RenderingQueue {
         @Override
         public boolean isAlive() {
             return asAt || convert.isValid(entityId) && convert.isAlive(entityId);
+        }
+    }
+
+    private static class Trigger {
+        final String key, emitter;
+        final int id;
+        Trigger(String key, String emitter, int id) {
+            this.key = key;
+            this.emitter = emitter;
+            this.id = id;
         }
     }
 }

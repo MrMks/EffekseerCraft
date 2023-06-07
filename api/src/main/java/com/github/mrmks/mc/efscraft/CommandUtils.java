@@ -101,11 +101,11 @@ class CommandUtils {
 
                             if (index > 0) {
                                 if (entry.dynamic == null)
-                                    entry.dynamic = new float[index];
-                                else if (entry.dynamic.length < index)
-                                    entry.dynamic = Arrays.copyOf(entry.dynamic, index);
+                                    entry.dynamic = new float[index + 1];
+                                else if (entry.dynamic.length <= index)
+                                    entry.dynamic = Arrays.copyOf(entry.dynamic, index + 1);
 
-                                entry.dynamic[index - 1] = value;
+                                entry.dynamic[index] = value;
                             }
                         }
                     }

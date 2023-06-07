@@ -4,10 +4,7 @@ import com.github.mrmks.efkseer4j.EffekSeer4J;
 import com.github.mrmks.mc.efscraft.client.MessageHandlerClient;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
-import com.github.mrmks.mc.efscraft.packet.SPacketClear;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayAt;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
-import com.github.mrmks.mc.efscraft.packet.SPacketStop;
+import com.github.mrmks.mc.efscraft.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraftforge.common.MinecraftForge;
@@ -55,6 +52,7 @@ public class ClientProxy extends CommonProxy {
             wrapper.register(SPacketPlayAt.class, client::handlePlayAt);
             wrapper.register(SPacketStop.class, client::handleStop);
             wrapper.register(SPacketClear.class, client::handleClear);
+            wrapper.register(SPacketTrigger.class, client::handleTrigger);
         }
     }
 

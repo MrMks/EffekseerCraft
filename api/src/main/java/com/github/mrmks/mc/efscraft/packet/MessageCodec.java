@@ -53,6 +53,7 @@ public class MessageCodec {
         register(SPacketPlayAt.class);
         register(SPacketStop.class);
         register(SPacketClear.class);
+        register(SPacketTrigger.class);
     }
 
     private void register(Class<? extends IMessage> klass) {

@@ -1,9 +1,6 @@
 package com.github.mrmks.mc.efscraft;
 
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
-import com.github.mrmks.mc.efscraft.packet.SPacketClear;
-import com.github.mrmks.mc.efscraft.packet.SPacketStop;
+import com.github.mrmks.mc.efscraft.packet.*;
 
 import java.io.File;
 import java.util.*;
@@ -69,6 +66,14 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
         }
     }
 
+    private static int parseInt(String p) throws CommandException {
+        try {
+            return Integer.parseInt(p);
+        } catch (NumberFormatException e) {
+            throw new CommandException("commands.generic.num.invalid", p);
+        }
+    }
+
     private static float parseFloat(String p, float base) throws CommandException {
         if (p.length() > 0) {
 
@@ -92,6 +97,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
                 switch (sub) {
                     case "play": executePlay(subArgs, server, sender); break;
+                    case "trigger": executeTrigger(subArgs, server, sender); break;
                     case "stop": executeStop(subArgs, server, sender); break;
                     case "clear": executeClear(subArgs, server, sender); break;
                     case "reload": executeReload(subArgs, server, sender); break;
@@ -107,13 +113,14 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
             return Collections.emptyList();
 
         if (args.length == 1) {
-            return getListMatchLastArg(args, "play", "stop", "clear", "reload", "version");
+            return getListMatchLastArg(args, "play", "stop", "trigger", "clear", "reload", "version");
         } else if (args.length > 1) {
             String sub = args[0];
             String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 
             switch (sub) {
                 case "play":    return completePlay(subArgs, server, sender);
+                case "trigger": return completeTrigger(subArgs, server, sender);
                 case "stop":    return completeStop(subArgs, server, sender);
                 case "clear":   return completeClear(subArgs, server, sender);
                 case "reload":  return completeReload(subArgs, server, sender);
@@ -190,10 +197,32 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
     private List<String> completePlay(String[] args, SERVER server, SENDER sender) {
         if (args.length < 5) {
-            return completePlayStop(args, server, sender);
+            return completeBasic(args, 0, server, sender);
         } else {
             return Collections.emptyList();
         }
+    }
+
+    private void executeTrigger(String[] args, SERVER server, SENDER sender) throws CommandException {
+        // effek trigger 1 effect emitter on entity
+        // effek trigger 1 effect emitter at world posx posy posz
+        if (args.length < 4) {
+            throw new WrongUsageException("commands.effek.trigger.usage");
+        } else {
+            final int triggerId = parseInt(args[0]);
+            ActionOn actionOn = (effect, emitter, id, followings) -> new SPacketTrigger(effect, emitter, triggerId);
+            ActionAt actionAt = (effect, emitter, posAngle, followings) -> new SPacketTrigger(effect, emitter, triggerId);
+
+            executeBasic(args, 1, server, sender, false, actionAt, actionOn);
+        }
+    }
+
+    private List<String> completeTrigger(String[] args, SERVER server, SENDER sender) {
+        if (args.length <= 1) {
+            return getListMatchLastArg(args, "0", "1", "2", "3");
+        } else if (args.length < 6) {
+            return completeBasic(args, 1, server, sender);
+        } else return Collections.emptyList();
     }
 
     private void executeStop(String[] args, SERVER server, SENDER sender) throws CommandException {
@@ -246,23 +275,106 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
     private List<String> completeStop(String[] args, SERVER server, SENDER sender) {
         if (args.length < 5) {
-            return completePlayStop(args, server, sender);
+            return completeBasic(args, 0, server, sender);
         } else {
             return Collections.emptyList();
         }
     }
 
-    private List<String> completePlayStop(String[] args, SERVER server, SENDER sender) {
-        if (args.length == 1) {
+    @FunctionalInterface
+    private interface ActionAt {
+        IMessage accept(String effect, String emitter, float[] posAngle, String[] followings);
+    }
+
+    @FunctionalInterface
+    private interface ActionOn {
+        IMessage accept(String effect, String emitter, int entity, String[] followings);
+    }
+
+    private void executeBasic(String[] args, int index, SERVER server, SENDER sender, boolean hasRot, ActionAt actionAt, ActionOn actionOn) throws CommandException {
+
+        if (args.length < index + 4)
+            throw WrongUsageException.PLACEHOLDER;
+
+        String effect = args[index], emitter = args[index + 1], action = args[index + 2];
+
+        if (!registry.isExist(effect))
+            throw new EffectNotFoundException(effect);
+
+        if ("on".equalsIgnoreCase(action)) {
+            ENTITY entity = adaptor.findEntity(server, sender, args[index + 3]);
+            float[] pos = entity == null ? null : adaptor.getEntityPosAngle(entity);
+
+            if (pos == null || pos.length < 5)
+                throw new EntityNotFoundException(args[index + 3]);
+
+            int entityId = adaptor.getEntityId(entity);
+
+            String[] followings = Arrays.copyOfRange(args, index + 4, args.length);
+
+            IMessage message = actionOn.accept(effect, emitter, entityId, followings);
+
+            WORLD world = adaptor.getEntityWorld(entity);
+            Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
+
+            sendNearby(server, sender, players, message, pos[0], pos[1], pos[2]);
+        } else if ("at".equalsIgnoreCase(action)) {
+
+            if (args.length < index + 7)
+                throw WrongUsageException.PLACEHOLDER;
+
+            WORLD world = adaptor.findWorld(server, sender, args[index + 3]);
+            if (world == null)
+                throw new WorldNotFoundException(args[index + 3]);
+
+            float x, y, z;
+            float[] pos = adaptor.getSenderPosAngle(sender);
+            if (pos == null || pos.length < 3) {
+                x = parseFloat(args[index + 4]); y = parseFloat(args[index + 5]);  z = parseFloat(args[index + 6]);
+            } else {
+                x = parseFloat(args[index + 4], pos[0]); y = parseFloat(args[index + 5], pos[1]); z = parseFloat(args[index + 6], pos[2]);
+            }
+
+            IMessage message;
+            if (hasRot) {
+                if (args.length < index + 9)
+                    throw WrongUsageException.PLACEHOLDER;
+
+                float yaw, pitch;
+                if (pos == null || pos.length < 5) {
+                    yaw = parseFloat(args[index + 7]); pitch = parseFloat(args[index + 8]);
+                } else {
+                    yaw = parseFloat(args[index + 7], pos[3]); pitch = parseFloat(args[index + 8], pos[4]);
+                }
+
+                float[] posAngle = {x, y, z, yaw, pitch};
+                String[] followings = Arrays.copyOfRange(args, index + 9, args.length);
+                message = actionAt.accept(effect, emitter, posAngle, followings);
+            } else {
+                float[] posAngle = {x, y, z, 0, 0};
+                String[] followings = Arrays.copyOfRange(args, index + 9, args.length);
+                message = actionAt.accept(effect, emitter, posAngle, followings);
+            }
+
+            Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
+
+            sendNearby(server, sender, players, message, x, y, z);
+        } else {
+            throw WrongUsageException.PLACEHOLDER;
+        }
+    }
+
+    private List<String> completeBasic(String[] args, int index, SERVER server, SENDER sender) {
+        if (args.length == index + 1) {
             return getListMatchLastArg(args, registry.keySets());
-        } else if (args.length == 2) {
-            return args[1].isEmpty() ? Collections.singletonList("emitter") : Collections.emptyList();
-        } else if (args.length == 3) {
+        } else if (args.length == index + 2) {
+            return args[index + 1].isEmpty() ? Collections.singletonList("emitter") : Collections.emptyList();
+        } else if (args.length == index + 3) {
             return getListMatchLastArg(args, "on", "at");
-        } else if (args.length == 4) {
-            if ("on".equals(args[2])) {
+        } else if (args.length == index + 4) {
+            if ("on".equals(args[index + 2])) {
                 return getListMatchLastArg(args, adaptor.completePlayers(server));
-            } else if ("at".equals(args[2])) {
+            } else if ("at".equals(args[index + 2])) {
                 return getListMatchLastArg(args, adaptor.completeWorlds(server));
             } else {
                 return Collections.emptyList();
@@ -341,6 +453,9 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     }
 
     public static class WrongUsageException extends CommandException {
+
+        public static final WrongUsageException PLACEHOLDER = new WrongUsageException("<PLACEHOLDER>");
+
         WrongUsageException(String msg, Object... params) {
             super(msg, params);
         }

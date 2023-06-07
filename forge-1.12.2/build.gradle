@@ -6,7 +6,7 @@ ext {
     projectClasspath = file("$buildDir/bin/main")
 }
 
-project.version += '.' + '1'
+project.version += '.' + '0'
 
 configurations {
     containDep
@@ -97,7 +97,7 @@ dependencies {
     shade rootProject.project(':api-client'), {
         transitive = false
     }
-    containDep 'com.github.mrmks.effekseer4j:effekseer4j:0.1.9-SNAPSHOT', {
+    containDep "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer", {
         transitive = false
     }
 }
