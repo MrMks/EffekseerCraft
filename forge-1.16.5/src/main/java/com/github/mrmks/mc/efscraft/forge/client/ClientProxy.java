@@ -6,11 +6,10 @@ import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import com.github.mrmks.mc.efscraft.forge.EffekseerCraft;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
-import com.github.mrmks.mc.efscraft.packet.*;
+import com.github.mrmks.mc.efscraft.common.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.IReloadableResourceManager;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
 public class ClientProxy extends CommonProxy {

@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.EventHandler;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.EventHandler;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
@@ -42,7 +42,7 @@ class EventHandlerImpl extends EventHandler {
     }
 
     @Override
-    protected void sendMessage(UUID uuid, IMessage message) {
+    protected void sendMessage(UUID uuid, NetworkPacket message) {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             PlayerList list = server.getPlayerList();

@@ -1,6 +1,6 @@
-package com.github.mrmks.mc.efscraft.packet;
+package com.github.mrmks.mc.efscraft.common.packet;
 
-import com.github.mrmks.mc.efscraft.Constants;
+import com.github.mrmks.mc.efscraft.common.Constants;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -8,19 +8,23 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-public class PacketHello implements IMessage {
+public class PacketHello implements NetworkPacket {
 
     private int version;
     public PacketHello() {}
 
-    @Override
-    public void read(DataInput stream) throws IOException {
-        version = stream.readInt();
-    }
+    enum Codec implements NetworkPacket.Codec<PacketHello> {
+        INSTANCE;
 
-    @Override
-    public void write(DataOutput stream) throws IOException {
-        stream.writeInt(Constants.PROTOCOL_VERSION);
+        @Override
+        public void read(PacketHello packet, DataInput stream) throws IOException {
+            packet.version = stream.readInt();
+        }
+
+        @Override
+        public void write(PacketHello packet, DataOutput stream) throws IOException {
+            stream.writeInt(Constants.PROTOCOL_VERSION);
+        }
     }
 
     public interface BooleanConsumer {
@@ -31,7 +35,7 @@ public class PacketHello implements IMessage {
         WAITING_FOR_REPLY, COMPLETE
     }
 
-    public static final class Handler implements IMessageHandler<PacketHello, PacketHello> {
+    public static final class Handler implements NetworkPacket.Handler<PacketHello, PacketHello> {
 
         private final BooleanConsumer consumer;
         private final Map<UUID, State> clients;

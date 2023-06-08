@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;

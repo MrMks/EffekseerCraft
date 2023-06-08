@@ -1,10 +1,10 @@
-package com.github.mrmks.mc.efscraft.packet;
+package com.github.mrmks.mc.efscraft.common.packet;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.github.mrmks.mc.efscraft.Constants.*;
+import static com.github.mrmks.mc.efscraft.common.Constants.*;
 
 public class SPacketPlayWith extends SPacketPlayAbstract {
 
@@ -103,17 +103,22 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
         return (mask2 & MASK2_INHERIT_PITCH) != 0;
     }
 
-    @Override
-    public void read(DataInput stream) throws IOException {
-        super.read(stream);
-        this.target = stream.readInt();
-        this.mask2 = stream.readByte();
-    }
+    static class Codec extends SPacketPlayAbstract.Codec<SPacketPlayWith> {
 
-    @Override
-    public void write(DataOutput stream) throws IOException {
-        super.write(stream);
-        stream.writeInt(this.target);
-        stream.writeByte(this.mask2);
+        public static final Codec INSTANCE = new Codec();
+
+        @Override
+        public void read(SPacketPlayWith packet, DataInput stream) throws IOException {
+            super.read(packet, stream);
+            packet.target = stream.readInt();
+            packet.mask2 = stream.readByte();
+        }
+
+        @Override
+        public void write(SPacketPlayWith packet, DataOutput stream) throws IOException {
+            super.write(packet, stream);
+            stream.writeInt(packet.target);
+            stream.writeByte(packet.mask2);
+        }
     }
 }

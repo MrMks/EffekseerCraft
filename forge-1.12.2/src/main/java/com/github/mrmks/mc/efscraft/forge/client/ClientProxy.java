@@ -4,7 +4,7 @@ import com.github.mrmks.efkseer4j.EffekSeer4J;
 import com.github.mrmks.mc.efscraft.client.MessageHandlerClient;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
-import com.github.mrmks.mc.efscraft.packet.*;
+import com.github.mrmks.mc.efscraft.common.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraftforge.common.MinecraftForge;

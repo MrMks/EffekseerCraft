@@ -3,6 +3,8 @@ package com.github.mrmks.mc.efscraft.client;
 import com.github.mrmks.efkseer4j.EfsEffect;
 import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
+import com.github.mrmks.mc.efscraft.common.packet.SPacketStop;
+import com.github.mrmks.mc.efscraft.common.packet.SPacketTrigger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -19,7 +21,7 @@ public final class RenderingQueue {
     private final Queue<Entry> present = new ConcurrentLinkedQueue<>();
     private final Map<String, Map<String, Entry>> lookup = new ConcurrentHashMap<>();
     private final AtomicBoolean clearMark = new AtomicBoolean(false);
-    private final Queue<Trigger> triggers = new ConcurrentLinkedQueue<>();
+    private final Queue<SPacketTrigger> triggers = new ConcurrentLinkedQueue<>();
 
     private final Function<String, EfsEffect> effects;
     private final EntityConvert convert;
@@ -51,8 +53,10 @@ public final class RenderingQueue {
         return new PlayBuilder(entry, overwrite);
     }
 
-    void commandStop(String key, String emitter) {
+    void commandStop(SPacketStop stop) {
         if (clearMark.get()) return;
+
+        String key = stop.getKey(), emitter = stop.getEmitter();
 
         Map<String, Entry> lookup = this.lookup.get(key);
         if (lookup != null) {
@@ -67,10 +71,10 @@ public final class RenderingQueue {
         }
     }
 
-    void commandTrigger(String key, String emitter, int id) {
+    void commandTrigger(SPacketTrigger trigger) {
         if (clearMark.get()) return;
 
-        triggers.add(new Trigger(key, emitter, id));
+        triggers.add(trigger);
     }
 
     void commandClear() {
@@ -111,8 +115,8 @@ public final class RenderingQueue {
             });
 
             triggers.forEach(trigger -> {
-                String key = trigger.key, emitter = trigger.emitter;
-                int id = trigger.id;
+                String key = trigger.getKey(), emitter = trigger.getEmitter();
+                int id = trigger.getTrigger();
                 Map<String, Entry> lookup = this.lookup.get(key);
                 if (lookup != null) {
                     if (emitter.isEmpty() || "*".equals(emitter)) {
@@ -423,13 +427,4 @@ public final class RenderingQueue {
         }
     }
 
-    private static class Trigger {
-        final String key, emitter;
-        final int id;
-        Trigger(String key, String emitter, int id) {
-            this.key = key;
-            this.emitter = emitter;
-            this.id = id;
-        }
-    }
 }

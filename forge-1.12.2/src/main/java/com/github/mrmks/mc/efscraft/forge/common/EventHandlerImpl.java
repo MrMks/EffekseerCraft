@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.EventHandler;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.EventHandler;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
@@ -12,7 +12,6 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 class EventHandlerImpl extends EventHandler {
@@ -46,7 +45,7 @@ class EventHandlerImpl extends EventHandler {
     }
 
     @Override
-    protected void sendMessage(UUID uuid, IMessage message) {
+    protected void sendMessage(UUID uuid, NetworkPacket message) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         PlayerList list = server.getPlayerList();
 

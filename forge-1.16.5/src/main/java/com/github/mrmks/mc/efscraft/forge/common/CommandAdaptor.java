@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.CommandHandler;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.CommandHandler;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.google.common.base.Splitter;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -61,7 +61,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     @Override
-    public void sendPacketTo(CommandContext<CommandSource> server, PlayerEntity entity, IMessage message) {
+    public void sendPacketTo(CommandContext<CommandSource> server, PlayerEntity entity, NetworkPacket message) {
         wrapper.sendTo(entity, message);
     }
 

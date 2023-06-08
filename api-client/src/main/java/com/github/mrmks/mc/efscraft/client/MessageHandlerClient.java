@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.client;
 
-import com.github.mrmks.mc.efscraft.packet.*;
+import com.github.mrmks.mc.efscraft.common.packet.*;
 
 import java.util.function.BooleanSupplier;
 
@@ -47,13 +47,12 @@ public final class MessageHandlerClient {
 
     public void handleStop(SPacketStop stop) {
         if (isVersionCompatible.getAsBoolean())
-            queue.commandStop(stop.getKey(), stop.getEmitter());
-
+            queue.commandStop(stop);
     }
 
     public void handleTrigger(SPacketTrigger packet) {
         if (isVersionCompatible.getAsBoolean())
-            queue.commandTrigger(packet.getKey(), packet.getEmitter(), packet.getTrigger());
+            queue.commandTrigger(packet);
     }
 
     public void handleClear(SPacketClear clear) {

@@ -1,10 +1,9 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.IMessageHandler;
-import com.github.mrmks.mc.efscraft.packet.MessageCodec;
-import com.github.mrmks.mc.efscraft.packet.MessageContext;
+import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.packet.MessageCodec;
+import com.github.mrmks.mc.efscraft.common.packet.MessageContext;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
@@ -33,7 +32,7 @@ import static net.minecraftforge.fml.common.network.FMLIndexedMessageToMessageCo
 public class NetworkWrapper {
 
     @ChannelHandler.Sharable
-    private static class MessageCodecAdaptor extends MessageToMessageCodec<FMLProxyPacket, IMessage> {
+    private static class MessageCodecAdaptor extends MessageToMessageCodec<FMLProxyPacket, NetworkPacket> {
 
         private final MessageCodec codec;
 
@@ -48,7 +47,7 @@ public class NetworkWrapper {
         }
 
         @Override
-        protected void encode(ChannelHandlerContext ctx, IMessage msg, List<Object> out) throws Exception {
+        protected void encode(ChannelHandlerContext ctx, NetworkPacket msg, List<Object> out) throws Exception {
 
             String channel = ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get();
 
@@ -77,7 +76,7 @@ public class NetworkWrapper {
             UUID uuid = isRemote ? null : ((NetHandlerPlayServer) msg.handler()).player.getPersistentID();
 
             ByteBufInputStream stream = new ByteBufInputStream(msg.payload(), true);
-            IMessage packet = codec.writeInput(stream, new MessageContext(uuid));
+            NetworkPacket packet = codec.writeInput(stream, new MessageContext(uuid));
             stream.close();
 
             if (packet != null) out.add(packet);
@@ -85,13 +84,13 @@ public class NetworkWrapper {
     }
 
     @ChannelHandler.Sharable
-    private static class MessageCodecReply extends SimpleChannelInboundHandler<IMessage> {
+    private static class MessageCodecReply extends SimpleChannelInboundHandler<NetworkPacket> {
         MessageCodecReply() {
-            super(IMessage.class);
+            super(NetworkPacket.class);
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, IMessage msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, NetworkPacket msg) throws Exception {
             if (msg != null) {
                 ctx.channel().attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.REPLY);
                 ctx.writeAndFlush(msg).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
@@ -106,17 +105,17 @@ public class NetworkWrapper {
         channels = NetworkRegistry.INSTANCE.newChannel(Constants.CHANNEL_KEY, new MessageCodecAdaptor(codec), new MessageCodecReply());
     }
 
-    public <T extends IMessage> void register(Class<T> klass, IMessageHandler<T, ? extends IMessage> handler) {
+    public <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ? extends NetworkPacket> handler) {
         codec.register(klass, handler);
     }
 
-    public <T extends IMessage> void register(Class<T> klass, Consumer<T> handler) {
+    public <T extends NetworkPacket> void register(Class<T> klass, Consumer<T> handler) {
         register(klass, (packetIn, context) -> {
             handler.accept(packetIn); return null;
         });
     }
 
-    public void sendTo(EntityPlayer player, IMessage message) {
+    public void sendTo(EntityPlayer player, NetworkPacket message) {
         FMLEmbeddedChannel channel = channels.get(Side.SERVER);
 
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.PLAYER);

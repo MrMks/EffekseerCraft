@@ -1,13 +1,12 @@
-package com.github.mrmks.mc.efscraft.packet;
+package com.github.mrmks.mc.efscraft.common.packet;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 
-import static com.github.mrmks.mc.efscraft.Constants.*;
+import static com.github.mrmks.mc.efscraft.common.Constants.MASK_CONFLICT;
 
-public abstract class SPacketPlayAbstract implements IMessage {
+public abstract class SPacketPlayAbstract implements NetworkPacket {
 
     private String key, effect, emitter;
     private float[] rotModel, posModel;
@@ -92,16 +91,6 @@ public abstract class SPacketPlayAbstract implements IMessage {
         return this;
     }
 
-    public final SPacketPlayAbstract setDynamic(int index, float value) {
-        if (dynamic == null)
-            dynamic = new float[index];
-        else if (dynamic.length < index)
-            dynamic = Arrays.copyOf(dynamic, index);
-
-        dynamic[index - 1] = value;
-        return this;
-    }
-
     public final SPacketPlayAbstract setDynamics(float[] dynamic) {
         this.dynamic = dynamic == null ? null : dynamic.clone();
 
@@ -168,64 +157,68 @@ public abstract class SPacketPlayAbstract implements IMessage {
         return dynamic;
     }
 
-    @Override
-    public void read(DataInput stream) throws IOException {
-        this.key = stream.readUTF();
-        this.effect = stream.readUTF();
-        this.emitter = stream.readUTF();
-        this.lifespan = stream.readInt();
-        this.skip = stream.readInt();
+    protected static abstract class Codec<T extends SPacketPlayAbstract> implements NetworkPacket.Codec<T> {
 
-        this.scale = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
-        this.rotLocal = new float[] {stream.readFloat(), stream.readFloat()};
-        this.posLocal = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
-        this.rotModel = new float[] {stream.readFloat(), stream.readFloat()};
-        this.posModel = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
+        @Override
+        public void read(SPacketPlayAbstract packet, DataInput stream) throws IOException {
+            packet.key = stream.readUTF();
+            packet.effect = stream.readUTF();
+            packet.emitter = stream.readUTF();
+            packet.lifespan = stream.readInt();
+            packet.skip = stream.readInt();
 
-        int length = stream.readInt();
-        this.dynamic = new float[length];
-        for (int i = 0; i < length; i++)
-            this.dynamic[i] = stream.readFloat();
+            packet.scale = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
+            packet.rotLocal = new float[] {stream.readFloat(), stream.readFloat()};
+            packet.posLocal = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
+            packet.rotModel = new float[] {stream.readFloat(), stream.readFloat()};
+            packet.posModel = new float[] {stream.readFloat(), stream.readFloat(), stream.readFloat()};
 
-        this.mask = stream.readByte();
-    }
+            int length = stream.readInt();
+            float[] dynamic = new float[length];
+            for (int i = 0; i < length; i++)
+                dynamic[i] = stream.readFloat();
+            packet.dynamic = dynamic;
 
-    @Override
-    public void write(DataOutput stream) throws IOException {
-        stream.writeUTF(key);
-        stream.writeUTF(effect);
-        stream.writeUTF(emitter);
-        stream.writeInt(lifespan);
-        stream.writeInt(skip);
+            packet.mask = stream.readByte();
+        }
 
-        if (scale == null) scale = new float[] {1, 1, 1};
-        stream.writeFloat(scale[0]);
-        stream.writeFloat(scale[1]);
-        stream.writeFloat(scale[2]);
+        @Override
+        public void write(SPacketPlayAbstract packet, DataOutput stream) throws IOException {
+            stream.writeUTF(packet.key);
+            stream.writeUTF(packet.effect);
+            stream.writeUTF(packet.emitter);
+            stream.writeInt(packet.lifespan);
+            stream.writeInt(packet.skip);
 
-        if (rotLocal == null) rotLocal = new float[2];
-        stream.writeFloat(rotLocal[0]);
-        stream.writeFloat(rotLocal[1]);
+            if (packet.scale == null) packet.scale = new float[] {1, 1, 1};
+            stream.writeFloat(packet.scale[0]);
+            stream.writeFloat(packet.scale[1]);
+            stream.writeFloat(packet.scale[2]);
 
-        if (posLocal == null) posLocal = new float[3];
-        stream.writeFloat(posLocal[0]);
-        stream.writeFloat(posLocal[1]);
-        stream.writeFloat(posLocal[2]);
+            if (packet.rotLocal == null) packet.rotLocal = new float[2];
+            stream.writeFloat(packet.rotLocal[0]);
+            stream.writeFloat(packet.rotLocal[1]);
 
-        if (rotModel == null) rotModel = new float[2];
-        stream.writeFloat(rotModel[0]);
-        stream.writeFloat(rotModel[1]);
+            if (packet.posLocal == null) packet.posLocal = new float[3];
+            stream.writeFloat(packet.posLocal[0]);
+            stream.writeFloat(packet.posLocal[1]);
+            stream.writeFloat(packet.posLocal[2]);
 
-        if (posModel == null) posModel = new float[3];
-        stream.writeFloat(posModel[0]);
-        stream.writeFloat(posModel[1]);
-        stream.writeFloat(posModel[2]);
+            if (packet.rotModel == null) packet.rotModel = new float[2];
+            stream.writeFloat(packet.rotModel[0]);
+            stream.writeFloat(packet.rotModel[1]);
 
-        int length = this.dynamic == null ? 0 : this.dynamic.length;
-        stream.writeInt(length);
-        for (int i = 0; i < length; i++)
-            stream.writeFloat(this.dynamic[i]);
+            if (packet.posModel == null) packet.posModel = new float[3];
+            stream.writeFloat(packet.posModel[0]);
+            stream.writeFloat(packet.posModel[1]);
+            stream.writeFloat(packet.posModel[2]);
 
-        stream.writeByte(mask);
+            int length = packet.dynamic == null ? 0 : packet.dynamic.length;
+            stream.writeInt(length);
+            for (int i = 0; i < length; i++)
+                stream.writeFloat(packet.dynamic[i]);
+
+            stream.writeByte(packet.mask);
+        }
     }
 }

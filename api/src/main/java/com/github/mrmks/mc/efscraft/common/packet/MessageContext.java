@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.packet;
+package com.github.mrmks.mc.efscraft.common.packet;
 
 import java.util.UUID;
 

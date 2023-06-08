@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

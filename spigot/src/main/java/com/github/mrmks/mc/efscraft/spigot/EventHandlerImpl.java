@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,7 +15,7 @@ import org.bukkit.event.player.PlayerUnregisterChannelEvent;
 import java.util.Map;
 import java.util.UUID;
 
-class EventHandlerImpl extends com.github.mrmks.mc.efscraft.EventHandler implements Listener {
+class EventHandlerImpl extends com.github.mrmks.mc.efscraft.common.EventHandler implements Listener {
 
     private final NetworkWrapper network;
     EventHandlerImpl(NetworkWrapper network, Map<UUID, PacketHello.State> clients) {
@@ -38,7 +38,7 @@ class EventHandlerImpl extends com.github.mrmks.mc.efscraft.EventHandler impleme
     }
 
     @Override
-    protected void sendMessage(UUID uuid, IMessage message) {
+    protected void sendMessage(UUID uuid, NetworkPacket message) {
         Player player = Bukkit.getPlayer(uuid);
 
         if (player != null) network.sendTo(player, message);

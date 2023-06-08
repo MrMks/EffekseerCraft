@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
 public class Constants {
     public static final String CHANNEL_KEY = "efscraft:main";

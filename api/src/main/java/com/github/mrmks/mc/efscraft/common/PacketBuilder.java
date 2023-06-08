@@ -1,11 +1,11 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayAbstract;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayAt;
-import com.github.mrmks.mc.efscraft.packet.SPacketPlayWith;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayAbstract;
+import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayAt;
+import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayWith;
 
-import static com.github.mrmks.mc.efscraft.CommandUtils.*;
+import static com.github.mrmks.mc.efscraft.common.CommandUtils.*;
 
 // represent a temporary effect entry and later build a packet from this entry;
 class PacketBuilder extends EffectEntry {
@@ -27,9 +27,10 @@ class PacketBuilder extends EffectEntry {
         return this;
     }
 
-    private IMessage buildCommon(SPacketPlayAbstract play) {
+    private NetworkPacket buildCommon(SPacketPlayAbstract play) {
         return play.skipFrame(skipFrames)
                 .markConflictOverwrite(overwrite)
+                .setLifespan(lifespan)
                 .setDynamics(dynamic)
                 .translateLocalTo(localPos[0], localPos[1], localPos[2])
                 .translateModelTo(modelPos[0], modelPos[1], modelPos[2])
@@ -38,7 +39,7 @@ class PacketBuilder extends EffectEntry {
                 .scaleTo(scale[0], scale[1], scale[2]);
     }
 
-    IMessage buildPlayWith(String key, String emitter, int entityId) {
+    NetworkPacket buildPlayWith(String key, String emitter, int entityId) {
         SPacketPlayWith play = new SPacketPlayWith(key, effect, emitter, lifespan, entityId)
                 .markFollowX(followX)
                 .markFollowY(followY)
@@ -53,7 +54,7 @@ class PacketBuilder extends EffectEntry {
         return buildCommon(play);
     }
 
-    IMessage buildPlayAt(String key, String emitter, float x, float y, float z, float yaw, float pitch) {
+    NetworkPacket buildPlayAt(String key, String emitter, float x, float y, float z, float yaw, float pitch) {
         SPacketPlayAt play = new SPacketPlayAt(key, effect, emitter, lifespan, x, y, z, yaw, pitch);
 
         return buildCommon(play);

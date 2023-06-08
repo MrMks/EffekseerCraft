@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
 abstract class EffectEntry {
     protected String effect;

@@ -1,10 +1,9 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.IMessageHandler;
-import com.github.mrmks.mc.efscraft.packet.MessageCodec;
-import com.github.mrmks.mc.efscraft.packet.MessageContext;
+import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.packet.MessageCodec;
+import com.github.mrmks.mc.efscraft.common.packet.MessageContext;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.google.common.io.ByteStreams;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -22,11 +21,11 @@ class NetworkWrapper implements PluginMessageListener {
         this.plugin = plugin;
     }
 
-    <T extends IMessage> void register(Class<T> klass, IMessageHandler<T, ? extends IMessage> handler) {
+    <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ? extends NetworkPacket> handler) {
         codec.register(klass, handler);
     }
 
-    void sendTo(Player player, IMessage packet) {
+    void sendTo(Player player, NetworkPacket packet) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         DataOutput output = ByteStreams.newDataOutput(stream);
         try {
@@ -45,7 +44,7 @@ class NetworkWrapper implements PluginMessageListener {
             DataInput input = new DataInputStream(new ByteArrayInputStream(bytes));
             try {
                 // convert it to Packet
-                IMessage out = codec.writeInput(input, new MessageContext(player.getUniqueId()));
+                NetworkPacket out = codec.writeInput(input, new MessageContext(player.getUniqueId()));
                 // send out reply;
                 if (out != null) sendTo(player, out);
             } catch (IOException e) {

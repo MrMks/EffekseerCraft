@@ -1,10 +1,9 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.IMessageHandler;
-import com.github.mrmks.mc.efscraft.packet.MessageCodec;
-import com.github.mrmks.mc.efscraft.packet.MessageContext;
+import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.packet.MessageCodec;
+import com.github.mrmks.mc.efscraft.common.packet.MessageContext;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
@@ -43,11 +42,11 @@ public class NetworkWrapper {
         this.codec = new MessageCodec();
     }
 
-    public <T extends IMessage> void register(Class<T> klass, IMessageHandler<T, ? extends IMessage> handler) {
+    public <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ? extends NetworkPacket> handler) {
         codec.register(klass, handler);
     }
 
-    public <T extends IMessage> void register(Class<T> klass, Consumer<T> handler) {
+    public <T extends NetworkPacket> void register(Class<T> klass, Consumer<T> handler) {
         register(klass, (packetIn, context) -> {
             handler.accept(packetIn); return null;
         });
@@ -65,7 +64,7 @@ public class NetworkWrapper {
 
         PacketBuffer buffer = event.getPayload();
         DataInput input = new ByteBufInputStream(buffer);
-        IMessage reply = null;
+        NetworkPacket reply = null;
         try {
             reply = codec.writeInput(input, ctx);
             if (ctx.isRemote()) buffer.release();
@@ -78,12 +77,12 @@ public class NetworkWrapper {
         }
     }
 
-    public void sendTo(PlayerEntity player, IMessage message) {
+    public void sendTo(PlayerEntity player, NetworkPacket message) {
         PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player);
         target.send(toVanillaPacket(target.getDirection(), message));
     }
 
-    private Pair<PacketBuffer, Integer> toBuffer(IMessage message) {
+    private Pair<PacketBuffer, Integer> toBuffer(NetworkPacket message) {
         PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
         try {
             if (!codec.writeOutput(message, new ByteBufOutputStream(buffer))) {
@@ -96,7 +95,7 @@ public class NetworkWrapper {
         return Pair.of(buffer, Integer.MIN_VALUE);
     }
 
-    private IPacket<?> toVanillaPacket(NetworkDirection direction, IMessage message) {
+    private IPacket<?> toVanillaPacket(NetworkDirection direction, NetworkPacket message) {
         return direction.buildPacket(toBuffer(message), CHANNEL_NAME).getThis();
     }
 }

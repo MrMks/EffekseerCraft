@@ -1,6 +1,6 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
-import com.github.mrmks.mc.efscraft.packet.*;
+import com.github.mrmks.mc.efscraft.common.packet.*;
 
 import java.io.File;
 import java.util.*;
@@ -34,7 +34,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
         return getListMatchLastArg(args, Arrays.asList(collection));
     }
 
-    private void sendNearby(SERVER server, SENDER sender, Collection<PLAYER> targets, IMessage message, float x, float y, float z) {
+    private void sendNearby(SERVER server, SENDER sender, Collection<PLAYER> targets, NetworkPacket message, float x, float y, float z) {
 
         int chunkX = floorInt(x) >> 4, chunkY = floorInt(y) >> 4, chunkZ = floorInt(z) >> 4;
 
@@ -150,7 +150,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
                     String[] options = Arrays.copyOfRange(args, 4, args.length);
 
 //                    IMessage message = registry.createPlayWith(effect, emitter, entityId, options);
-                    IMessage message = new PacketBuilder(registry.get(effect))
+                    NetworkPacket message = new PacketBuilder(registry.get(effect))
                             .consumeOptions(options)
                             .buildPlayWith(effect, emitter, entityId);
 
@@ -181,7 +181,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
                     String[] options = Arrays.copyOfRange(args, 9, args.length);
 
-                    IMessage message = new PacketBuilder(registry.get(effect))
+                    NetworkPacket message = new PacketBuilder(registry.get(effect))
                             .consumeOptions(options)
                             .buildPlayAt(effect, emitter, x, y, z, yaw, pitch);
 
@@ -247,7 +247,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
                     Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, adaptor.getEntityWorld(entity));
 
-                    IMessage message = new SPacketStop(effect, emitter);
+                    NetworkPacket message = new SPacketStop(effect, emitter);
 
                     sendNearby(server, sender, players, message, pos[0], pos[1], pos[2]);
                 } else if ("at".equals(action)) {
@@ -269,7 +269,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
                         x = parseFloat(args[4], pos[0]); y = parseFloat(args[5], pos[1]); z = parseFloat(args[6], pos[2]);
                     }
 
-                    IMessage message = new SPacketStop(effect, emitter);
+                    NetworkPacket message = new SPacketStop(effect, emitter);
                     Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
 
                     sendNearby(server, sender, players, message, x, y, z);
@@ -290,12 +290,12 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
     @FunctionalInterface
     private interface ActionAt {
-        IMessage accept(String effect, String emitter, float[] posAngle, String[] followings);
+        NetworkPacket accept(String effect, String emitter, float[] posAngle, String[] followings);
     }
 
     @FunctionalInterface
     private interface ActionOn {
-        IMessage accept(String effect, String emitter, int entity, String[] followings);
+        NetworkPacket accept(String effect, String emitter, int entity, String[] followings);
     }
 
     private void executeBasic(String[] args, int index, SERVER server, SENDER sender, boolean hasRot, ActionAt actionAt, ActionOn actionOn) throws CommandException {
@@ -319,7 +319,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
             String[] followings = Arrays.copyOfRange(args, index + 4, args.length);
 
-            IMessage message = actionOn.accept(effect, emitter, entityId, followings);
+            NetworkPacket message = actionOn.accept(effect, emitter, entityId, followings);
 
             WORLD world = adaptor.getEntityWorld(entity);
             Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
@@ -342,7 +342,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
                 x = parseFloat(args[index + 4], pos[0]); y = parseFloat(args[index + 5], pos[1]); z = parseFloat(args[index + 6], pos[2]);
             }
 
-            IMessage message;
+            NetworkPacket message;
             if (hasRot) {
                 if (args.length < index + 9)
                     throw WrongUsageException.PLACEHOLDER;
@@ -423,7 +423,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     public interface Adaptor<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD> {
         boolean hasPermission(SERVER server, SENDER sender, String node);
         UUID getClientUUID(PLAYER sender);
-        void sendPacketTo(SERVER server, PLAYER player, IMessage message);
+        void sendPacketTo(SERVER server, PLAYER player, NetworkPacket message);
         PLAYER findPlayer(SERVER server, SENDER sender, String toFound) throws CommandException;
         ENTITY findEntity(SERVER server, SENDER sender, String toFound) throws CommandException;
         Collection<PLAYER> getPlayersInWorld(SERVER server, SENDER sender, WORLD world);

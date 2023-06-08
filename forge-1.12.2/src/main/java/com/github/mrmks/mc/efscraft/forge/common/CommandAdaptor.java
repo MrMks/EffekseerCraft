@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.CommandHandler;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.CommandHandler;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -42,7 +42,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     }
 
     @Override
-    public void sendPacketTo(MinecraftServer server, EntityPlayer entityPlayer, IMessage message) {
+    public void sendPacketTo(MinecraftServer server, EntityPlayer entityPlayer, NetworkPacket message) {
         wrapper.sendTo(entityPlayer, message);
     }
 

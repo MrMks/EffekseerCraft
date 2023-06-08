@@ -1,7 +1,7 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.util.*;
 
@@ -63,5 +63,5 @@ public abstract class EventHandler {
             list.forEach(uuid -> pending.put(uuid, new Counter(40)));
     }
 
-    protected abstract void sendMessage(UUID uuid, IMessage message);
+    protected abstract void sendMessage(UUID uuid, NetworkPacket message);
 }

@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.CommandHandler;
-import com.github.mrmks.mc.efscraft.packet.IMessage;
-import com.github.mrmks.mc.efscraft.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.CommandHandler;
+import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
@@ -38,7 +38,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
     }
 
     @Override
-    public void sendPacketTo(Server server, Player player, IMessage message) {
+    public void sendPacketTo(Server server, Player player, NetworkPacket message) {
         wrapper.sendTo(player, message);
     }
 
