@@ -80,7 +80,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
                                 super.visitMethodInsn(opcode, owner, name, desc, itf);
                             }
                         };
-                    } else if ((deobf ? "updateFramebufferSize" : "").equals(name)) {
+                    } else if ((deobf ? "updateFramebufferSize" : "func_147119_ah").equals(name)) {
                         mv = new MethodVisitor(api, mv) {
                             @Override
                             public void visitCode() {
@@ -127,7 +127,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
 
                                 if (!handled && foundAnchor
                                         && "net/minecraft/client/renderer/RenderGlobal".equals(owner)
-                                        && (deobf ? "renderBlockLayer" : "").equals(name)) {
+                                        && (deobf ? "renderBlockLayer" : "func_174977_a").equals(name)) {
 
                                     handled = true;
                                     genDispatch(false);
@@ -139,7 +139,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
                                 if (!foundAnchor
                                         && opcode == Opcodes.GETSTATIC
                                         && "net/minecraft/util/BlockRenderLayer".equals(owner)
-                                        && (deobf ? "TRANSLUCENT" : "").equals(name)) {
+                                        && "TRANSLUCENT".equals(name)) {
 
                                     foundAnchor = true;
                                     genDispatch(true);
