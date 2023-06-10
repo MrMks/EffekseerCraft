@@ -285,7 +285,10 @@ class RendererImpl extends Renderer {
                 restoreTex[0] = glGetInteger(GL_TEXTURE_BINDING_2D);
                 glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
                 glBindFramebuffer(GL_FRAMEBUFFER, current);
+                int read_buffer = glGetInteger(GL_READ_BUFFER);
+                glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+                glReadBuffer(read_buffer);
 
                 glActiveTexture(GL_TEXTURE0 + 1);
                 restoreTex[1] = glGetInteger(GL_TEXTURE_BINDING_2D);
