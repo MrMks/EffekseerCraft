@@ -231,14 +231,12 @@ class RendererImpl extends Renderer {
 
         if (translucent && openglSupported())
         {
-            int current;
+            int originRead, originDraw;
 
             if (event.prev)
             {
-                current = glGetInteger(GL_FRAMEBUFFER_BINDING);
-                lastFramebuffer = current;
-
-                update(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
+                originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
+                lastFramebuffer = originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
 
                 glDepthMaskMC(true);
                 glStencilMask(0xff);
@@ -247,17 +245,28 @@ class RendererImpl extends Renderer {
                 glClear(GL_STENCIL_BUFFER_BIT);
                 overlay.framebufferClear();
 
-                blitFramebuffer(current, working.framebufferObject, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                blitFramebuffer(current, overlay.framebufferObject, width, height, GL_DEPTH_BUFFER_BIT);
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, working.framebufferObject);
+                int rb = glGetInteger(GL_READ_BUFFER);
+                glReadBuffer(GL_COLOR_ATTACHMENT0);
+                glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                glReadBuffer(rb);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, overlay.framebufferObject);
+                glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
                 glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
                 glBlendFuncSeparateMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 glDepthMaskMC(true);
             }
             else
             {
-                current = lastFramebuffer;
+                originDraw = lastFramebuffer;
+                originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
                 lastFramebuffer = -1;
+
+                glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
+                glReadBuffer(GL_COLOR_ATTACHMENT0);
 
                 glDepthMaskMC(false);
 
@@ -273,6 +282,7 @@ class RendererImpl extends Renderer {
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
+                update(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
                 draw();
 
                 // use stencil test;
@@ -284,7 +294,7 @@ class RendererImpl extends Renderer {
                 glActiveTexture(GL_TEXTURE0);
                 restoreTex[0] = glGetInteger(GL_TEXTURE_BINDING_2D);
                 glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
-                glBindFramebuffer(GL_FRAMEBUFFER, current);
+                glBindFramebuffer(GL_FRAMEBUFFER, originDraw);
                 int read_buffer = glGetInteger(GL_READ_BUFFER);
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
@@ -293,7 +303,7 @@ class RendererImpl extends Renderer {
                 glActiveTexture(GL_TEXTURE0 + 1);
                 restoreTex[1] = glGetInteger(GL_TEXTURE_BINDING_2D);
                 glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
-                glBindFramebuffer(GL_FRAMEBUFFER, current);
+                glBindFramebuffer(GL_FRAMEBUFFER, originDraw);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
                 glActiveTexture(GL_TEXTURE0 + 2);
@@ -352,8 +362,9 @@ class RendererImpl extends Renderer {
                 glDisableMC(GL_STENCIL_TEST);
 
                 // restore stencil buffer
-                blitFramebuffer(working.framebufferObject, current, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                glBindFramebuffer(GL_FRAMEBUFFER, current);
+                blitFramebuffer(working.framebufferObject, originDraw, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
             }
         }
         else
@@ -462,14 +473,16 @@ class RendererImpl extends Renderer {
     }
 
     private static void blitFramebuffer(int src, int tar, int width, int height, int masks) {
-        int current = glGetInteger(GL_FRAMEBUFFER_BINDING);
+        int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
+        int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, src);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, tar);
 
         glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, masks, GL_NEAREST);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, current);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
     }
 
 }

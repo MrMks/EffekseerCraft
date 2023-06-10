@@ -31,7 +31,9 @@ class GLHelper {
     static final int GL_FRAMEBUFFER = OpenGlHelper.GL_FRAMEBUFFER;
     static final int GL_FRAMEBUFFER_BINDING = 0x8CA6;
     static final int GL_READ_FRAMEBUFFER = 0x8CA8;
+    static final int GL_READ_FRAMEBUFFER_BINDING = 0x8CAA;
     static final int GL_DRAW_FRAMEBUFFER = 0x8CA9;
+    static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
     static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
 
     // vertex attrib buffer pointer
