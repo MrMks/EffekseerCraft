@@ -64,7 +64,7 @@ class RendererImpl extends Renderer {
                 "    float d0 = texture2D(backupDepth, texCoord).r;\n" +
                 "    float d1 = texture2D(workingDepth, texCoord).r;\n" +
                 "    float d2 = texture2D(overlayDepth, texCoord).r;\n" +
-                "    gl_FragColor = texture2D(backupColor, texCoord);\n" +
+                "    gl_FragColor = vec4(0);\n" +
                 "    if (d1 < d2) {\n" +
                 "        gl_FragDepth = d1;\n" +
                 "    } else {\n" +
@@ -224,10 +224,12 @@ class RendererImpl extends Renderer {
     @SubscribeEvent
     public void renderWorld(RenderParticleEvent event) {
 
-        Minecraft minecraft = Minecraft.getMinecraft();
-
         int width, height;
-        tryResize(width = minecraft.displayWidth, height = minecraft.displayHeight);
+        INTS.clear();
+        glGetInteger(GL_VIEWPORT, INTS);
+        width = INTS.get(2);
+        height = INTS.get(3);
+        tryResize(width, height);
 
         if (translucent && openglSupported())
         {
@@ -255,7 +257,7 @@ class RendererImpl extends Renderer {
                 glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
-                glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, overlay.framebufferObject);
                 glBlendFuncSeparateMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 glDepthMaskMC(true);
             }
@@ -264,6 +266,10 @@ class RendererImpl extends Renderer {
                 originDraw = lastFramebuffer;
                 originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
                 lastFramebuffer = -1;
+
+                // backup origin program;
+                int originProgram = glGetInteger(GL_CURRENT_PROGRAM);
+                glUseProgram(0);
 
                 glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -318,8 +324,13 @@ class RendererImpl extends Renderer {
                 glBindFramebuffer(GL_FRAMEBUFFER, overlay.framebufferObject);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
-                // draw texture from main to working use program;
                 glBindFramebuffer(GL_FRAMEBUFFER, working.framebufferObject);
+
+                glDisableMC(GL_BLEND);
+                drawTexture(texColorBackup);
+                glEnableMC(GL_BLEND);
+
+                // draw texture from main to working using program;
                 glUseProgram(program);
 
                 glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -330,7 +341,7 @@ class RendererImpl extends Renderer {
 
                 prevDrawTex();
                 glEnableMC(GL_DEPTH_TEST);
-                glDisableMC(GL_BLEND);
+                glDisableMC(GL_STENCIL_TEST);
                 int depthFunc = glGetInteger(GL_DEPTH_FUNC);
                 glDepthFuncMC(GL_ALWAYS);
                 glDepthMaskMC(true);
@@ -339,7 +350,7 @@ class RendererImpl extends Renderer {
 
                 glDepthMaskMC(false);
                 glDepthFuncMC(depthFunc);
-                glEnableMC(GL_BLEND);
+                glEnableMC(GL_STENCIL_TEST);
 
                 postDrawTex();
 
@@ -365,6 +376,7 @@ class RendererImpl extends Renderer {
                 blitFramebuffer(working.framebufferObject, originDraw, width, height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
+                glUseProgram(originProgram);
             }
         }
         else

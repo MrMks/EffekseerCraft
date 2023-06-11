@@ -6,7 +6,7 @@ ext {
     projectClasspath = file("$buildDir/bin/main")
 }
 
-project.version += '.' + '5'
+project.version += '.' + '6'
 
 configurations {
     containDep

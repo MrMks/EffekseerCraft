@@ -6,6 +6,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -22,6 +23,7 @@ class GLHelper {
     static final int GL_COMPILE_STATUS = OpenGlHelper.GL_COMPILE_STATUS;
     static final int GL_LINK_STATUS = OpenGlHelper.GL_LINK_STATUS;
     static final int GL_INFO_LOG_LENGTH = 0x8B84;
+    static final int GL_CURRENT_PROGRAM = 0x8B8D;
 
     // textures
     static final int GL_TEXTURE0 = OpenGlHelper.defaultTexUnit;
@@ -35,6 +37,8 @@ class GLHelper {
     static final int GL_DRAW_FRAMEBUFFER = 0x8CA9;
     static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
     static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
+
+    static IntBuffer INTS = BufferUtils.createIntBuffer(16);
 
     // vertex attrib buffer pointer
 
@@ -248,6 +252,20 @@ class GLHelper {
                 EXTFramebufferBlit.glBlitFramebufferEXT(x0, y0, w0, h0, x1, y1, w1, h1, masks, filter);
             }
         }
+    }
+
+    static int glGetFramebufferAttachmentParameteri(int target, int attachment, int pname) {
+        if (framebufferSupport) {
+            if (framebufferMODE == 0) {
+                return GL30.glGetFramebufferAttachmentParameteri(target, attachment, pname);
+            } else if (framebufferMODE == 1) {
+                return ARBFramebufferObject.glGetFramebufferAttachmentParameteri(target, attachment, pname);
+            } else if (framebufferMODE == 2) {
+                return EXTFramebufferObject.glGetFramebufferAttachmentParameteriEXT(target, attachment, pname);
+            }
+        }
+
+        return -1;
     }
 
     // textures
