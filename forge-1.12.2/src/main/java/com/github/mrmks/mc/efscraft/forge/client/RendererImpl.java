@@ -177,9 +177,10 @@ class RendererImpl extends Renderer {
 
         if (openglSupported()) {
 
-            int current;
+            int currentDraw, currentRead;
 
-            current = glGetInteger(GL_FRAMEBUFFER_BINDING);
+            currentDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
+            currentRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
 
             if (working == null) {
                 working = new Framebuffer(w, h, true);
@@ -189,7 +190,6 @@ class RendererImpl extends Renderer {
                 working.deleteFramebuffer();
                 working.createFramebuffer(w, h);
             }
-            working.bindFramebuffer(true);
 
             if (overlay == null) {
                 overlay = new Framebuffer(w, h, true);
@@ -198,10 +198,11 @@ class RendererImpl extends Renderer {
                 overlay.deleteFramebuffer();
                 overlay.createFramebuffer(w, h);
             }
-            overlay.bindFramebuffer(true);
-            glBindFramebuffer(GL_FRAMEBUFFER, current);
 
-            current = glGetInteger(GL_TEXTURE_BINDING_2D);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDraw);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentRead);
+
+            currentDraw = glGetInteger(GL_TEXTURE_BINDING_2D);
 
             glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
@@ -212,7 +213,7 @@ class RendererImpl extends Renderer {
             glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
 
-            glBindTextureMC(GL_TEXTURE_2D, current);
+            glBindTextureMC(GL_TEXTURE_2D, currentDraw);
 
             int error = glGetError();
             if (error != GL_NO_ERROR) {
