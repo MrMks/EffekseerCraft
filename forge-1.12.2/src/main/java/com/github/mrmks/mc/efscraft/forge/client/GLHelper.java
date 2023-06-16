@@ -160,7 +160,7 @@ class GLHelper {
     }
 
     static String glGetShaderInfoLog(int shader) {
-        return OpenGlHelper.glGetShaderInfoLog(shader, GL_INFO_LOG_LENGTH);
+        return OpenGlHelper.glGetShaderInfoLog(shader, glGetShaderi(shader, GL_INFO_LOG_LENGTH));
     }
 
     // programs
@@ -185,7 +185,7 @@ class GLHelper {
     }
 
     static String glGetProgramInfoLog(int program) {
-        return OpenGlHelper.glGetProgramInfoLog(program, GL_INFO_LOG_LENGTH);
+        return OpenGlHelper.glGetProgramInfoLog(program, glGetProgrami(program, GL_INFO_LOG_LENGTH));
     }
 
     // attach shader
