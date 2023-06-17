@@ -6,6 +6,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -16,6 +17,7 @@ class GLHelper {
     // buffer related;
     static final int GL_ARRAY_BUFFER = OpenGlHelper.GL_ARRAY_BUFFER;
     static final int GL_STATIC_DRAW = OpenGlHelper.GL_STATIC_DRAW;
+    static final int GL_DRAW_BUFFER0 = GL20.GL_DRAW_BUFFER0;
 
     // shaders and programs
     static final int GL_VERTEX_SHADER = OpenGlHelper.GL_VERTEX_SHADER;
@@ -28,6 +30,7 @@ class GLHelper {
     // textures
     static final int GL_TEXTURE0 = OpenGlHelper.defaultTexUnit;
     static final int GL_DEPTH_COMPONENT24 = GL14.GL_DEPTH_COMPONENT24;
+    static final int GL_ACTIVE_TEXTURE = GL13.GL_ACTIVE_TEXTURE;
 
     // framebuffers
     static final int GL_FRAMEBUFFER = OpenGlHelper.GL_FRAMEBUFFER;
@@ -38,7 +41,9 @@ class GLHelper {
     static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
     static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
 
-    static IntBuffer INTS = BufferUtils.createIntBuffer(16);
+    private static final ByteBuffer BYTE_64 = BufferUtils.createByteBuffer(64);
+    static final IntBuffer INT_16 = BYTE_64.asIntBuffer();
+    static final FloatBuffer FLOAT_16 = BYTE_64.asFloatBuffer();
 
     // vertex attrib buffer pointer
 
@@ -135,6 +140,10 @@ class GLHelper {
         OpenGlHelper.glDeleteBuffers(buffer);
     }
 
+    static void glDrawBuffers(IntBuffer bufs) {
+        GL20.glDrawBuffers(bufs);
+    }
+
     // shaders
     static int glCreateShader(int type) {
         return OpenGlHelper.glCreateShader(type);
@@ -196,6 +205,16 @@ class GLHelper {
     // program getters and uniforms
     static int glGetUniformLocation(int program, CharSequence name) {
         return OpenGlHelper.glGetUniformLocation(program, name);
+    }
+
+    static void glBindAttribLocation(int program, int index, CharSequence name) {
+        if (shaderSupport) {
+            if (!shaderARB) {
+                GL20.glBindAttribLocation(program, index, name);
+            } else {
+                ARBVertexShader.glBindAttribLocationARB(program, index, name);
+            }
+        }
     }
 
     static int glGetAttribLocation(int program, CharSequence name) {
