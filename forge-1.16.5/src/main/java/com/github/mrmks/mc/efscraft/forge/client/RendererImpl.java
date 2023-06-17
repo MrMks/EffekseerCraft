@@ -486,6 +486,20 @@ public class RendererImpl extends Renderer {
         @Override
         public void drawEffect(boolean prev) {
 
+            INT_16.clear();
+            glGetIntegerv(GL_VIEWPORT, INT_16);
+            int w = INT_16.get(2), h = INT_16.get(3);
+
+            if (prev) {
+                // blit from main framebuffer, color and depth;
+
+                // copy depth from some framebuffers and combine them to one depth tex;
+
+            } else {
+                // backup main framebuffer's depth and color;
+
+
+            }
         }
 
         @Override
