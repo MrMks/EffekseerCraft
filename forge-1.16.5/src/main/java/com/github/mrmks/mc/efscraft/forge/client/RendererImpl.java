@@ -124,18 +124,18 @@ public class RendererImpl extends Renderer {
 
     private class DrawerFancy implements Drawer {
 
-        int workingFBO, colorAttach0, colorAttach1, depthAttach0;
+        int workingFBO, colorAttach0, depthAttach0;
         int backupFBO, depthAttach1;
         int colorTex0, colorTex1;
-        int programHalfer = 0, programComp = 0, programPlain = 0;
-        int vertexBuffer = -1;
+        int programPlain;
+        int vertexBuffer;
         int lastWidth = -1, lastHeight = -1;
 
         DrawerFancy() {
-            int vs, fs; String src;
+            int vs, fs, prog; String src;
+            int originProg = glGetInteger(GL_CURRENT_PROGRAM);
 
             vs = glCreateShader(GL_VERTEX_SHADER);
-
             src = "#version 120\n" +
                     "\n" +
                     "attribute vec3 position;\n" +
@@ -152,91 +152,6 @@ public class RendererImpl extends Renderer {
 
             if (glGetShaderi(vs, GL_COMPILE_STATUS) == 0)
                 System.out.println(glGetShaderInfoLog(vs));
-
-            fs = glCreateShader(GL_FRAGMENT_SHADER);
-            src = "#version 120\n" +
-                    "\n" +
-                    "uniform sampler2D texture0;\n" +
-                    "varying vec2 texCoord;\n" +
-                    "\n" +
-                    "void main() {\n" +
-                    "    vec4 v = texture2D(texture0, texCoord);\n" +
-                    "    v.a = v.a / 2;\n" +
-                    "    gl_FragColor = v;\n" +
-                    "}\n";
-
-            glShaderSource(fs, src);
-            glCompileShader(fs);
-
-            if (glGetShaderi(fs, GL_COMPILE_STATUS) == 0)
-                System.out.println(glGetShaderInfoLog(fs));
-
-            int prog = glCreateProgram(), originProg = glGetInteger(GL_CURRENT_PROGRAM);
-
-            glAttachShader(prog, vs);
-            glAttachShader(prog, fs);
-            glBindAttribLocation(prog, 0, "position");
-            glBindAttribLocation(prog, 1, "uv");
-            glLinkProgram(prog);
-
-            if (glGetProgrami(prog, GL_LINK_STATUS) == 0)
-                System.out.println(glGetProgramInfoLog(prog));
-
-            glUseProgram(prog);
-            glUniform1i(glGetUniformLocation(prog, "texture0"), 0);
-            glUseProgram(originProg);
-
-            programHalfer = prog;
-
-            glDeleteShader(fs);
-
-            fs = glCreateShader(GL_FRAGMENT_SHADER);
-            src = "#version 120\n" +
-                    "\n" +
-                    "uniform sampler2D origin;\n" +
-                    "uniform sampler2D current;\n" +
-                    "varying vec2 texCoord;\n" +
-                    "\n" +
-                    "void main() {\n" +
-                    "    vec4 colorD0 = texture2D(origin, texCoord);\n" +
-                    "    vec4 colorD1 = texture2D(current, texCoord);\n" +
-                    "\n" +
-                    "    float alpha0 = colorD0.a;\n" +
-                    "    float alpha1 = colorD1.a;\n" +
-                    "    float alphaS = (2 * alpha1 - alpha0) / (2 - alpha0);\n" +
-                    "\n" +
-                    "    colorD1.a = colorD1.a + alpha0 / 2 * (1 - alphaS);\n" +
-                    "    gl_FragData[0] = colorD1;\n" +
-                    "\n" +
-                    "    vec3 colorS = colorD1.rgb - colorD0.rgb * (1 - alphaS);\n" +
-                    "    colorS = colorS / alphaS;\n" +
-                    "    gl_FragData[1] = vec4(colorS, alphaS);\n" +
-                    "}\n";
-
-            glShaderSource(fs, src);
-            glCompileShader(fs);
-
-            if (glGetShaderi(fs, GL_COMPILE_STATUS) == 0)
-                System.out.println(glGetShaderInfoLog(fs));
-
-            prog = glCreateProgram();
-            glAttachShader(prog, vs);
-            glAttachShader(prog, fs);
-            glBindAttribLocation(prog, 0, "position");
-            glBindAttribLocation(prog, 1, "uv");
-            glLinkProgram(prog);
-
-            if (glGetProgrami(prog, GL_LINK_STATUS) == 0)
-                System.out.println(glGetProgramInfoLog(prog));
-
-            glUseProgram(prog);
-            glUniform1i(glGetUniformLocation(prog, "origin"), 0);
-            glUniform1i(glGetUniformLocation(prog, "current"), 1);
-            glUseProgram(originProg);
-
-            programComp = prog;
-
-            glDeleteShader(fs);
 
             fs = glCreateShader(GL_FRAGMENT_SHADER);
             src = "#version 120\n" +
@@ -298,9 +213,9 @@ public class RendererImpl extends Renderer {
                 workingFBO = glGenFramebuffers();
                 backupFBO = glGenFramebuffers();
 
-                int[] names = new int[4];
+                int[] names = new int[3];
                 glGenTextures(names);
-                colorTex0 = names[0]; colorTex1 = names[1]; colorAttach0 = names[2]; colorAttach1 = names[3];
+                colorTex0 = names[0]; colorTex1 = names[1]; colorAttach0 = names[2];
                 int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
                 for (int name : names) {
                     glBindTexture(GL_TEXTURE_2D, name);
@@ -318,7 +233,6 @@ public class RendererImpl extends Renderer {
                 int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttach0, 0);
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorAttach1, 0);
                 glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach0);
                 glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthAttach0);
 
@@ -338,7 +252,7 @@ public class RendererImpl extends Renderer {
 
         private void reallocateBuffers(int width, int height) {
             int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
-            for (int name : new int[] {colorTex0, colorTex1, colorAttach0, colorAttach1}) {
+            for (int name : new int[] {colorTex0, colorTex1, colorAttach0}) {
                 glBindTexture(GL_TEXTURE_2D, name);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
             }
@@ -431,37 +345,30 @@ public class RendererImpl extends Renderer {
                     glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
 
                 int bufferRead = glGetInteger(GL_READ_BUFFER);
-                if (bufferRead != bufferDraw)
-                    glReadBuffer(bufferDraw);
+                if (bufferRead != bufferDraw) glReadBuffer(bufferDraw);
 
                 int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
                 glBindTexture(GL_TEXTURE_2D, colorTex0);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h); // to colorTex0
+                glBindTexture(GL_TEXTURE_2D, colorAttach0);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
                 glBindTexture(GL_TEXTURE_2D, originTex);
 
-                if (bufferRead != bufferDraw)
-                    glReadBuffer(bufferRead);
+                if (bufferRead != bufferDraw) glReadBuffer(bufferRead);
 
-                // draw with half alpha;
-                int originProgram = glGetInteger(GL_CURRENT_PROGRAM);
-                int[] capsToEnable = {}, capsToDisable = {GL_DEPTH_TEST, GL_ALPHA_TEST, GL_BLEND, GL_LIGHTING, GL_FOG, GL_COLOR_MATERIAL};
-                boolean[] originCaps = setupCaps(capsToEnable, capsToDisable);
-                int[] originTexs = setupTextures(colorTex0);
-                drawRectangle(programHalfer);
-
-                // restore contexts
-                glUseProgram(originProgram);
-                restoreCaps(originCaps, capsToEnable, capsToDisable);
-                restoreTexture(originTexs);
+                FLOAT_16.clear();
+                glGetFloatv(GL_COLOR_CLEAR_VALUE, FLOAT_16);
+                glClearColor(0, 0, 0, 0);
+                glClear(GL_COLOR_BUFFER_BIT);
+                glClearColor(FLOAT_16.get(0), FLOAT_16.get(1), FLOAT_16.get(2), FLOAT_16.get(3));
 
                 // backup current depth to backupFBO
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backupFBO);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST); // to depthAttach0
 
-                // bind framebuffers back;
+                // restores
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
-                if (originRead != originDraw)
-                    glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
 
                 int error = glGetError();
                 if (error != GL_NO_ERROR)
@@ -489,12 +396,14 @@ public class RendererImpl extends Renderer {
 
                 // compute correct color;
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
-                glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
-                glClearColor(0, 0, 0, 0);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                setupTextures(colorTex0, colorTex1);
-                drawRectangle(programComp);
-                glDrawBuffer(GL_COLOR_ATTACHMENT0);
+//                glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
+                glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                setupTextures(colorTex1);
+                glEnable(GL_BLEND);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                drawRectangle(programPlain);
+                glDisable(GL_BLEND);
+//                glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
                 // copy depth to workingFBO
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
@@ -527,10 +436,9 @@ public class RendererImpl extends Renderer {
 
                 // draw translucent layer
                 glEnable(GL_BLEND);
-                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                setupTextures(colorAttach1);
+//                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                setupTextures(colorTex1);
                 drawRectangle(programPlain);
-                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
                 // copy workingFBO's first color attachment back to originDraw
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
@@ -541,6 +449,7 @@ public class RendererImpl extends Renderer {
                 // restores
                 glDisable(GL_STENCIL_TEST);
                 glDisable(GL_BLEND);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
                 restoreCaps(originCaps, capsEnable, capsDisable);
                 restoreTexture(originTextures);
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
@@ -557,14 +466,12 @@ public class RendererImpl extends Renderer {
         @Override
         public void cleanup() {
 
-            glDeleteProgram(programHalfer);
-            glDeleteProgram(programComp);
             glDeleteProgram(programPlain);
 
             glDeleteFramebuffers(workingFBO);
             glDeleteFramebuffers(backupFBO);
 
-            int[] names = {colorTex0, colorTex1, colorAttach0, colorAttach1};
+            int[] names = {colorTex0, colorTex1, colorAttach0};
             glDeleteTextures(names);
 
             names = new int[] {depthAttach0, depthAttach1};

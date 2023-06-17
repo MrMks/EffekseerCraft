@@ -6,12 +6,16 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 public class GLHelper {
     static final boolean apiSupport = GlStateManager.supportsFramebufferBlit();
 
-    static final IntBuffer INT_16 = BufferUtils.createIntBuffer(16);
+    private static final ByteBuffer BYTE_64 = BufferUtils.createByteBuffer(64);
+    static final IntBuffer INT_16 = BYTE_64.asIntBuffer();
+    static final FloatBuffer FLOAT_16 = BYTE_64.asFloatBuffer();
 
     // commons;
     static final int GL_FLOAT = GL20.GL_FLOAT;
@@ -195,12 +199,17 @@ public class GLHelper {
     static final int GL_READ_FRAMEBUFFER_BINDING = 0x8CAA;
     static final int GL_DRAW_FRAMEBUFFER_BINDING = 0x8CA6;
     static final int GL_CURRENT_PROGRAM = GL20.GL_CURRENT_PROGRAM;
+    static final int GL_COLOR_CLEAR_VALUE = GL20.GL_COLOR_CLEAR_VALUE;
     static int glGetInteger(int pname) {
         return GL20.glGetInteger(pname);
     }
 
     static void glGetIntegerv(int pname, IntBuffer params) {
         GL20.glGetIntegerv(pname, params);
+    }
+
+    static void glGetFloatv(int pname, FloatBuffer params) {
+        GL20.glGetFloatv(pname, params);
     }
 
     // framebuffers
