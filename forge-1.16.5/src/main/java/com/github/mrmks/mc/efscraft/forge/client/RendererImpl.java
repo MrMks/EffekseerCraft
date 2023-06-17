@@ -484,7 +484,7 @@ public class RendererImpl extends Renderer {
 
                 int originProgram = glGetInteger(GL_CURRENT_PROGRAM);
                 int[] originTextures = setupTextures(0, 0, 0, 0);
-                int[] capsEnable = {}, capsDisable = {GL_DEPTH_TEST, GL_ALPHA_TEST, GL_BLEND, GL_LIGHTING, GL_FOG, GL_COLOR_MATERIAL};
+                int[] capsEnable = {}, capsDisable = {GL_DEPTH_TEST, GL_STENCIL_TEST, GL_ALPHA_TEST, GL_BLEND, GL_LIGHTING, GL_FOG, GL_COLOR_MATERIAL};
                 boolean[] originCaps = setupCaps(capsEnable, capsDisable);
 
                 // compute correct color;
@@ -494,30 +494,25 @@ public class RendererImpl extends Renderer {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                 setupTextures(colorTex0, colorTex1);
                 drawRectangle(programComp);
-                restoreCaps(originCaps, capsEnable, capsDisable);
+                glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
                 // copy depth to workingFBO
-                glDrawBuffer(GL_COLOR_ATTACHMENT0);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 // draw effects to workingFBO, and generate stencils
-                capsEnable = new int[] {GL_STENCIL_TEST};capsDisable = new int[0];
-                originCaps = setupCaps(capsEnable, capsDisable);
-                glStencilOp(GL_KEEP, GL_REPLACE, GL_KEEP);
+                glEnable(GL_STENCIL_TEST);
+                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilMask(0xff);
                 draw();
-                restoreCaps(originCaps, capsEnable, capsDisable);
 
-                // draw colorTex0 to screen
-                capsDisable = new int[] {GL_DEPTH_TEST, GL_FOG, GL_LIGHTING, GL_COLOR_MATERIAL};
-                originCaps = setupCaps(capsEnable, capsDisable);
+                // draw colorTex0 to workingFBO
                 glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                glStencilFunc(GL_EQUAL, 1, 0xff);
+                glStencilFunc(GL_NOTEQUAL, 1, 0xff);
                 setupTextures(colorTex0);
                 drawRectangle(programPlain);
 
-                // copy depth to origin draw, this is the depth result we excepted.
+                // copy depth to origin drawing framebuffer, this is the depth result we excepted.
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
@@ -527,12 +522,13 @@ public class RendererImpl extends Renderer {
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-                // draw effects
+                // draw effects again
                 draw();
 
                 // draw translucent layer
-                setupTextures(colorAttach1);
+                glEnable(GL_BLEND);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                setupTextures(colorAttach1);
                 drawRectangle(programPlain);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
@@ -543,6 +539,8 @@ public class RendererImpl extends Renderer {
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
                 // restores
+                glDisable(GL_STENCIL_TEST);
+                glDisable(GL_BLEND);
                 restoreCaps(originCaps, capsEnable, capsDisable);
                 restoreTexture(originTextures);
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
