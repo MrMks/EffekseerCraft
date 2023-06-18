@@ -18,10 +18,14 @@ import static org.lwjgl.opengl.GL11.*;
 
 class RendererImpl extends Renderer {
 
+    @Deprecated
     private Framebuffer working = null, backup = null;
+    private int workingFBO, colorTexWorking, depthBufWorking;
+    private int backupFBO, colorTexBackup, depthTexBackup;
     private final int vertexBuffer;
     private final int programDepth, programAlpha, programPlain;
     private final int texColorBackup, texDepthBackup, texDepthWorking, texDepthOverlay;
+    private int texColorOrigin;
     private final boolean translucent;
 
     private int lastWidth = -1, lastHeight = -1;
@@ -184,30 +188,29 @@ class RendererImpl extends Renderer {
         glUseProgram(originProg);
 
         // generate textures to use;
-        texColorBackup = glGenTextures();
-        texDepthBackup = glGenTextures();
-        texDepthOverlay = glGenTextures();
-        texDepthWorking = glGenTextures();
+        INT_16.clear();
+        INT_16.limit(7);
+        glGenTextures(INT_16);
+        texColorBackup = INT_16.get(0);
+        texDepthBackup = INT_16.get(1);
+        texDepthOverlay = INT_16.get(2);
+        texDepthWorking = INT_16.get(3);
+
+        colorTexWorking = INT_16.get(4);
+        colorTexBackup = INT_16.get(5);
+        depthTexBackup = INT_16.get(6);
 
         int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
 
-        glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        for (int i = 0; i < INT_16.limit(); i++) {
+            glBindTextureMC(GL_TEXTURE_2D, INT_16.get(i));
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
 
         glBindTextureMC(GL_TEXTURE_2D, originTex);
+
+        depthBufWorking = glGenRenderbuffers();
     }
 
     @Override
@@ -240,6 +243,12 @@ class RendererImpl extends Renderer {
         glGetFloat(GL_PROJECTION_MATRIX, buffer);
     }
 
+    private static void checkError() {
+        int error = glGetError();
+        if (error != GL_NO_ERROR)
+            System.out.println(error);
+    }
+
     private void tryResize(int w, int h) {
 
         if (lastWidth == w && lastHeight == h)
@@ -255,30 +264,10 @@ class RendererImpl extends Renderer {
             currentDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
             currentRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
 
-            if (working == null) {
-                working = new Framebuffer(w, h, true);
-                working.enableStencil();
-                working.setFramebufferColor(0, 0, 0, 0);
-            } else {
-                working.deleteFramebuffer();
-                working.createFramebuffer(w, h);
-            }
-
-            if (backup == null) {
-                backup = new Framebuffer(w, h, true);
-                backup.setFramebufferColor(0, 0, 0, 0);
-            } else {
-                backup.deleteFramebuffer();
-                backup.createFramebuffer(w, h);
-            }
-
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDraw);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentRead);
-
-            currentDraw = glGetInteger(GL_TEXTURE_BINDING_2D);
+            int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
 
             glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
             glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
             glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
@@ -286,7 +275,38 @@ class RendererImpl extends Renderer {
             glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
 
-            glBindTextureMC(GL_TEXTURE_2D, currentDraw);
+            glBindTextureMC(GL_TEXTURE_2D, colorTexWorking);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, (ByteBuffer) null);
+            glBindTextureMC(GL_TEXTURE_2D, colorTexBackup);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, (ByteBuffer) null);
+            glBindTextureMC(GL_TEXTURE_2D, depthTexBackup);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
+
+            glBindTextureMC(GL_TEXTURE_2D, originTex);
+
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBufWorking);
+            checkError();
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+            checkError();
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+            if (workingFBO <= 0) {
+                workingFBO = glGenFramebuffers();
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexWorking, 0);
+                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufWorking);
+                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufWorking);
+
+                backupFBO = glGenFramebuffers();
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backupFBO);
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexBackup, 0);
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexBackup, 0);
+
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDraw);
+            }
+
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDraw);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentRead);
 
             int error = glGetError();
             if (error != GL_NO_ERROR) {
@@ -367,21 +387,21 @@ class RendererImpl extends Renderer {
                 FLOAT_16.get(cls);
                 glDepthMaskMC(true);
                 glClearColor(0, 0, 0, 0);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, working.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backup.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backupFBO);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 // backup color on COLOR_ATTACHMENT0 to working
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, working.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 int rb = glGetInteger(GL_READ_BUFFER);
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
                 glReadBuffer(rb);
 
                 // backup depth to backupFBO
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backup.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backupFBO);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 // bind origin framebuffers back
@@ -393,6 +413,11 @@ class RendererImpl extends Renderer {
 
                 // clear color_attachment0
                 glDrawBuffer(GL_COLOR_ATTACHMENT0);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                // rebind color attachment 0 and clear again
+                texColorOrigin = glGetFramebufferAttachmentParameteri(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME);
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBackup, 0);
                 glClear(GL_COLOR_BUFFER_BIT);
                 glClearColor(cls[0], cls[1], cls[2], cls[3]);
 
@@ -425,34 +450,30 @@ class RendererImpl extends Renderer {
                 glActiveTexture(GL_TEXTURE0 + 3);
                 glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
 
-                // copy color to texColorBackup
-                int readBuffer = glGetInteger(GL_READ_BUFFER);
-                glReadBuffer(GL_COLOR_ATTACHMENT0);
-                glActiveTexture(GL_TEXTURE0);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-                glReadBuffer(readBuffer);
+                // bind origin color attachment 0
+                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorOrigin, 0);
 
                 // copy depth to texDepthOverlay
                 glActiveTexture(GL_TEXTURE0 + 3);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
                 // copy depth to workingFBO
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, working.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 // draw correct color to backupFBO
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backup.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backupFBO);
                 glActiveTexture(GL_TEXTURE0);
                 drawRectangle(programAlpha);
 
                 // copy working's color to texColorBackup
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, working.framebufferObject);
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
                 // draw backup color to working;
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, working.framebufferObject);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 glEnableMC(GL_BLEND);
-                glBindTextureMC(GL_TEXTURE_2D, backup.framebufferTexture);
+                glBindTextureMC(GL_TEXTURE_2D, colorTexBackup);
                 drawRectangle(programPlain);
                 glDisableMC(GL_BLEND);
                 glBindTextureMC(GL_TEXTURE_2D, texColorBackup);
@@ -470,7 +491,7 @@ class RendererImpl extends Renderer {
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
                 // copy backup's depth to texDepthBackup
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, backup.framebufferObject);
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, backupFBO);
                 glActiveTexture(GL_TEXTURE0 + 1);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
@@ -497,13 +518,13 @@ class RendererImpl extends Renderer {
 
                 // draw translucent layer again
                 glActiveTexture(GL_TEXTURE0);
-                glBindTextureMC(GL_TEXTURE_2D, backup.framebufferTexture);
+                glBindTextureMC(GL_TEXTURE_2D, colorTexBackup);
                 glEnableMC(GL_BLEND);
                 drawRectangle(programPlain);
                 glDisableMC(GL_BLEND);
 
                 // we got every thing we need, copy them to originDraw
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, working.framebufferObject);
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
                 int[] draws = backupDrawBuffers();
                 glDrawBuffer(GL_COLOR_ATTACHMENT0);

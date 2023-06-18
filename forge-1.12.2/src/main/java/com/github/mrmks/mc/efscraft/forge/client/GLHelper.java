@@ -40,13 +40,21 @@ class GLHelper {
     static final int GL_DRAW_FRAMEBUFFER = 0x8CA9;
     static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
     static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
+    static final int GL_DEPTH_ATTACHMENT = OpenGlHelper.GL_DEPTH_ATTACHMENT;
+    static final int GL_STENCIL_ATTACHMENT = GL30.GL_STENCIL_ATTACHMENT;
+
+    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE;
+    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
+
+    // internal formats
+    static final int GL_RGBA16F = GL30.GL_RGBA16F;
+    static final int GL_DEPTH24_STENCIL8 = GL30.GL_DEPTH24_STENCIL8;
 
     private static final ByteBuffer BYTE_64 = BufferUtils.createByteBuffer(64);
     static final IntBuffer INT_16 = BYTE_64.asIntBuffer();
     static final FloatBuffer FLOAT_16 = BYTE_64.asFloatBuffer();
 
     // vertex attrib buffer pointer
-
     private static final boolean shaderSupport;
     private static final boolean shaderARB;
     private static final boolean framebufferSupport;
@@ -257,6 +265,10 @@ class GLHelper {
     }
 
     // framebuffers
+    static int glGenFramebuffers() {
+        return OpenGlHelper.glGenFramebuffers();
+    }
+
     static void glBindFramebuffer(int target, int fbo) {
         OpenGlHelper.glBindFramebuffer(target, fbo);
     }
@@ -285,6 +297,28 @@ class GLHelper {
         }
 
         return -1;
+    }
+
+    static void glFramebufferTexture2D(int target, int attachment, int texTarget, int tex, int level) {
+        OpenGlHelper.glFramebufferTexture2D(target, attachment, texTarget, tex, level);
+    }
+
+    static final int GL_RENDERBUFFER = OpenGlHelper.GL_RENDERBUFFER;
+
+    static int glGenRenderbuffers() {
+        return OpenGlHelper.glGenRenderbuffers();
+    }
+
+    static void glBindRenderbuffer(int target, int buf) {
+        OpenGlHelper.glBindRenderbuffer(target, buf);
+    }
+
+    static void glRenderbufferStorage(int target, int internalformat, int w, int h) {
+        OpenGlHelper.glRenderbufferStorage(target, internalformat, w, h);
+    }
+
+    static void glFramebufferRenderbuffer(int targrt, int attachment, int bufTarget, int buf) {
+        OpenGlHelper.glFramebufferRenderbuffer(targrt, attachment, bufTarget, buf);
     }
 
     // textures
