@@ -340,7 +340,7 @@ class RendererImpl extends Renderer {
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 int rb = glGetInteger(GL_READ_BUFFER);
-                glReadBuffer(GL_COLOR_ATTACHMENT0);
+                glReadBuffer(glGetInteger(GL_DRAW_BUFFER));
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
                 glReadBuffer(rb);
 
@@ -395,8 +395,12 @@ class RendererImpl extends Renderer {
                 glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
 
                 // copy color to texColorOverlay
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
+                int rb = glGetInteger(GL_READ_BUFFER);
+                glReadBuffer(glGetInteger(GL_DRAW_BUFFER));
                 glActiveTexture(GL_TEXTURE0);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
+                glReadBuffer(rb);
                 glBindTextureMC(GL_TEXTURE_2D, texColor);
 
                 // bind origin color attachment 0
@@ -408,6 +412,7 @@ class RendererImpl extends Renderer {
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 // copy depth to texDepthOverlay
+                glActiveTexture(GL_TEXTURE0 + 3);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
                 // copy working's color to texColorBackup
