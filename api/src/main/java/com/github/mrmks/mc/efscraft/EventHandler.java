@@ -67,7 +67,7 @@ public abstract class EventHandler {
         }
 
         if (list != null)
-            list.forEach(uuid -> pending.put(uuid, new Counter(100)));
+            list.forEach(uuid -> pending.put(uuid, new Counter(600)));
     }
 
     protected abstract void sendMessage(UUID uuid, IMessage message);

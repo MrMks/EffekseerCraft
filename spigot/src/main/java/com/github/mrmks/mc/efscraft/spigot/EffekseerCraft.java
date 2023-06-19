@@ -58,7 +58,7 @@ public class EffekseerCraft extends JavaPlugin {
 
         getCommand("effek").setExecutor(new CommandAdaptor(this, network, clients, localize));
 
-        EventHandlerImpl listener = new EventHandlerImpl(network, clients, adaptor);
+        EventHandlerImpl listener = new EventHandlerImpl(this, network, clients, adaptor);
         getServer().getPluginManager().registerEvents(listener, this);
         getServer().getScheduler().runTaskTimer(this, listener::tick, 0, 0);
         try {
