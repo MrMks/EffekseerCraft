@@ -1,7 +1,7 @@
 
 ext.workDirectory = './run/spigot-1.12.2'
 
-project.version += '.' + '1'
+project.version += '.' + '2'
 
 configurations {
     runMain
