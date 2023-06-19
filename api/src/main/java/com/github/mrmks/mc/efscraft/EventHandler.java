@@ -17,16 +17,21 @@ public abstract class EventHandler {
             return --count < 0;
         }
     }
+
+    private final ILogAdaptor logger;
     private final Map<UUID, PacketHello.State> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
-    protected EventHandler(Map<UUID, PacketHello.State> clients) {
+    protected EventHandler(Map<UUID, PacketHello.State> clients, ILogAdaptor logger) {
         this.clients = clients;
+        this.logger = logger;
     }
 
     protected final void onLogin(UUID uuid) {
         if (!clients.containsKey(uuid))
             pending.computeIfAbsent(uuid, it -> new Counter(10));
+
+        logger.logDebug("Player with uuid " + uuid + " begin to login");
     }
 
     protected final void onLogout(UUID uuid) {
@@ -53,8 +58,10 @@ public abstract class EventHandler {
 
                     if (list == null) list = new ArrayList<>();
                     list.add(uuid);
+                    logger.logDebug("Begin to connect to client with uuid " + uuid);
                 } else if (state != PacketHello.State.COMPLETE) {
                     clients.remove(uuid);
+                    logger.logDebug("Failed to establish the connection to client with uuid " + uuid + ": Timeout");
                 }
             }
         }

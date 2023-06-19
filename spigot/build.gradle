@@ -79,10 +79,8 @@ tasks.register('runServer', JavaExec) {
     }))
 
     workingDir workDirectory
-//    classpath files('../../libs/spigot-1.12.2.jar')
-//    classpath files("$workDirectory/CatServer-dc1d7e6d-universal.jar")
     classpath configurations.runMain
-//    jvmArgs '-Dmrmks.prepo.debug=true'
+    systemProperty 'efscraft.log.debug', 'true'
 
     standardInput System.in
 }

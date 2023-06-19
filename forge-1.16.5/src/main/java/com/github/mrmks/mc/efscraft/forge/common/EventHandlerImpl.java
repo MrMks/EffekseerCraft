@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.EventHandler;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,8 +18,8 @@ import java.util.UUID;
 class EventHandlerImpl extends EventHandler {
 
     private final NetworkWrapper wrapper;
-    EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients) {
-        super(clients);
+    EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, ILogAdaptor adaptor) {
+        super(clients, adaptor);
         this.wrapper = wrapper;
     }
 

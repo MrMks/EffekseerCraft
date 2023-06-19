@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
@@ -32,8 +33,9 @@ public class CommonProxy {
     public void initialize(FMLInitializationEvent event) {
         this.wrapper = new NetworkWrapper();
         // handler of message hello
-        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients));
-        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients));
+        ILogAdaptor adaptor = new LogAdaptor(logger);
+        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients, adaptor));
+        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients, adaptor));
     }
 
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {}

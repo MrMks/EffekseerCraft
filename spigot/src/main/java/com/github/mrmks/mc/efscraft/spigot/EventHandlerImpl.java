@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.Constants;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.packet.IMessage;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import org.bukkit.Bukkit;
@@ -18,8 +19,8 @@ import java.util.UUID;
 class EventHandlerImpl extends com.github.mrmks.mc.efscraft.EventHandler implements Listener {
 
     private final NetworkWrapper network;
-    EventHandlerImpl(NetworkWrapper network, Map<UUID, PacketHello.State> clients) {
-        super(clients);
+    EventHandlerImpl(NetworkWrapper network, Map<UUID, PacketHello.State> clients, ILogAdaptor adaptor) {
+        super(clients, adaptor);
         this.network = network;
     }
 

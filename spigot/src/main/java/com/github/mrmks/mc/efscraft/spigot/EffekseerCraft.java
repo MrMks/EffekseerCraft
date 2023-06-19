@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.Constants;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.packet.PacketHello;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -38,6 +39,7 @@ public class EffekseerCraft extends JavaPlugin {
     public void onEnable() {
         if (forgeDetected) return;
 
+        ILogAdaptor adaptor = new LogAdaptor(getLogger());
         NetworkWrapper network = new NetworkWrapper(this);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
@@ -45,7 +47,7 @@ public class EffekseerCraft extends JavaPlugin {
 
         Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
 
-        network.register(PacketHello.class, new PacketHello.Handler(clients));
+        network.register(PacketHello.class, new PacketHello.Handler(clients, adaptor));
 
         Localize localize = new Localize();
         try (InputStream stream = getResource("lang/en_us.lang")) {
@@ -56,7 +58,7 @@ public class EffekseerCraft extends JavaPlugin {
 
         getCommand("effek").setExecutor(new CommandAdaptor(this, network, clients, localize));
 
-        EventHandlerImpl listener = new EventHandlerImpl(network, clients);
+        EventHandlerImpl listener = new EventHandlerImpl(network, clients, adaptor);
         getServer().getPluginManager().registerEvents(listener, this);
         getServer().getScheduler().runTaskTimer(this, listener::tick, 0, 0);
         try {
