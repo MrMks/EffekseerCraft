@@ -24,11 +24,6 @@ class EventHandlerImpl extends com.github.mrmks.mc.efscraft.EventHandler impleme
     }
 
     @EventHandler
-    public void playerLogin(PlayerJoinEvent event) {
-        onLogin(event.getPlayer().getUniqueId());
-    }
-
-    @EventHandler
     public void playerLogout(PlayerQuitEvent event) {
         onLogout(event.getPlayer().getUniqueId());
     }
@@ -48,6 +43,10 @@ class EventHandlerImpl extends com.github.mrmks.mc.efscraft.EventHandler impleme
         return new ChannelEventHandler();
     }
 
+    Listener loginListener() {
+        return new LoginEventHandler();
+    }
+
     class ChannelEventHandler implements Listener {
 
         @EventHandler
@@ -61,5 +60,13 @@ class EventHandlerImpl extends com.github.mrmks.mc.efscraft.EventHandler impleme
             if (event.getChannel().equals(Constants.CHANNEL_KEY))
                 onLogout(event.getPlayer().getUniqueId());
         }
+    }
+
+    class LoginEventHandler implements Listener {
+        @EventHandler
+        public void playerLogin(PlayerJoinEvent event) {
+            onLogin(event.getPlayer().getUniqueId());
+        }
+
     }
 }

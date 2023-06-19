@@ -6,9 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,7 +62,7 @@ public class EffekseerCraft extends JavaPlugin {
         try {
             getServer().getPluginManager().registerEvents(listener.channelListener(), this);
         } catch (NoClassDefFoundError error) {
-            // do-nothing
+            getServer().getPluginManager().registerEvents(listener.loginListener(), this);
         }
     }
 
