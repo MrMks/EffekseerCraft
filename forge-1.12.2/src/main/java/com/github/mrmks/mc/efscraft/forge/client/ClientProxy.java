@@ -26,7 +26,7 @@ public class ClientProxy extends CommonProxy {
             Minecraft mc = Minecraft.getMinecraft();
 
             // add resource loader to load effects;
-            ResourceManager resources = new ResourceManager(logger);
+            ResourceManager resources = new ResourceManager(logAdaptor);
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(resources);
 
             // create program container, used to delete the program when thread exit;
@@ -36,7 +36,7 @@ public class ClientProxy extends CommonProxy {
             // on 1.12.2, it uses the same thread of main thread, so
             // we let Minecraft call us when the thread about to exit;
             // such a function is completed by runtime bytecode transform;
-            RenderingQueue queue = new RenderingQueue(resources::get, new EntityConvertImpl());
+            RenderingQueue queue = new RenderingQueue(resources::get, new EntityConvertImpl(), logAdaptor);
             RendererImpl renderer = new RendererImpl(queue, translucent);
             MinecraftForge.EVENT_BUS.register(renderer);
 

@@ -36,7 +36,7 @@ public class PacketHello implements IMessage {
 
         private final BooleanConsumer consumer;
         private final Map<UUID, State> clients;
-        private ILogAdaptor logger;
+        private final ILogAdaptor logger;
         public Handler(BooleanConsumer validator, Map<UUID, State> clients, ILogAdaptor logger) {
             this.consumer = validator;
             this.clients = clients;
@@ -58,9 +58,9 @@ public class PacketHello implements IMessage {
                 } else {
                     if (clients.get(context.getSender()) == State.WAITING_FOR_REPLY) {
                         clients.put(context.getSender(), State.COMPLETE);
-                        logger.logDebug("Established connection to client with uuid " + context.getSender());
+                        logger.logInfo("Established connection to client with uuid " + context.getSender());
                     } else {
-                        logger.logDebug("Received hello packet from unexpected client " + context.getSender());
+                        logger.logWarning("Received hello packet from unexpected client " + context.getSender());
                     }
                     return null;
                 }

@@ -52,6 +52,7 @@ minecraft {
             property 'effekseer.path', "D:\\Workspaces\\EffekseerForMultiLanguages\\build\\src\\cpp\\Debug" + '/EffekseerNativeForJava.dll'
             property 'file.encoding', 'UTF-8'
             property 'fml.coreMods.load', 'com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin'
+            property 'efscraft.log.debug', 'true'
 
             mods {
                 grouparticle {

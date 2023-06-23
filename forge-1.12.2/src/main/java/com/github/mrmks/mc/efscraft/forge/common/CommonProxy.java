@@ -21,21 +21,22 @@ public class CommonProxy {
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;
+    protected ILogAdaptor logAdaptor;
     protected File configFile;
 
     public void preInitialize(FMLPreInitializationEvent event) {
         configurationFolder = event.getModConfigurationDirectory();
         modVersion = event.getModMetadata().version;
         logger = event.getModLog();
+        logAdaptor = new LogAdaptor(logger);
         configFile = event.getSuggestedConfigurationFile();
     }
 
     public void initialize(FMLInitializationEvent event) {
         this.wrapper = new NetworkWrapper();
         // handler of message hello
-        ILogAdaptor adaptor = new LogAdaptor(logger);
-        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients, adaptor));
-        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients, adaptor));
+        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients, logAdaptor));
+        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients, logAdaptor));
     }
 
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {}

@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,9 +20,12 @@ public abstract class ResourceLoader<RM, RL> {
         return createLocation("efscraft", "effects/" + effect + "/" + resource);
     }
 
-    protected abstract RL createLocation(String key, String path);
-    protected abstract void logException(String msg, Throwable tr);
+    protected final ILogAdaptor logger;
+    protected ResourceLoader(ILogAdaptor adaptor) {
+        this.logger = adaptor;
+    }
 
+    protected abstract RL createLocation(String key, String path);
     private boolean loadResource0(
             RM manager,
             String key,
@@ -43,9 +47,9 @@ public abstract class ResourceLoader<RM, RL> {
             } catch (IOException e) {
                 String msg = "Unable to load resource file " + path + " of effect " + key;
                 if (e instanceof FileNotFoundException) {
-                    logException(msg + ": " + e.getMessage(), null);
+                    logger.logWarning(msg + ": " + e.getMessage());
                 } else {
-                    logException(msg, e);
+                    logger.logWarning(msg, e);
                 }
                 return false;
             }
@@ -59,7 +63,22 @@ public abstract class ResourceLoader<RM, RL> {
 
     protected final Map<String, EfsEffect> effects = new HashMap<>();
 
-    protected final void doLoad(RM resourceManager, String effectKey) {
+    protected final void doLoad(RM resourceManager, Collection<String> keys) {
+        for (String key : keys)
+            doLoad(resourceManager, key);
+
+        logger.logDebug("Loaded effects: ");
+        Iterator<String> it = effects.keySet().iterator();
+        while (it.hasNext()) {
+            StringBuilder bd = new StringBuilder("    ");
+            for (int i = 0; i < 5 && it.hasNext(); i++)
+                bd.append(it.next()).append(", ");
+
+            logger.logDebug(bd.toString());
+        }
+    }
+
+    private void doLoad(RM resourceManager, String effectKey) {
 
         EfsEffect effect = new EfsEffect();
 
@@ -71,9 +90,9 @@ public abstract class ResourceLoader<RM, RL> {
         } catch (IOException e) {
             String msg = "Unable to load effect " + effectKey;
             if (e instanceof FileNotFoundException) {
-                logException(msg + ": " + e.getMessage(), null);
+                logger.logWarning(msg + ": " + e.getMessage());
             } else {
-                logException(msg, e);
+                logger.logWarning(msg, e);
             }
             effect.delete();
             return;

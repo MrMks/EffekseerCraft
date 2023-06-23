@@ -2,7 +2,7 @@ subprojects {
     apply plugin: 'java'
 
     group = 'com.github.mrmks.mc'
-    version = '0.3.3.4' // major.protocol.minor.fix
+    version = '0.3.3.5' // major.protocol.minor.fix
 
     java {
         archivesBaseName = 'EffekseerCraft'

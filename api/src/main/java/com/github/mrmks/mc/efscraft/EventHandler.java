@@ -58,10 +58,10 @@ public abstract class EventHandler {
 
                     if (list == null) list = new ArrayList<>();
                     list.add(uuid);
-                    logger.logDebug("Begin to connect to client with uuid " + uuid);
+                    logger.logInfo("Begin to connect to client with uuid " + uuid);
                 } else if (state != PacketHello.State.COMPLETE) {
                     clients.remove(uuid);
-                    logger.logDebug("Failed to establish the connection to client with uuid " + uuid + ": Timeout");
+                    logger.logInfo("Failed to establish the connection to client with uuid " + uuid + ": Timeout");
                 }
             }
         }

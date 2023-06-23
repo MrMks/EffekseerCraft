@@ -10,7 +10,6 @@ import com.github.mrmks.mc.efscraft.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.IReloadableResourceManager;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
 public class ClientProxy extends CommonProxy {
@@ -28,11 +27,11 @@ public class ClientProxy extends CommonProxy {
         if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL)) {
             Minecraft mc = Minecraft.getInstance();
 
-            ResourceManager resources = new ResourceManager(LOGGER);
+            ResourceManager resources = new ResourceManager(logAdaptor);
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(resources);
             resources.onResourceManagerReload(mc.getResourceManager(), it -> true);
 
-            RenderingQueue queue = new RenderingQueue(resources::get, new EntityConvertImpl());
+            RenderingQueue queue = new RenderingQueue(resources::get, new EntityConvertImpl(), logAdaptor);
             Renderer renderer = new RendererImpl(queue);
             MinecraftForge.EVENT_BUS.register(renderer);
 
