@@ -1,13 +1,13 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.client.ResourceLoader;
 import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.resource.IResourceType;
 import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -18,8 +18,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.Locale;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -89,10 +89,8 @@ class ResourceManager extends ResourceLoader<IResourceManager, ResourceLocation>
         GET_PACK_ZIP = tmp;
     }
 
-    private final Logger logger;
-
-    ResourceManager(Logger logger) {
-        this.logger = logger;
+    ResourceManager(ILogAdaptor logger) {
+        super(logger);
     }
 
     private Set<String> searchPacks(IResourceManager rm) {
@@ -146,23 +144,13 @@ class ResourceManager extends ResourceLoader<IResourceManager, ResourceLocation>
     public void onResourceManagerReload(@Nonnull IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
         if (resourcePredicate.test(ResourceEffect.INSTANCE)) {
             doClear();
-            Set<String> registry = searchPacks(resourceManager);
-            for (String key : registry)
-                doLoad(resourceManager, key);
+            doLoad(resourceManager, searchPacks(resourceManager));
         }
     }
 
     @Override
     protected ResourceLocation createLocation(String key, String path) {
         return new ResourceLocation(key, path);
-    }
-
-    @Override
-    protected void logException(String msg, Throwable tr) {
-        if (tr == null)
-            logger.error(msg);
-        else
-            logger.error(msg, tr);
     }
 
     @Override

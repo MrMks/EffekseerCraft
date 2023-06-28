@@ -6,6 +6,8 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -15,6 +17,7 @@ class GLHelper {
     // buffer related;
     static final int GL_ARRAY_BUFFER = OpenGlHelper.GL_ARRAY_BUFFER;
     static final int GL_STATIC_DRAW = OpenGlHelper.GL_STATIC_DRAW;
+    static final int GL_DRAW_BUFFER0 = GL20.GL_DRAW_BUFFER0;
 
     // shaders and programs
     static final int GL_VERTEX_SHADER = OpenGlHelper.GL_VERTEX_SHADER;
@@ -22,19 +25,36 @@ class GLHelper {
     static final int GL_COMPILE_STATUS = OpenGlHelper.GL_COMPILE_STATUS;
     static final int GL_LINK_STATUS = OpenGlHelper.GL_LINK_STATUS;
     static final int GL_INFO_LOG_LENGTH = 0x8B84;
+    static final int GL_CURRENT_PROGRAM = 0x8B8D;
 
     // textures
     static final int GL_TEXTURE0 = OpenGlHelper.defaultTexUnit;
     static final int GL_DEPTH_COMPONENT24 = GL14.GL_DEPTH_COMPONENT24;
+    static final int GL_ACTIVE_TEXTURE = GL13.GL_ACTIVE_TEXTURE;
 
     // framebuffers
     static final int GL_FRAMEBUFFER = OpenGlHelper.GL_FRAMEBUFFER;
     static final int GL_FRAMEBUFFER_BINDING = 0x8CA6;
     static final int GL_READ_FRAMEBUFFER = 0x8CA8;
+    static final int GL_READ_FRAMEBUFFER_BINDING = 0x8CAA;
     static final int GL_DRAW_FRAMEBUFFER = 0x8CA9;
+    static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
+    static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
+    static final int GL_DEPTH_ATTACHMENT = OpenGlHelper.GL_DEPTH_ATTACHMENT;
+    static final int GL_STENCIL_ATTACHMENT = GL30.GL_STENCIL_ATTACHMENT;
+
+    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE;
+    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
+
+    // internal formats
+    static final int GL_RGBA16F = GL30.GL_RGBA16F;
+    static final int GL_DEPTH24_STENCIL8 = GL30.GL_DEPTH24_STENCIL8;
+
+    private static final ByteBuffer BYTE_64 = BufferUtils.createByteBuffer(64);
+    static final IntBuffer INT_16 = BYTE_64.asIntBuffer();
+    static final FloatBuffer FLOAT_16 = BYTE_64.asFloatBuffer();
 
     // vertex attrib buffer pointer
-
     private static final boolean shaderSupport;
     private static final boolean shaderARB;
     private static final boolean framebufferSupport;
@@ -128,6 +148,10 @@ class GLHelper {
         OpenGlHelper.glDeleteBuffers(buffer);
     }
 
+    static void glDrawBuffers(IntBuffer bufs) {
+        GL20.glDrawBuffers(bufs);
+    }
+
     // shaders
     static int glCreateShader(int type) {
         return OpenGlHelper.glCreateShader(type);
@@ -153,7 +177,7 @@ class GLHelper {
     }
 
     static String glGetShaderInfoLog(int shader) {
-        return OpenGlHelper.glGetShaderInfoLog(shader, GL_INFO_LOG_LENGTH);
+        return OpenGlHelper.glGetShaderInfoLog(shader, glGetShaderi(shader, GL_INFO_LOG_LENGTH));
     }
 
     // programs
@@ -178,7 +202,7 @@ class GLHelper {
     }
 
     static String glGetProgramInfoLog(int program) {
-        return OpenGlHelper.glGetProgramInfoLog(program, GL_INFO_LOG_LENGTH);
+        return OpenGlHelper.glGetProgramInfoLog(program, glGetProgrami(program, GL_INFO_LOG_LENGTH));
     }
 
     // attach shader
@@ -189,6 +213,16 @@ class GLHelper {
     // program getters and uniforms
     static int glGetUniformLocation(int program, CharSequence name) {
         return OpenGlHelper.glGetUniformLocation(program, name);
+    }
+
+    static void glBindAttribLocation(int program, int index, CharSequence name) {
+        if (shaderSupport) {
+            if (!shaderARB) {
+                GL20.glBindAttribLocation(program, index, name);
+            } else {
+                ARBVertexShader.glBindAttribLocationARB(program, index, name);
+            }
+        }
     }
 
     static int glGetAttribLocation(int program, CharSequence name) {
@@ -231,6 +265,10 @@ class GLHelper {
     }
 
     // framebuffers
+    static int glGenFramebuffers() {
+        return OpenGlHelper.glGenFramebuffers();
+    }
+
     static void glBindFramebuffer(int target, int fbo) {
         OpenGlHelper.glBindFramebuffer(target, fbo);
     }
@@ -245,6 +283,42 @@ class GLHelper {
                 EXTFramebufferBlit.glBlitFramebufferEXT(x0, y0, w0, h0, x1, y1, w1, h1, masks, filter);
             }
         }
+    }
+
+    static int glGetFramebufferAttachmentParameteri(int target, int attachment, int pname) {
+        if (framebufferSupport) {
+            if (framebufferMODE == 0) {
+                return GL30.glGetFramebufferAttachmentParameteri(target, attachment, pname);
+            } else if (framebufferMODE == 1) {
+                return ARBFramebufferObject.glGetFramebufferAttachmentParameteri(target, attachment, pname);
+            } else if (framebufferMODE == 2) {
+                return EXTFramebufferObject.glGetFramebufferAttachmentParameteriEXT(target, attachment, pname);
+            }
+        }
+
+        return -1;
+    }
+
+    static void glFramebufferTexture2D(int target, int attachment, int texTarget, int tex, int level) {
+        OpenGlHelper.glFramebufferTexture2D(target, attachment, texTarget, tex, level);
+    }
+
+    static final int GL_RENDERBUFFER = OpenGlHelper.GL_RENDERBUFFER;
+
+    static int glGenRenderbuffers() {
+        return OpenGlHelper.glGenRenderbuffers();
+    }
+
+    static void glBindRenderbuffer(int target, int buf) {
+        OpenGlHelper.glBindRenderbuffer(target, buf);
+    }
+
+    static void glRenderbufferStorage(int target, int internalformat, int w, int h) {
+        OpenGlHelper.glRenderbufferStorage(target, internalformat, w, h);
+    }
+
+    static void glFramebufferRenderbuffer(int targrt, int attachment, int bufTarget, int buf) {
+        OpenGlHelper.glFramebufferRenderbuffer(targrt, attachment, bufTarget, buf);
     }
 
     // textures

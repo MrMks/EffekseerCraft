@@ -99,9 +99,9 @@ class CommandUtils {
                             int index = parseInt(str.substring(dot + 1));
                             float value = parseFloat(options[++i]);
 
-                            if (index > 0) {
+                            if (index >= 0) {
                                 if (entry.dynamic == null)
-                                    entry.dynamic = new float[index + 1];
+                                    entry.dynamic = new float[Math.max(4, index + 1)];
                                 else if (entry.dynamic.length <= index)
                                     entry.dynamic = Arrays.copyOf(entry.dynamic, index + 1);
 

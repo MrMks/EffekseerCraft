@@ -5,6 +5,7 @@ import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketStop;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketTrigger;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,10 +26,12 @@ public final class RenderingQueue {
 
     private final Function<String, EfsEffect> effects;
     private final EntityConvert convert;
+    private final ILogAdaptor logger;
 
-    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert convert) {
+    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert convert, ILogAdaptor logger) {
         this.effects = getter;
         this.convert = convert;
+        this.logger = logger;
     }
 
     private void putEntry(Entry entry, boolean overwrite) {
@@ -41,7 +44,7 @@ public final class RenderingQueue {
             submap.put(entry.emitter, entry);
 
             if (old != null)
-                old.state = State.STOPPING_O;
+                old.state = State.STOPPING_OVERWRITE;
         }
     }
 
@@ -95,8 +98,10 @@ public final class RenderingQueue {
                     EfsEffect effect = effects.apply(entry.effect);
                     if (effect == null) {
                         entry.state = State.STOPPED;
+                        logger.logWarning("Unable to player an absent effect with key: " + entry.effect);
                     } else {
                         entry.init(program.playEffect(effect));
+                        logger.logDebug("Begin to play effect: " + "[key: " + entry.effect + ", emitter: " + entry.emitter + "]");
                     }
                 }
 
@@ -104,14 +109,14 @@ public final class RenderingQueue {
                     entry.update(frameGap, partial);
                 }
 
-                if (entry.state == State.STOPPING || entry.state == State.STOPPING_O) {
+                if (entry.state == State.STOPPING || entry.state == State.STOPPING_OVERWRITE) {
                     entry.stop();
                 }
 
                 if (entry.state == State.STOPPED) {
                     lookup.getOrDefault(entry.key, Collections.emptyMap()).remove(entry.emitter);
                     return true;
-                } else return entry.state == State.STOPPED_O;
+                } else return entry.state == State.STOPPED_OVERWRITE;
             });
 
             triggers.forEach(trigger -> {
@@ -190,7 +195,7 @@ public final class RenderingQueue {
         }
     }
 
-    enum State { NEW, CREATED, RUNNING, STOPPING, STOPPING_O, STOPPED, STOPPED_O }
+    enum State { NEW, CREATED, RUNNING, STOPPING, STOPPING_OVERWRITE, STOPPED, STOPPED_OVERWRITE}
 
     private static class Entry {
 
@@ -264,8 +269,8 @@ public final class RenderingQueue {
                 handle.stop();
             if (state == State.STOPPING)
                 state = State.STOPPED;
-            else if (state == State.STOPPING_O)
-                state = State.STOPPED_O;
+            else if (state == State.STOPPING_OVERWRITE)
+                state = State.STOPPED_OVERWRITE;
         }
     }
 

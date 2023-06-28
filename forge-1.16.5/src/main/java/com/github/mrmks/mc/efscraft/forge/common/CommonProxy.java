@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.FolderName;
@@ -22,6 +23,7 @@ public class CommonProxy {
     protected static final Logger LOGGER = LogManager.getLogger("efscraft");
 
     protected final NetworkWrapper wrapper;
+    protected final ILogAdaptor logAdaptor = new LogAdaptor(LOGGER);
     protected transient boolean versionCompatible = false;
     private final Map<UUID, PacketHello.State> compatibleClients = new ConcurrentHashMap<>();
     private final String modVersion;
@@ -30,11 +32,11 @@ public class CommonProxy {
         this.modVersion = modVersion;
 
         this.wrapper = new NetworkWrapper();
-        wrapper.register(PacketHello.class, new PacketHello.Handler((flag) -> versionCompatible = flag, compatibleClients));
+        wrapper.register(PacketHello.class, new PacketHello.Handler((flag) -> versionCompatible = flag, compatibleClients, logAdaptor));
     }
 
     public void onCommonSetup(FMLCommonSetupEvent event) {
-        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients));
+        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients, logAdaptor));
         MinecraftForge.EVENT_BUS.addListener(this::onServerAboutToStart);
     }
 

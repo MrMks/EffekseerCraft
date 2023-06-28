@@ -1,35 +1,39 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.client.ResourceLoader;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.resource.IResourceType;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ResourceManager extends ResourceLoader<IResourceManager, ResourceLocation> implements ISelectiveResourceReloadListener {
 
     enum ResourceEffect implements IResourceType { INSTANCE }
 
-    private final Logger logger;
-    ResourceManager(Logger logger) {
-        this.logger = logger;
+    ResourceManager(ILogAdaptor logger) {
+        super(logger);
     }
 
     @Override
     public void onResourceManagerReload(@Nonnull IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
         if (resourcePredicate.test(ResourceEffect.INSTANCE)) {
             doClear();
-            resourceManager.listResources("effects", it -> it.endsWith(".efkefc"))
+            Collection<String> keys = resourceManager.listResources("effects", it -> it.endsWith(".efkefc"))
                     .stream()
                     .filter(ResourceManager::filterResource)
-                    .forEach(it -> loadEffect(resourceManager, it));
+                    .map(ResourceManager::mapResourceToKey)
+                    .collect(Collectors.toSet());
+
+            doLoad(resourceManager, keys);
         }
     }
 
@@ -39,23 +43,8 @@ public class ResourceManager extends ResourceLoader<IResourceManager, ResourceLo
     }
 
     @Override
-    protected void logException(String msg, Throwable tr) {
-        if (tr == null)
-            logger.error(msg);
-        else
-            logger.error(msg, tr);
-    }
-
-    @Override
     protected InputStream loadResource(IResourceManager resourceManager, ResourceLocation resourceLocation) throws IOException {
         return resourceManager.getResource(resourceLocation).getInputStream();
-    }
-
-    private void loadEffect(IResourceManager resourceManager, ResourceLocation rl) {
-        String path = rl.getPath();
-        String key = path.substring(path.indexOf('/') + 1, path.lastIndexOf('/'));
-
-        doLoad(resourceManager, key);
     }
 
     EfsEffect get(String key) {
@@ -82,6 +71,12 @@ public class ResourceManager extends ResourceLoader<IResourceManager, ResourceLo
         String folder = path.substring(i0 + 1, i1), file = path.substring(i1 + 1, path.length() - 7);
 
         return folder.equals(file);
+    }
+
+    private static String mapResourceToKey(ResourceLocation rl) {
+        String path = rl.getPath();
+
+        return path.substring(path.indexOf('/') + 1, path.lastIndexOf('/'));
     }
 
 }

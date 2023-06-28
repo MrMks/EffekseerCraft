@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
@@ -20,20 +21,22 @@ public class CommonProxy {
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;
+    protected ILogAdaptor logAdaptor;
     protected File configFile;
 
     public void preInitialize(FMLPreInitializationEvent event) {
         configurationFolder = event.getModConfigurationDirectory();
         modVersion = event.getModMetadata().version;
         logger = event.getModLog();
+        logAdaptor = new LogAdaptor(logger);
         configFile = event.getSuggestedConfigurationFile();
     }
 
     public void initialize(FMLInitializationEvent event) {
         this.wrapper = new NetworkWrapper();
         // handler of message hello
-        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients));
-        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients));
+        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients, logAdaptor));
+        MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients, logAdaptor));
     }
 
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {}

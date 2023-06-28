@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
+import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 
 import java.io.DataInput;
@@ -39,14 +40,17 @@ public class PacketHello implements NetworkPacket {
 
         private final BooleanConsumer consumer;
         private final Map<UUID, State> clients;
-        public Handler(BooleanConsumer validator, Map<UUID, State> clients) {
+        private final ILogAdaptor logger;
+        public Handler(BooleanConsumer validator, Map<UUID, State> clients, ILogAdaptor logger) {
             this.consumer = validator;
             this.clients = clients;
+            this.logger = logger;
         }
 
-        public Handler(Map<UUID, State> clients) {
+        public Handler(Map<UUID, State> clients, ILogAdaptor logger) {
             this.consumer = it -> {throw new UnsupportedOperationException();};
             this.clients = clients;
+            this.logger = logger;
         }
 
         @Override
@@ -58,6 +62,9 @@ public class PacketHello implements NetworkPacket {
                 } else {
                     if (clients.get(context.getSender()) == State.WAITING_FOR_REPLY) {
                         clients.put(context.getSender(), State.COMPLETE);
+                        logger.logInfo("Established connection to client with uuid " + context.getSender());
+                    } else {
+                        logger.logWarning("Received hello packet from unexpected client " + context.getSender());
                     }
                     return null;
                 }
