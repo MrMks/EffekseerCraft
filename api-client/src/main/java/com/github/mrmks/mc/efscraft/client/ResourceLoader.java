@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

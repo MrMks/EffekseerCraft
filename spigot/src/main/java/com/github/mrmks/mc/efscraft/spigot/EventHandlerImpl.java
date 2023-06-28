@@ -1,7 +1,6 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.Constants;
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;

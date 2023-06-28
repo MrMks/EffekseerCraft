@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 
 import java.io.DataInput;

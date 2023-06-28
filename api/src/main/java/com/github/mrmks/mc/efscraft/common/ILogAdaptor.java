@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft;
+package com.github.mrmks.mc.efscraft.common;
 
 public interface ILogAdaptor {
     String DEBUG_PROP = "efscraft.log.debug";

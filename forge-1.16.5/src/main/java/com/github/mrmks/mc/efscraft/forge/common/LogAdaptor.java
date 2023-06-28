@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import org.apache.logging.log4j.Logger;
 
 class LogAdaptor implements ILogAdaptor {

@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.FolderName;

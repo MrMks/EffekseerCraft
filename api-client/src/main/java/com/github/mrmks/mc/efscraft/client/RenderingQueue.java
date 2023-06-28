@@ -5,7 +5,7 @@ import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketStop;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketTrigger;
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

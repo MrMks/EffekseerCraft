@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

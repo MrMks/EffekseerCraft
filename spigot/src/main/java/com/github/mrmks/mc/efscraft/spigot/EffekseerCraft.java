@@ -2,7 +2,8 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;

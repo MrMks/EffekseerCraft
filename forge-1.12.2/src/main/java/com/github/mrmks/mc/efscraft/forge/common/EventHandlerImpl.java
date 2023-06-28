@@ -1,8 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.EventHandler;
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.EventHandler;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.entity.player.EntityPlayer;

@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
-import com.github.mrmks.mc.efscraft.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.client.ResourceLoader;
 import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
