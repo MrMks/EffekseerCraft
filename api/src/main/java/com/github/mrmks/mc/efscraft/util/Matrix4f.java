@@ -1,6 +1,6 @@
-package com.github.mrmks.mc.efscraft.client;
+package com.github.mrmks.mc.efscraft.util;
 
-class Matrix4f {
+public class Matrix4f {
 
     private static final float PI = (float) Math.PI;
     private static float sin(float rad) {
@@ -53,6 +53,10 @@ class Matrix4f {
         return this;
     }
 
+    public Matrix4f translatef(Vec3f vec) {
+        return translatef(vec.x, vec.y, vec.z);
+    }
+
     public Matrix4f translated(double x, double y, double z) {
         translatef((float) x, (float) y, (float) z);
         return this;
@@ -60,6 +64,10 @@ class Matrix4f {
 
     public Matrix4f rotateMC(float yaw, float pitch) {
         return rotate(-yaw, -pitch);
+    }
+
+    public Matrix4f rotateMC(Vec2f vec) {
+        return rotateMC(vec.x, vec.y);
     }
 
     public Matrix4f rotate(float yaw, float pitch) {
@@ -81,11 +89,19 @@ class Matrix4f {
         return mul33(other);
     }
 
+    public Matrix4f rotate(Vec2f vec) {
+        return rotate(vec.x, vec.y);
+    }
+
     public Matrix4f scale(float x, float y, float z) {
         m00 *= x; m01 *= x; m02 *= x;
         m10 *= y; m11 *= y; m12 *= y;
         m20 *= z; m21 *= z; m22 *= z;
         return this;
+    }
+
+    public Matrix4f scale(Vec3f vec) {
+        return scale(vec.x, vec.y, vec.z);
     }
 
     private Matrix4f mul33(Matrix4f other) {

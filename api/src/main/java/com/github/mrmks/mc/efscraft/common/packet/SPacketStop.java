@@ -22,9 +22,7 @@ public class SPacketStop implements NetworkPacket {
         return emitter;
     }
 
-    enum Codec implements NetworkPacket.Codec<SPacketStop> {
-        INSTANCE;
-
+    static final NetworkPacket.Codec<SPacketStop> CODEC = new Codec<SPacketStop>() {
         @Override
         public void read(SPacketStop packet, DataInput stream) throws IOException {
             packet.key = stream.readUTF();
@@ -36,5 +34,5 @@ public class SPacketStop implements NetworkPacket {
             stream.writeUTF(packet.key);
             stream.writeUTF(packet.emitter);
         }
-    }
+    };
 }

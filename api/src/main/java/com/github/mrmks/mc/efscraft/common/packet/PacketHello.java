@@ -14,9 +14,7 @@ public class PacketHello implements NetworkPacket {
     private int version;
     public PacketHello() {}
 
-    enum Codec implements NetworkPacket.Codec<PacketHello> {
-        INSTANCE;
-
+    static final NetworkPacket.Codec<PacketHello> CODEC = new NetworkPacket.Codec<PacketHello>() {
         @Override
         public void read(PacketHello packet, DataInput stream) throws IOException {
             packet.version = stream.readInt();
@@ -26,7 +24,7 @@ public class PacketHello implements NetworkPacket {
         public void write(PacketHello packet, DataOutput stream) throws IOException {
             stream.writeInt(Constants.PROTOCOL_VERSION);
         }
-    }
+    };
 
     public interface BooleanConsumer {
         void accept(boolean flag);
@@ -36,41 +34,45 @@ public class PacketHello implements NetworkPacket {
         WAITING_FOR_REPLY, COMPLETE
     }
 
-    public static final class Handler implements NetworkPacket.Handler<PacketHello, PacketHello> {
+    public static final class ClientHandler implements NetworkPacket.ClientHandler<PacketHello, PacketHello> {
 
-        private final BooleanConsumer consumer;
-        private final Map<UUID, State> clients;
-        private final ILogAdaptor logger;
-        public Handler(BooleanConsumer validator, Map<UUID, State> clients, ILogAdaptor logger) {
-            this.consumer = validator;
-            this.clients = clients;
-            this.logger = logger;
+        private final BooleanConsumer setter;
+        public ClientHandler(BooleanConsumer setter) {
+            this.setter = setter;
         }
 
-        public Handler(Map<UUID, State> clients, ILogAdaptor logger) {
-            this.consumer = it -> {throw new UnsupportedOperationException();};
+        @Override
+        public PacketHello handlePacket(PacketHello packetIn) {
+            boolean flag = packetIn.version == Constants.PROTOCOL_VERSION;
+            setter.accept(flag);
+
+            return flag ? new PacketHello() : null;
+        }
+    }
+
+    public static final class ServerHandler implements NetworkPacket.ServerHandler<PacketHello, NetworkPacket> {
+
+        private final Map<UUID, State> clients;
+        private final ILogAdaptor logger;
+
+        public ServerHandler(Map<UUID, State> clients, ILogAdaptor logger) {
             this.clients = clients;
             this.logger = logger;
         }
 
         @Override
-        public PacketHello handlePacket(PacketHello packetIn, MessageContext context) {
-            if (packetIn.version == Constants.PROTOCOL_VERSION) {
-                if (context.isRemote()) {
-                    consumer.accept(true);
-                    return new PacketHello();
+        public NetworkPacket handlePacket(PacketHello packet, UUID sender) {
+
+            if (packet.version == Constants.PROTOCOL_VERSION) {
+                if (clients.get(sender) == State.WAITING_FOR_REPLY) {
+                    clients.put(sender, State.COMPLETE);
+                    logger.logInfo("Established connection to client with uuid " + sender);
                 } else {
-                    if (clients.get(context.getSender()) == State.WAITING_FOR_REPLY) {
-                        clients.put(context.getSender(), State.COMPLETE);
-                        logger.logInfo("Established connection to client with uuid " + context.getSender());
-                    } else {
-                        logger.logWarning("Received hello packet from unexpected client " + context.getSender());
-                    }
-                    return null;
+                    logger.logWarning("Received hello packet from unexpected client " + sender);
                 }
-            } else {
-                return null;
             }
+
+            return null;
         }
     }
 }

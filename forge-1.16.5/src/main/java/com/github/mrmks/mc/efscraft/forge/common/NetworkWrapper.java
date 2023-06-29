@@ -23,13 +23,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.util.function.Consumer;
 
-public class NetworkWrapper {
+public class NetworkWrapper extends MessageCodec {
     private static final ResourceLocation CHANNEL_NAME = ResourceLocation.tryParse(Constants.CHANNEL_KEY);
     private static final Logger LOGGER = LogManager.getLogger("efscraft");
-    private final MessageCodec codec;
-
     NetworkWrapper() {
         EventNetworkChannel channel = NetworkRegistry.newEventChannel(
                 CHANNEL_NAME,
@@ -38,18 +35,6 @@ public class NetworkWrapper {
                 any -> true);
 
         channel.addListener(this::receivePacket);
-
-        this.codec = new MessageCodec();
-    }
-
-    public <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ? extends NetworkPacket> handler) {
-        codec.register(klass, handler);
-    }
-
-    public <T extends NetworkPacket> void register(Class<T> klass, Consumer<T> handler) {
-        register(klass, (packetIn, context) -> {
-            handler.accept(packetIn); return null;
-        });
     }
 
     private void receivePacket(NetworkEvent event) {
@@ -66,7 +51,7 @@ public class NetworkWrapper {
         DataInput input = new ByteBufInputStream(buffer);
         NetworkPacket reply = null;
         try {
-            reply = codec.writeInput(input, ctx);
+            reply = super.readInput(input, ctx);
             if (ctx.isRemote()) buffer.release();
         } catch (IOException e) {
             LOGGER.error("Unable to decode and handle a message", e);
@@ -85,7 +70,7 @@ public class NetworkWrapper {
     private Pair<PacketBuffer, Integer> toBuffer(NetworkPacket message) {
         PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
         try {
-            if (!codec.writeOutput(message, new ByteBufOutputStream(buffer))) {
+            if (!super.writeOutput(message, new ByteBufOutputStream(buffer))) {
                 buffer.release();
             }
         } catch (IOException e) {

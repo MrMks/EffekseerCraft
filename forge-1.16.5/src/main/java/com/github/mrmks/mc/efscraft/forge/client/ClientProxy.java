@@ -39,16 +39,14 @@ public class ClientProxy extends CommonProxy {
             EffekseerCraft.registerCleanup(renderer::deleteProgram);
             EffekseerCraft.registerCleanup(EffekSeer4J::finish);
 
-            MessageHandlerClient client = new MessageHandlerClient(this::isVersionCompatible, queue);
-            wrapper.register(SPacketPlayWith.class, client::handlePlayWith);
-            wrapper.register(SPacketPlayAt.class, client::handlePlayAt);
-            wrapper.register(SPacketStop.class, client::handleStop);
-            wrapper.register(SPacketClear.class, client::handleClear);
-            wrapper.register(SPacketTrigger.class, client::handleTrigger);
+            MessageHandlerClient client = new MessageHandlerClient(queue);
+            wrapper.registerClient(PacketHello.class, new PacketHello.ClientHandler(client::handleHello));
+            wrapper.registerClient(SPacketPlayWith.class, client::handlePlayWith);
+            wrapper.registerClient(SPacketPlayAt.class, client::handlePlayAt);
+            wrapper.registerClient(SPacketStop.class, client::handleStop);
+            wrapper.registerClient(SPacketClear.class, client::handleClear);
+            wrapper.registerClient(SPacketTrigger.class, client::handleTrigger);
         }
     }
 
-    boolean isVersionCompatible() {
-        return versionCompatible;
-    }
 }

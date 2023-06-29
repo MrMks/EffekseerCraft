@@ -6,41 +6,61 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class MessageCodec {
 
     private static class Node<T extends NetworkPacket> {
         private final Class<T> klass;
         private final Byte desc;
+        private final Supplier<T> supplier;
         private final NetworkPacket.Codec<T> codec;
-        private NetworkPacket.Handler<T, ?> handle;
+        @Deprecated private NetworkPacket.Handler<T, ?> handle;
+        private NetworkPacket.ClientHandler<T, ?> cHandler;
+        private NetworkPacket.ServerHandler<T, ?> sHandler;
 
-        Node(Class<T> klass, Byte desc, NetworkPacket.Codec<T> codec) {
+        Node(Class<T> klass, Byte desc, Supplier<T> supplier, NetworkPacket.Codec<T> codec) {
             this.klass = klass;
             this.desc = desc;
+            this.supplier = supplier;
             this.codec = codec;
         }
 
+        @Deprecated
         void setHandler(NetworkPacket.Handler<T, ?> handle) {
-            if (this.handle == null && handle != null)
-                this.handle = handle;
+            if (this.handle == null && handle != null) this.handle = handle;
+        }
+
+        void setHandler(NetworkPacket.ClientHandler<T, ?> handler) {
+            if (this.cHandler == null && handler != null) this.cHandler = handler;
+        }
+
+        void setHandler(NetworkPacket.ServerHandler<T, ?> handler) {
+            if (this.sHandler == null && handler != null) this.sHandler = handler;
         }
 
         NetworkPacket handle(DataInput input, MessageContext context) throws IOException {
 
-            if (handle == null) return null;
+            T packet = supplier.get();
+            codec.read(packet, input);
 
-            T packet;
-            try {
-                packet = klass.newInstance();
-                if (codec != null)
-                    codec.read(packet, input);
-            } catch (InstantiationException | IllegalAccessException e) {
-                e.printStackTrace();
-                return null;
+            NetworkPacket reply = null;
+            if (context.isRemote()) {
+                if (cHandler != null)
+                    reply = cHandler.handlePacket(packet);
+                else if (handle != null)
+                    reply = handle.handlePacket(packet, context);
+            } else {
+                if (sHandler != null)
+                    reply = sHandler.handlePacket(packet, context.getSender());
+                else if (handle != null)
+                    reply = handle.handlePacket(packet, context);
             }
 
-            return handle.handlePacket(packet, context);
+            return reply;
         }
 
         void writeTo(T packet, DataOutput output) throws IOException {
@@ -56,16 +76,16 @@ public class MessageCodec {
 
     public MessageCodec() {
 
-        register(PacketHello.class, PacketHello.Codec.INSTANCE);
+        register(PacketHello.class, PacketHello::new, PacketHello.CODEC);
 
-        register(SPacketPlayWith.class, SPacketPlayWith.Codec.INSTANCE);
-        register(SPacketPlayAt.class, SPacketPlayAt.Codec.INSTANCE);
-        register(SPacketStop.class, SPacketStop.Codec.INSTANCE);
-        register(SPacketClear.class, (NetworkPacket.Codec<SPacketClear>) null);
-        register(SPacketTrigger.class, SPacketTrigger.Codec.INSTANCE);
+        register(SPacketPlayWith.class, SPacketPlayWith::new, SPacketPlayWith.CODEC);
+        register(SPacketPlayAt.class, SPacketPlayAt::new, SPacketPlayAt.CODEC);
+        register(SPacketStop.class, SPacketStop::new, SPacketStop.CODEC);
+        register(SPacketClear.class, SPacketClear::new, null);
+        register(SPacketTrigger.class, SPacketTrigger::new, SPacketTrigger.CODEC);
     }
 
-    private <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Codec<T> codec) {
+    private <T extends NetworkPacket> void register(Class<T> klass, Supplier<T> supplier, NetworkPacket.Codec<T> codec) {
         int modifier = klass.getModifiers();
         if (Modifier.isAbstract(modifier) || Modifier.isInterface(modifier))
             throw new IllegalArgumentException("We can't accept an abstract class or interface as message type!");
@@ -73,12 +93,13 @@ public class MessageCodec {
         Node<?> node = klassToNode.get(klass);
         if (node != null) throw new IllegalArgumentException();
 
-        node = new Node<>(klass, descIndex++, codec);
+        node = new Node<>(klass, descIndex++, supplier, codec);
 
         klassToNode.put(node.klass, node);
         descToNode.put(node.desc, node);
     }
 
+    @Deprecated
     public final <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ?> handle) {
         Node<?> node = klassToNode.get(klass);
         if (node != null) {
@@ -87,8 +108,35 @@ public class MessageCodec {
         }
     }
 
-    // in this case, data always reply to the one who send inputs.
-    public final <S extends DataInput> NetworkPacket writeInput(S input, MessageContext context) throws IOException {
+    @Deprecated
+    public final <T extends NetworkPacket> void register(Class<T> klass, BiConsumer<T, MessageContext> consumer) {
+        register(klass, (packetIn, context) -> {consumer.accept(packetIn, context); return null;});
+    }
+
+    public final <T extends NetworkPacket> void registerClient(Class<T> klass, NetworkPacket.ClientHandler<T, ?> handle) {
+        Node<?> node = klassToNode.get(klass);
+        if (node != null)
+            //noinspection unchecked
+            ((Node<T>) node).setHandler(handle);
+    }
+
+    public final <T extends NetworkPacket> void registerClient(Class<T> klass, Consumer<T> consumer) {
+        registerClient(klass, packetIn -> {consumer.accept(packetIn); return null;});
+    }
+
+    public final <T extends NetworkPacket> void registerServer(Class<T> klass, NetworkPacket.ServerHandler<T, ?> handle) {
+        Node<?> node = klassToNode.get(klass);
+        if (node != null)
+            //noinspection unchecked
+            ((Node<T>) node).setHandler(handle);
+    }
+
+    public final <T extends NetworkPacket> void registerServer(Class<T> klass, BiConsumer<T, UUID> consumer) {
+        registerServer(klass, (packet, sender) -> {consumer.accept(packet, sender); return null;});
+    }
+
+    // in this case, responses always send back to the sender;
+    public final <S extends DataInput> NetworkPacket readInput(S input, MessageContext context) throws IOException {
         byte desc = input.readByte();
         Node<?> node = descToNode.get(desc);
         if (node != null)

@@ -29,9 +29,7 @@ public class SPacketTrigger implements NetworkPacket {
         return id;
     }
 
-    enum Codec implements NetworkPacket.Codec<SPacketTrigger> {
-        INSTANCE;
-
+    static final NetworkPacket.Codec<SPacketTrigger> CODEC = new NetworkPacket.Codec<SPacketTrigger>() {
         @Override
         public void read(SPacketTrigger packet, DataInput stream) throws IOException {
             packet.effect = stream.readUTF();
@@ -45,5 +43,6 @@ public class SPacketTrigger implements NetworkPacket {
             stream.writeUTF(packet.emitter);
             stream.writeByte(packet.id);
         }
-    }
+    };
+
 }

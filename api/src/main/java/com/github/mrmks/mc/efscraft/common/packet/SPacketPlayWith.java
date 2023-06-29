@@ -103,10 +103,7 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
         return (mask2 & MASK2_INHERIT_PITCH) != 0;
     }
 
-    static class Codec extends SPacketPlayAbstract.Codec<SPacketPlayWith> {
-
-        public static final Codec INSTANCE = new Codec();
-
+    static final NetworkPacket.Codec<SPacketPlayWith> CODEC = new SPacketPlayAbstract.Codec<SPacketPlayWith>() {
         @Override
         public void read(SPacketPlayWith packet, DataInput stream) throws IOException {
             super.read(packet, stream);
@@ -120,5 +117,5 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
             stream.writeInt(packet.target);
             stream.writeByte(packet.mask2);
         }
-    }
+    };
 }

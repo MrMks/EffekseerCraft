@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.util.logging.Level;
 
@@ -21,8 +22,8 @@ class NetworkWrapper implements PluginMessageListener {
         this.plugin = plugin;
     }
 
-    <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ? extends NetworkPacket> handler) {
-        codec.register(klass, handler);
+    <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.ServerHandler<T, ? extends NetworkPacket> handler) {
+        codec.registerServer(klass, handler);
     }
 
     void sendTo(Player player, NetworkPacket packet) {
@@ -38,13 +39,13 @@ class NetworkWrapper implements PluginMessageListener {
     }
 
     @Override
-    public void onPluginMessageReceived(String s, Player player, byte[] bytes) {
+    public void onPluginMessageReceived(@Nonnull String s, @Nonnull Player player, @Nonnull byte[] bytes) {
         // receive a client packet;
         if (Constants.CHANNEL_KEY.equals(s)) {
             DataInput input = new DataInputStream(new ByteArrayInputStream(bytes));
             try {
                 // convert it to Packet
-                NetworkPacket out = codec.writeInput(input, new MessageContext(player.getUniqueId()));
+                NetworkPacket out = codec.readInput(input, new MessageContext(player.getUniqueId()));
                 // send out reply;
                 if (out != null) sendTo(player, out);
             } catch (IOException e) {

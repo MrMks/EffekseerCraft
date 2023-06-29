@@ -16,8 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CommonProxy {
     protected NetworkWrapper wrapper;
-    protected transient boolean versionCompatible = false;
-    private final Map<UUID, PacketHello.State> compatibleClients = new ConcurrentHashMap<>();
+    protected final Map<UUID, PacketHello.State> compatibleClients = new ConcurrentHashMap<>();
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;
@@ -35,11 +34,9 @@ public class CommonProxy {
     public void initialize(FMLInitializationEvent event) {
         this.wrapper = new NetworkWrapper();
         // handler of message hello
-        this.wrapper.register(PacketHello.class, new PacketHello.Handler(it -> versionCompatible = it, compatibleClients, logAdaptor));
+        this.wrapper.registerServer(PacketHello.class, new PacketHello.ServerHandler(compatibleClients, logAdaptor));
         MinecraftForge.EVENT_BUS.register(new EventHandlerImpl(wrapper, compatibleClients, logAdaptor));
     }
-
-    public void serverAboutToStart(FMLServerAboutToStartEvent event) {}
 
     public void serverStarting(FMLServerStartingEvent event) {
         File file;
@@ -53,15 +50,6 @@ public class CommonProxy {
         }
         PermissionAPI.registerNode("efscraft.command", DefaultPermissionLevel.OP, "permissions to use efscraft's commands");
         event.registerServerCommand(new CommandAdaptor(wrapper, file, compatibleClients, modVersion));
-    }
-
-    public void serverStarted(FMLServerStartedEvent event) {
-    }
-
-    public void serverStopping(FMLServerStoppingEvent event) {
-    }
-
-    public void serverStopped(FMLServerStoppedEvent event) {
     }
 
 }

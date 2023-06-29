@@ -24,7 +24,6 @@ public class CommonProxy {
 
     protected final NetworkWrapper wrapper;
     protected final ILogAdaptor logAdaptor = new LogAdaptor(LOGGER);
-    protected transient boolean versionCompatible = false;
     private final Map<UUID, PacketHello.State> compatibleClients = new ConcurrentHashMap<>();
     private final String modVersion;
 
@@ -32,7 +31,7 @@ public class CommonProxy {
         this.modVersion = modVersion;
 
         this.wrapper = new NetworkWrapper();
-        wrapper.register(PacketHello.class, new PacketHello.Handler((flag) -> versionCompatible = flag, compatibleClients, logAdaptor));
+        wrapper.registerServer(PacketHello.class, new PacketHello.ServerHandler(compatibleClients, logAdaptor));
     }
 
     public void onCommonSetup(FMLCommonSetupEvent event) {

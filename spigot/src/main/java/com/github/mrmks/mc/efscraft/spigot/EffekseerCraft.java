@@ -48,7 +48,7 @@ public class EffekseerCraft extends JavaPlugin {
 
         Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
 
-        network.register(PacketHello.class, new PacketHello.Handler(clients, adaptor));
+        network.register(PacketHello.class, new PacketHello.ServerHandler(clients, adaptor));
 
         Localize localize = new Localize();
         try (InputStream stream = getResource("lang/en_us.lang")) {

@@ -25,11 +25,10 @@ import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import static net.minecraftforge.fml.common.network.FMLIndexedMessageToMessageCodec.INBOUNDPACKETTRACKER;
 
-public class NetworkWrapper {
+public class NetworkWrapper extends MessageCodec {
 
     @ChannelHandler.Sharable
     private static class MessageCodecAdaptor extends MessageToMessageCodec<FMLProxyPacket, NetworkPacket> {
@@ -76,7 +75,7 @@ public class NetworkWrapper {
             UUID uuid = isRemote ? null : ((NetHandlerPlayServer) msg.handler()).player.getPersistentID();
 
             ByteBufInputStream stream = new ByteBufInputStream(msg.payload(), true);
-            NetworkPacket packet = codec.writeInput(stream, new MessageContext(uuid));
+            NetworkPacket packet = codec.readInput(stream, new MessageContext(uuid));
             stream.close();
 
             if (packet != null) out.add(packet);
@@ -98,21 +97,10 @@ public class NetworkWrapper {
         }
     }
 
-    private final MessageCodec codec = new MessageCodec();
     private final EnumMap<Side, FMLEmbeddedChannel> channels;
 
     NetworkWrapper() {
-        channels = NetworkRegistry.INSTANCE.newChannel(Constants.CHANNEL_KEY, new MessageCodecAdaptor(codec), new MessageCodecReply());
-    }
-
-    public <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ? extends NetworkPacket> handler) {
-        codec.register(klass, handler);
-    }
-
-    public <T extends NetworkPacket> void register(Class<T> klass, Consumer<T> handler) {
-        register(klass, (packetIn, context) -> {
-            handler.accept(packetIn); return null;
-        });
+        channels = NetworkRegistry.INSTANCE.newChannel(Constants.CHANNEL_KEY, new MessageCodecAdaptor(this), new MessageCodecReply());
     }
 
     public void sendTo(EntityPlayer player, NetworkPacket message) {
