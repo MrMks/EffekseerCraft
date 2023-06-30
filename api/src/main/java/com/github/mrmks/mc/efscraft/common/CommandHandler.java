@@ -34,7 +34,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
         return getListMatchLastArg(args, Arrays.asList(collection));
     }
 
-    private void sendNearby(SERVER server, SENDER sender, Collection<PLAYER> targets, NetworkPacket message, float x, float y, float z) {
+    private void sendNearby(SERVER server, SENDER sender, Collection<PLAYER> targets, NetworkPacket message, float x, float y, float z, int dist) {
 
         int chunkX = floorInt(x) >> 4, chunkY = floorInt(y) >> 4, chunkZ = floorInt(z) >> 4;
 
@@ -45,7 +45,7 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
             int cx = floorInt(pos[0]) >> 4, cy = floorInt(pos[1]) >> 4, cz = floorInt(pos[2]) >> 4;
 
-            if (inClamp(chunkX, cx, 10) && inClamp(chunkY, cy, 10) && inClamp(chunkZ, cz, 10))
+            if (inClamp(chunkX, cx, dist) && inClamp(chunkY, cy, dist) && inClamp(chunkZ, cz, 10))
                 adaptor.sendPacketTo(server, player, message);
         }
     }
@@ -156,8 +156,9 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
                     WORLD world = adaptor.getEntityWorld(entity);
                     Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
+                    int dist = adaptor.getViewDistance(world);
 
-                    sendNearby(server, sender, players, message, pos[0], pos[1], pos[2]);
+                    sendNearby(server, sender, players, message, pos[0], pos[1], pos[2], dist);
 
                 } else if ("at".equals(action)) {
                     if (args.length < 9)
@@ -186,8 +187,9 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
                             .buildPlayAt(effect, emitter, x, y, z, yaw, pitch);
 
                     Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
+                    int dist = adaptor.getViewDistance(world);
 
-                    sendNearby(server, sender, players, message, x, y, z);
+                    sendNearby(server, sender, players, message, x, y, z, dist);
                 }
             } else {
                 throw new EffectNotFoundException(effect);
@@ -198,6 +200,9 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     private List<String> completePlay(String[] args, SERVER server, SENDER sender) {
         if (args.length < 5) {
             return completeBasic(args, 0, server, sender);
+        } else if (args.length < 10) {
+            if ("at".equals(args[2])) return getListMatchLastArg(args, "~");
+            else return Collections.emptyList();
         } else {
             return Collections.emptyList();
         }
@@ -229,6 +234,8 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
             return getListMatchLastArg(args, "0", "1", "2", "3");
         } else if (args.length < 6) {
             return completeBasic(args, 1, server, sender);
+        } else if (args.length < 9 && "at".equals(args[3])) {
+            return getListMatchLastArg(args, "~");
         } else return Collections.emptyList();
     }
 
@@ -236,46 +243,17 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
         if (args.length < 4) {
             throw new WrongUsageException("commands.effek.stop.usage");
         } else {
-            String effect = args[0], emitter = args[1], action = args[2];
 
-            if (registry.isExist(effect)) {
-                if ("on".equals(action)) {
-                    ENTITY entity = adaptor.findEntity(server, sender, args[3]);
-                    float[] pos = entity == null ? null : adaptor.getEntityPosAngle(entity);
-                    if (pos == null || pos.length < 5)
-                        throw new EntityNotFoundException(args[3]);
+            ActionOn actionOn = (effect, emitter, entity, followings) -> new SPacketStop(effect, emitter);
+            ActionAt actionAt = (effect, emitter, posAngle, followings) -> new SPacketStop(effect, emitter);
 
-                    Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, adaptor.getEntityWorld(entity));
+            try {
+                executeBasic(args, 0, server, sender, false, actionAt, actionOn);
+            } catch (WrongUsageException wue) {
+                if (wue == WrongUsageException.PLACEHOLDER)
+                    throw new WrongUsageException("commands.effek.stop.usage");
 
-                    NetworkPacket message = new SPacketStop(effect, emitter);
-
-                    sendNearby(server, sender, players, message, pos[0], pos[1], pos[2]);
-                } else if ("at".equals(action)) {
-
-                    if (args.length < 7)
-                        throw new CommandException("commands.effek.stop.usage");
-
-                    WORLD world = adaptor.findWorld(server, sender, args[3]);
-
-                    if (world == null)
-                        throw new WorldNotFoundException(args[3]);
-
-                    float x, y, z;
-
-                    float[] pos = adaptor.getSenderPosAngle(sender);
-                    if (pos == null || pos.length < 5) {
-                        x = parseFloat(args[4]); y = parseFloat(args[5]);  z = parseFloat(args[6]);
-                    } else {
-                        x = parseFloat(args[4], pos[0]); y = parseFloat(args[5], pos[1]); z = parseFloat(args[6], pos[2]);
-                    }
-
-                    NetworkPacket message = new SPacketStop(effect, emitter);
-                    Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
-
-                    sendNearby(server, sender, players, message, x, y, z);
-                }
-            } else {
-                throw new EffectNotFoundException(effect);
+                throw wue;
             }
         }
     }
@@ -283,6 +261,8 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
     private List<String> completeStop(String[] args, SERVER server, SENDER sender) {
         if (args.length < 5) {
             return completeBasic(args, 0, server, sender);
+        } else if (args.length < 8 && "at".equals(args[2])) {
+            return getListMatchLastArg(args, "~");
         } else {
             return Collections.emptyList();
         }
@@ -323,8 +303,9 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
             WORLD world = adaptor.getEntityWorld(entity);
             Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
+            int dist = adaptor.getViewDistance(world);
 
-            sendNearby(server, sender, players, message, pos[0], pos[1], pos[2]);
+            sendNearby(server, sender, players, message, pos[0], pos[1], pos[2], dist);
         } else if ("at".equalsIgnoreCase(action)) {
 
             if (args.length < index + 7)
@@ -359,13 +340,14 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
                 message = actionAt.accept(effect, emitter, posAngle, followings);
             } else {
                 float[] posAngle = {x, y, z, 0, 0};
-                String[] followings = Arrays.copyOfRange(args, index + 9, args.length);
+                String[] followings = Arrays.copyOfRange(args, index + 7, args.length);
                 message = actionAt.accept(effect, emitter, posAngle, followings);
             }
 
             Collection<PLAYER> players = adaptor.getPlayersInWorld(server, sender, world);
+            int dist = adaptor.getViewDistance(world);
 
-            sendNearby(server, sender, players, message, x, y, z);
+            sendNearby(server, sender, players, message, x, y, z, dist);
         } else {
             throw WrongUsageException.PLACEHOLDER;
         }
@@ -436,6 +418,8 @@ public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD
 
         Collection<String> completePlayers(SERVER server);
         Collection<String> completeWorlds(SERVER server);
+
+        int getViewDistance(WORLD world);
 
         void sendMessage(SENDER player, String msg, Object[] objects, boolean schedule);
 

@@ -119,6 +119,11 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
     }
 
     @Override
+    public int getViewDistance(World world) {
+        return world.getViewDistance();
+    }
+
+    @Override
     public void sendMessage(CommandSender sender, String msg, Object[] objects, boolean schedule) {
         if (schedule) {
             sender.getServer().getScheduler().runTaskLater(plugin, () -> sendMessage0(sender, msg, objects, false), 1L);

@@ -23,6 +23,8 @@ import net.minecraft.command.arguments.RotationArgument;
 import net.minecraft.command.arguments.Vec3Argument;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.server.permission.PermissionAPI;
@@ -126,6 +128,14 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     @Override
     public Collection<String> completeWorlds(CommandContext<CommandSource> server) {
         return server.getSource().getServer().levelKeys().stream().map(it -> it.location().toString()).collect(Collectors.toSet());
+    }
+
+    @Override
+    public int getViewDistance(World world) {
+        MinecraftServer server = world == null ? null : world.getServer();
+        PlayerList list = server == null ? null : server.getPlayerList();
+
+        return list == null ? 10 : list.getViewDistance();
     }
 
     @Override

@@ -10,6 +10,7 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -77,6 +78,14 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     @Override
     public Collection<String> completeWorlds(MinecraftServer server) {
         return Arrays.stream(DimensionManager.getIDs()).map(Object::toString).collect(Collectors.toList());
+    }
+
+    @Override
+    public int getViewDistance(World world) {
+        MinecraftServer server = world == null ? null : world.getMinecraftServer();
+        PlayerList list = server == null ? null : server.getPlayerList();
+
+        return list == null ? 10 : list.getViewDistance();
     }
 
     @Override
