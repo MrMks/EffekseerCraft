@@ -39,7 +39,7 @@ public class ClientProxy extends CommonProxy {
             EffekseerCraft.registerCleanup(renderer::deleteProgram);
             EffekseerCraft.registerCleanup(EffekSeer4J::finish);
 
-            MessageHandlerClient client = new MessageHandlerClient(queue);
+            MessageHandlerClient client = new MessageHandlerClient(queue, ClientProxy::scheduleTask);
             wrapper.registerClient(PacketHello.class, new PacketHello.ClientHandler(client::handleHello));
             wrapper.registerClient(SPacketPlayWith.class, client::handlePlayWith);
             wrapper.registerClient(SPacketPlayAt.class, client::handlePlayAt);
@@ -47,6 +47,10 @@ public class ClientProxy extends CommonProxy {
             wrapper.registerClient(SPacketClear.class, client::handleClear);
             wrapper.registerClient(SPacketTrigger.class, client::handleTrigger);
         }
+    }
+
+    static void scheduleTask(Runnable task) {
+        Minecraft.getInstance().submit(task);
     }
 
 }

@@ -29,46 +29,31 @@ public abstract class SPacketPlayAbstract implements NetworkPacket {
     }
 
     public final SPacketPlayAbstract rotateLocalTo(float yaw, float pitch) {
-        if (rotLocal == null)
-            rotLocal = new Vec2f(yaw, pitch);
-        else
-            rotLocal.set(yaw, pitch);
+        rotLocal = new Vec2f(yaw, pitch);
 
         return this;
     }
 
     public final SPacketPlayAbstract rotateModelTo(float yaw, float pitch) {
-        if (rotModel == null)
-            rotModel = new Vec2f(yaw, pitch);
-        else
-            rotModel.set(yaw, pitch);
+        rotModel = new Vec2f(yaw, pitch);
 
         return this;
     }
 
     public final SPacketPlayAbstract translateLocalTo(float x, float y, float z) {
-        if (posLocal == null)
-            posLocal = new Vec3f(x, y, z);
-        else
-            posLocal.set(x, y, z);
+        posLocal = new Vec3f(x, y, z);
 
         return this;
     }
 
     public final SPacketPlayAbstract translateModelTo(float x, float y, float z) {
-        if (posModel == null)
-            posModel = new Vec3f(x, y, z);
-        else
-            posModel.set(x, y, z);
+        posModel = new Vec3f(x, y, z);
 
         return this;
     }
 
     public final SPacketPlayAbstract scaleTo(float x, float y, float z) {
-        if (scale == null)
-            scale = new Vec3f(x, y, z);
-        else
-            scale.set(x, y, z);
+        scale = new Vec3f(x, y, z);
 
         return this;
     }
@@ -126,9 +111,9 @@ public abstract class SPacketPlayAbstract implements NetworkPacket {
         return posLocal;
     }
 
-    public final float[] getModelPosition() {
+    public final Vec3f getModelPosition() {
         if (posModel == null) posModel = new Vec3f();
-        return posModel.toArray();
+        return posModel;
     }
 
     public final Vec2f getLocalRotation() {
@@ -136,9 +121,9 @@ public abstract class SPacketPlayAbstract implements NetworkPacket {
         return rotLocal;
     }
 
-    public final float[] getModelRotation() {
+    public final Vec2f getModelRotation() {
         if (rotModel == null) rotModel = new Vec2f();
-        return rotModel.toArray();
+        return rotModel;
     }
 
     public final Vec3f getScale() {
