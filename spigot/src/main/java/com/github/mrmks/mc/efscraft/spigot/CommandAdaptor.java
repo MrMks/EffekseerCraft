@@ -6,6 +6,7 @@ import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -120,7 +121,7 @@ public class CommandAdaptor implements TabExecutor, CommandHandler.Adaptor<Entit
 
     @Override
     public int getViewDistance(World world) {
-        return world.getViewDistance();
+        return plugin.getServer().getViewDistance();
     }
 
     @Override

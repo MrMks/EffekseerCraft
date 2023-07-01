@@ -1,7 +1,7 @@
 
 ext.workDirectory = './run/spigot-1.12.2'
 
-project.version += '.' + '2'
+project.version += '.' + '3'
 
 configurations {
     runMain
@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT', {
+    compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT', {
         exclude group: 'junit'
     }
     compileOnly 'net.md-5:bungeecord-api:1.18-R0.1-SNAPSHOT'
