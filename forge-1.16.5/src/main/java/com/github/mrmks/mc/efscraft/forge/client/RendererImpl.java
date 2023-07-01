@@ -483,6 +483,33 @@ public class RendererImpl extends Renderer {
 
     private class DrawerPerfect implements Drawer {
 
+        private int lastWidth = -1, lastHeight = -1;
+        private int depthFBO = -1, depthAttach0, depthAttach1;
+
+        private void resize(int w, int h) {
+
+            if (lastWidth == w && lastHeight == h)
+                return;
+
+            lastWidth = w; lastHeight = h;
+
+            if (depthFBO < 0) {
+                depthFBO = glGenFramebuffers();
+
+                int[] ints = new int[2];
+                glGenRenderbuffers(ints);
+                depthAttach0 = ints[0];
+                depthAttach1 = ints[1];
+            }
+
+            glBindRenderbuffer(GL_RENDERBUFFER, depthAttach0);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthAttach1);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        }
+
         @Override
         public void drawEffect(boolean prev) {
 
@@ -490,16 +517,37 @@ public class RendererImpl extends Renderer {
             glGetIntegerv(GL_VIEWPORT, INT_16);
             int w = INT_16.get(2), h = INT_16.get(3);
 
+            resize(w, h);
+
+            int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
+            int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
+
+            int mainFBO = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
+
             if (prev) {
-                // blit from main framebuffer, color and depth;
-
-                // copy depth from some framebuffers and combine them to one depth tex;
-
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthFBO);
+                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach0);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
             } else {
-                // backup main framebuffer's depth and color;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, depthFBO);
+                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, depthFBO);
+                glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach0);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
+                draw();
+
+                glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
             }
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
         }
 
         @Override

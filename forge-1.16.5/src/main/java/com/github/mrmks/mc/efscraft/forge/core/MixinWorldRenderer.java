@@ -24,16 +24,12 @@ public class MixinWorldRenderer {
                             shift = At.Shift.BEFORE,
                             ordinal = 5
                     ),
-//                    @At(
-//                            value = "INVOKE",
-//                            target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
-//                            ordinal = 3
-//                    ),
-//                    @At(
-//                            value = "INVOKE",
-//                            target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
-//                            ordinal = 5
-//                    )
+                    @At(
+                            value = "FIELD",
+                            target = "Lnet/minecraft/client/renderer/WorldRenderer;transparencyChain:Lnet/minecraft/client/shader/ShaderGroup;",
+                            shift = At.Shift.BEFORE,
+                            ordinal = 3
+                    )
             }
     )
     private void prevRenderEffect(MatrixStack pMatrixStack, float pPartialTicks, long pFinishTimeNano, boolean pDrawBlockOutline, ActiveRenderInfo pActiveRenderInfo, GameRenderer pGameRenderer, LightTexture pLightmap, Matrix4f pProjection, CallbackInfo ci) {
@@ -48,6 +44,12 @@ public class MixinWorldRenderer {
                             target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
                             shift = At.Shift.AFTER,
                             ordinal = 5
+                    ),
+                    @At(
+                            value = "INVOKE",
+                            target = "Lnet/minecraft/client/shader/ShaderGroup;process(F)V",
+                            shift = At.Shift.AFTER,
+                            ordinal = 1
                     )
             }
     )
