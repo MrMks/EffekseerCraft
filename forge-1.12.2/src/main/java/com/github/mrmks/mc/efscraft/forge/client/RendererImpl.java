@@ -33,9 +33,9 @@ class RendererImpl extends Renderer {
         // bind vertex buffer
         float[] data = {
                 -1f, -1f,  0,      0, 0,        // left-bottom
-                -1f,  1f,  0,      0, 1,        // left-top
-                +1f,  1f,  0,      1, 1,        // right-top
                 +1f, -1f,  0,      1, 0,        // right-bottom
+                +1f,  1f,  0,      1, 1,        // right-top
+                -1f,  1f,  0,      0, 1,        // left-top
         };
 
         vertexBuffer = glGenBuffers();
@@ -310,7 +310,7 @@ class RendererImpl extends Renderer {
             int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
             int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
 
-            int[] caps = {GL_DEPTH_TEST, GL_ALPHA_TEST, GL_STENCIL_TEST, GL_BLEND, GL_FOG, GL_LIGHTING, GL_CULL_FACE, GL_COLOR_MATERIAL};
+            int[] caps = {GL_DEPTH_TEST, GL_ALPHA_TEST, GL_STENCIL_TEST, GL_BLEND, GL_FOG, GL_LIGHTING, GL_COLOR_MATERIAL};
             boolean[] originCaps = new boolean[caps.length];
             for (int i = 0; i < caps.length; i++) {
                 originCaps[i] = glIsEnabled(caps[i]);
@@ -444,10 +444,10 @@ class RendererImpl extends Renderer {
                 // draw color back
                 glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
                 glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-                glEnableMC(GL_BLEND);
                 drawRectangle(programPlain);
 
                 // draw depth back
+                glEnableMC(GL_BLEND);
                 glDisableMC(GL_STENCIL_TEST);
                 glEnableMC(GL_DEPTH_TEST);
                 glDepthFuncMC(GL_ALWAYS);

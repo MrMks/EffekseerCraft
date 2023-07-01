@@ -10,8 +10,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
-import static org.lwjgl.opengl.GL11.*;
-
 class GLHelper {
 
     // buffer related;
@@ -85,28 +83,28 @@ class GLHelper {
     // statues management
     static void glEnableMC(int cap) {
         switch (cap) {
-            case GL_ALPHA_TEST:         GlStateManager.enableAlpha(); break;
-            case GL_BLEND:              GlStateManager.enableBlend(); break;
-            case GL_COLOR_MATERIAL:     GlStateManager.enableColorMaterial(); break;
-            case GL_COLOR_LOGIC_OP:     GlStateManager.enableColorLogic();
-            case GL_CULL_FACE:          GlStateManager.enableCull(); break;
-            case GL_DEPTH_TEST:         GlStateManager.enableDepth(); break;
-            case GL_FOG:                GlStateManager.enableFog(); break;
-            case GL_LIGHTING:           GlStateManager.enableLighting(); break;
+            case GL11.GL_ALPHA_TEST:         GlStateManager.enableAlpha(); break;
+            case GL11.GL_BLEND:              GlStateManager.enableBlend(); break;
+            case GL11.GL_COLOR_MATERIAL:     GlStateManager.enableColorMaterial(); break;
+            case GL11.GL_COLOR_LOGIC_OP:     GlStateManager.enableColorLogic();
+            case GL11.GL_CULL_FACE:          GlStateManager.enableCull(); break;
+            case GL11.GL_DEPTH_TEST:         GlStateManager.enableDepth(); break;
+            case GL11.GL_FOG:                GlStateManager.enableFog(); break;
+            case GL11.GL_LIGHTING:           GlStateManager.enableLighting(); break;
             default:                    GL11.glEnable(cap); break;
         }
     }
 
     static void glDisableMC(int cap) {
         switch (cap) {
-            case GL_ALPHA_TEST:         GlStateManager.disableAlpha(); break;
-            case GL_BLEND:              GlStateManager.disableBlend(); break;
-            case GL_COLOR_MATERIAL:     GlStateManager.disableColorMaterial(); break;
-            case GL_COLOR_LOGIC_OP:     GlStateManager.disableColorLogic();
-            case GL_CULL_FACE:          GlStateManager.disableCull(); break;
-            case GL_DEPTH_TEST:         GlStateManager.disableDepth(); break;
-            case GL_FOG:                GlStateManager.disableFog(); break;
-            case GL_LIGHTING:           GlStateManager.disableLighting(); break;
+            case GL11.GL_ALPHA_TEST:         GlStateManager.disableAlpha(); break;
+            case GL11.GL_BLEND:              GlStateManager.disableBlend(); break;
+            case GL11.GL_COLOR_MATERIAL:     GlStateManager.disableColorMaterial(); break;
+            case GL11.GL_COLOR_LOGIC_OP:     GlStateManager.disableColorLogic();
+            case GL11.GL_CULL_FACE:          GlStateManager.disableCull(); break;
+            case GL11.GL_DEPTH_TEST:         GlStateManager.disableDepth(); break;
+            case GL11.GL_FOG:                GlStateManager.disableFog(); break;
+            case GL11.GL_LIGHTING:           GlStateManager.disableLighting(); break;
             default:                    GL11.glDisable(cap); break;
         }
     }
@@ -323,7 +321,7 @@ class GLHelper {
 
     // textures
     static void glBindTextureMC(int target, int texture) {
-        if (target == GL_TEXTURE_2D) {
+        if (target == GL11.GL_TEXTURE_2D) {
             GlStateManager.bindTexture(texture);
         } else {
             GL11.glBindTexture(target, texture);
