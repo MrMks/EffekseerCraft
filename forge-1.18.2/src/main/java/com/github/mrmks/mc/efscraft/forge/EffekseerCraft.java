@@ -35,12 +35,6 @@ public class EffekseerCraft {
         Dist dist = FMLEnvironment.dist;
         CommonProxy proxy = null;
 
-        try {
-            Class<?> klass = Class.forName("com.github.mrmks.mc.efscraft.common.ILogAdaptor");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
         if (dist.isClient()) {
             proxy = new ClientProxy(info.getVersion().toString());
         } else if (dist.isDedicatedServer()) {

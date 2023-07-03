@@ -34,6 +34,7 @@ minecraft {
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             property 'forge.logging.console.level', 'debug'
+            property 'efscraft.log.debug', 'true'
 
             mods {
                 efscraft {
@@ -120,7 +121,7 @@ dependencies {
         transitive = true
     }
 
-    implementation "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer"
+    minecraftLibrary "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 

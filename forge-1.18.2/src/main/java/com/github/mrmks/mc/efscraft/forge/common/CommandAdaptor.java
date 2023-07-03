@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public class CommandAdaptor implements CommandHandler.Adaptor<Entity, Player, CommandContext<CommandSourceStack>, CommandSourceStack, Level> {
 
     static final Map<String, PermissionNode<Boolean>> NODES = ImmutableMap.of(
-            "efscraft.commands", new PermissionNode<>("efscraft", "commands", PermissionTypes.BOOLEAN, ((p, u, c) -> p == null || p.server.getPlayerList().isOp(p.getGameProfile()) ? Boolean.TRUE : Boolean.FALSE))
+            "efscraft.command", new PermissionNode<>("efscraft", "command", PermissionTypes.BOOLEAN, ((p, u, c) -> p == null || p.server.getPlayerList().isOp(p.getGameProfile()) ? Boolean.TRUE : Boolean.FALSE))
     );
 
     private static final Splitter SPLITTER = Splitter.on(' ');

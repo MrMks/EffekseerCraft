@@ -52,7 +52,7 @@ public class CommonProxy {
         if (server.isDedicatedServer()) {
             file = new File(new File(FMLPaths.CONFIGDIR.get().toFile().getAbsoluteFile(), "efscraft"), "effects.json");
         } else {
-            file = new File(server.getWorldPath(new LevelResource("efscraft")).toFile(), "efscraft.json");
+            file = new File(server.getWorldPath(new LevelResource("efscraft")).toFile(), "effects.json");
         }
 
         new CommandAdaptor(wrapper, file, clients, version).register(server.getCommands().getDispatcher());

@@ -36,12 +36,12 @@ public class RendererImpl extends Renderer {
     private Matrix4f proj, model;
     @Override
     protected void getModelviewMatrix(FloatBuffer buffer) {
-        model.load(buffer);
+        model.store(buffer);
     }
 
     @Override
     protected void getProjectionMatrix(FloatBuffer buffer) {
-        proj.load(buffer);
+        proj.store(buffer);
     }
 
 
@@ -126,6 +126,7 @@ public class RendererImpl extends Renderer {
 
             glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, mainFBO.frameBufferId);
     }
 }
