@@ -1,11 +1,12 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.Properties;
 import org.apache.logging.log4j.Logger;
 
 class LogAdaptor implements ILogAdaptor {
 
-    private final boolean enableDebug = System.getProperties().containsKey(DEBUG_PROP);
+    private final boolean enableDebug = Properties.ENABLE_LOG_DEBUG;
     private final Logger logger;
 
     LogAdaptor(Logger logger) {

@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EffectMap {
+class EffectMap {
 
     public static class Pojo {
         @SerializedName("extendsFrom") String parent;
