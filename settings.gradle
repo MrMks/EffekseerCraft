@@ -10,5 +10,5 @@ pluginManagement {
 System.setProperty("net.minecraftforge.gradle.check.certs", "false")
 
 rootProject.name = 'EffekseerCraft'
-include 'api', 'api-client', 'spigot', 'forge-1.12.2', 'forge-1.16.5'
+include 'api', 'api-client', 'spigot', 'forge-1.12.2', 'forge-1.16.5', 'forge-1.18.2'
 
