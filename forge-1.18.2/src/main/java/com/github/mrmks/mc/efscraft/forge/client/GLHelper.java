@@ -1,10 +1,14 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL30;
 
+import java.nio.FloatBuffer;
+
 public class GLHelper {
+
+    static final FloatBuffer FLOAT_16 = BufferUtils.createFloatBuffer(16);
 
     static final int GL_FRAMEBUFFER = GL30.GL_FRAMEBUFFER;
     static final int GL_READ_FRAMEBUFFER = GL30.GL_READ_FRAMEBUFFER;

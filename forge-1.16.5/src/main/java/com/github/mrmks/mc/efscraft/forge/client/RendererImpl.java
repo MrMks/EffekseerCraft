@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.vector.Matrix4f;
@@ -12,8 +13,6 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.nio.FloatBuffer;
-
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
 public class RendererImpl extends Renderer {
@@ -21,41 +20,29 @@ public class RendererImpl extends Renderer {
         super(queue);
     }
 
-    @Override
-    protected double[] getRenderViewEntityPos() {
-        return viewPos;
-    }
-
-    @Override
-    protected double[] getRenderViewEntityPrevPos() {
-        return viewPos;
-    }
-
-    private Matrix4f camMat, projMat;
-    private final double[] viewPos = new double[3];
-
-    @Override
-    protected void getModelviewMatrix(FloatBuffer buffer) {
-        camMat.store(buffer);
-    }
-
-    @Override
-    protected void getProjectionMatrix(FloatBuffer buffer) {
-        projMat.store(buffer);
-    }
-
     @SubscribeEvent
     public void onRenderEvent(RenderWorldLastEvent event) {
         if (Minecraft.useFancyGraphics()) return;
 
-        this.camMat = event.getMatrixStack().last().pose();
-        this.projMat = event.getProjectionMatrix();
+        float[] floats = new float[16];
+        FLOAT_16.clear();
+        event.getMatrixStack().last().pose().store(FLOAT_16);
+        FLOAT_16.get(floats);
+        com.github.mrmks.mc.efscraft.math.Matrix4f matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+        FLOAT_16.clear();
+        event.getProjectionMatrix().store(FLOAT_16);
+        FLOAT_16.get(floats);
+        com.github.mrmks.mc.efscraft.math.Matrix4f matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
 
         ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getMainCamera();
         Vector3d v3d = info.getPosition();
-        viewPos[0] = v3d.x; viewPos[1] = v3d.y; viewPos[2] = v3d.z;
+        Vec3f vPos = new Vec3f(v3d.x, v3d.y, v3d.z);
 
-        updateAndRender(event.getPartialTicks(), event.getFinishTimeNano(), 1000_000_000, Minecraft.getInstance().isPaused());
+        Minecraft mc = Minecraft.getInstance();
+
+        updateAndRender(event.getFinishTimeNano(), 1_000_000_000L, mc.isPaused(),
+                matView, vPos, vPos, 0, matProj);
     }
 
     private int lastFancy = -1;
@@ -65,14 +52,27 @@ public class RendererImpl extends Renderer {
     public void renderParticle(RenderParticleEvent event) {
         if (!Minecraft.useFancyGraphics()) return;
 
-        this.camMat = event.cam;
-        this.projMat = event.proj;
+        com.github.mrmks.mc.efscraft.math.Matrix4f matView, matProj;
+        Vec3f vPos;
 
-        Vector3d v3d = event.info.getPosition();
-        viewPos[0] = v3d.x; viewPos[1] = v3d.y; viewPos[2] = v3d.z;
+        {
+            float[] floats = new float[16];
+            FLOAT_16.clear();
+            event.cam.store(FLOAT_16);
+            FLOAT_16.get(floats);
+            matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+            FLOAT_16.clear();
+            event.proj.store(FLOAT_16);
+            FLOAT_16.get(floats);
+            matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+            Vector3d v3d = event.info.getPosition();
+            vPos = new Vec3f(v3d.x, v3d.y, v3d.z);
+        }
 
         if (event.prev)
-            update(event.partial, event.nano, 1000_000_000, Minecraft.getInstance().isPaused());
+            update(event.nano, 1000_000_000L, Minecraft.getInstance().isPaused(), matView, vPos, vPos, 0, matProj);
 
         if (!apiSupport)
             return;
@@ -468,14 +468,16 @@ public class RendererImpl extends Renderer {
 
             glDeleteProgram(programPlain);
 
-            glDeleteFramebuffers(workingFBO);
-            glDeleteFramebuffers(backupFBO);
+            if (workingFBO > 0) {
+                glDeleteFramebuffers(workingFBO);
+                glDeleteFramebuffers(backupFBO);
 
-            int[] names = {colorTex0, colorTex1, colorAttach0};
-            glDeleteTextures(names);
+                int[] names = {colorTex0, colorTex1, colorAttach0};
+                glDeleteTextures(names);
 
-            names = new int[] {depthAttach0, depthAttach1};
-            glDeleteRenderbuffers(names);
+                names = new int[]{depthAttach0, depthAttach1};
+                glDeleteRenderbuffers(names);
+            }
 
             glDeleteBuffers(vertexBuffer);
         }
@@ -552,7 +554,10 @@ public class RendererImpl extends Renderer {
 
         @Override
         public void cleanup() {
-
+            if (depthFBO > 0) {
+                glDeleteFramebuffers(depthFBO);
+                glDeleteRenderbuffers(new int[]{depthAttach0, depthAttach1});
+            }
         }
     }
 }

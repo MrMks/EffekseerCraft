@@ -4,9 +4,9 @@ import com.github.mrmks.efkseer4j.EfsEffect;
 import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
-import com.github.mrmks.mc.efscraft.util.Matrix4f;
-import com.github.mrmks.mc.efscraft.util.Vec2f;
-import com.github.mrmks.mc.efscraft.util.Vec3f;
+import com.github.mrmks.mc.efscraft.math.Matrix4f;
+import com.github.mrmks.mc.efscraft.math.Vec2f;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +84,7 @@ public final class RenderingQueue {
             float[] one = new Matrix4f().identity()
                     .translatef(modelPos)
                     .translated(targetPos[0], targetPos[1], targetPos[2])
-                    .rotateMC(modelRot.add(targetRot[0], targetRot[1]))
+                    .rotateMC(new Vec2f(targetRot[0] + 90, targetRot[1]).add(modelRot))
                     .mul(base)
                     .getFloats();
             Updater initializer = (h, p) -> {
@@ -163,8 +163,8 @@ public final class RenderingQueue {
         Predicate predicate = (h, l) -> h.exists() && l < lifespan;
 
         float[] one = new Matrix4f().identity()
-                .translatef(modelPos.add(targetPos))
-                .rotateMC(modelRot.add(targetRot.add(90, 0)))
+                .translatef(new Vec3f().add(modelPos).add(targetPos))
+                .rotateMC(new Vec2f(90, 0).add(modelRot).add(targetRot))
                 .mul(base)
                 .getFloats();
 

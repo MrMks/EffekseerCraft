@@ -2,6 +2,8 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.math.Matrix4f;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
@@ -10,7 +12,6 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -169,34 +170,22 @@ class RendererImpl extends Renderer {
         glBindTextureMC(GL_TEXTURE_2D, originTex);
     }
 
-    @Override
-    protected double[] getRenderViewEntityPos() {
-        Entity entity = Minecraft.getMinecraft().getRenderViewEntity();
+    protected float[] getModelviewMatrix() {
+        FLOAT_16.clear();
+        glGetFloat(GL_MODELVIEW_MATRIX, FLOAT_16);
+        float[] floats = new float[16];
+        FLOAT_16.get(floats);
 
-        if (entity == null)
-            return null;
-        else
-            return new double[] {entity.posX, entity.posY, entity.posZ};
+        return floats;
     }
 
-    @Override
-    protected double[] getRenderViewEntityPrevPos() {
-        Entity entity = Minecraft.getMinecraft().getRenderViewEntity();
+    protected float[] getProjectionMatrix() {
+        FLOAT_16.clear();
+        glGetFloat(GL_PROJECTION_MATRIX, FLOAT_16);
+        float[] floats = new float[16];
+        FLOAT_16.get(floats);
 
-        if (entity == null)
-            return null;
-        else
-            return new double[] {entity.prevPosX, entity.prevPosY, entity.prevPosZ};
-    }
-
-    @Override
-    protected void getModelviewMatrix(FloatBuffer buffer) {
-        glGetFloat(GL_MODELVIEW_MATRIX, buffer);
-    }
-
-    @Override
-    protected void getProjectionMatrix(FloatBuffer buffer) {
-        glGetFloat(GL_PROJECTION_MATRIX, buffer);
+        return floats;
     }
 
     private void tryResize(int w, int h) {
@@ -303,6 +292,8 @@ class RendererImpl extends Renderer {
         INT_16.clear();
         glGetInteger(GL_VIEWPORT, INT_16);
         tryResize(w = INT_16.get(2), h = INT_16.get(3));
+
+        Minecraft mc = Minecraft.getMinecraft();
 
         if (translucent && openglSupported())
         {
@@ -434,8 +425,15 @@ class RendererImpl extends Renderer {
                 glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilMask(0xff);
-                update(event.partial, event.finishNano, 1_000_000_000L, Minecraft.getMinecraft().isGamePaused());
-                draw();
+//                update(event.partial, event.finishNano, 1_000_000_000L, Minecraft.getMinecraft().isGamePaused());
+                {
+                    Entity entity = mc.getRenderViewEntity();
+                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+                    updateAndRender(event.finishNano, 1_000_000_000L, mc.isGamePaused(),
+                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+                            new Matrix4f(getProjectionMatrix()));
+                }
 
                 // copy current working's depth to texDepthWorking
                 glActiveTexture(GL_TEXTURE0 + 2);
@@ -504,7 +502,14 @@ class RendererImpl extends Renderer {
         else
         {
             if (!event.prev) {
-                updateAndRender(event.partial, event.finishNano, 1000_000_000L, Minecraft.getMinecraft().isGamePaused());
+                Entity entity = mc.getRenderViewEntity();
+                Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+                Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+
+                updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
+                        new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+                        new Matrix4f(getProjectionMatrix())
+                );
             }
         }
     }

@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import com.github.mrmks.mc.efscraft.util.Vec2f;
-import com.github.mrmks.mc.efscraft.util.Vec3f;
+import com.github.mrmks.mc.efscraft.math.Vec2f;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 
 import java.io.DataInput;
 import java.io.DataOutput;

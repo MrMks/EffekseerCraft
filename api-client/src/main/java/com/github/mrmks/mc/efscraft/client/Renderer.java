@@ -1,22 +1,17 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.efkseer4j.EfsProgram;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+import com.github.mrmks.mc.efscraft.math.Matrix4f;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 
 public abstract class Renderer {
     private EfsProgram program = null;
     private Thread createThread = null;
 
-    private final FloatBuffer buffer = ByteBuffer.allocateDirect(16 << 2).order(ByteOrder.nativeOrder()).asFloatBuffer();
     private final RenderingQueue queue;
     private long lastFrameTimer = -1;
 
-    protected Renderer(RenderingQueue queue) {
-        this.queue = queue;
-    }
+    protected Renderer(RenderingQueue queue) { this.queue = queue; }
 
     private EfsProgram getProgram() {
         synchronized (this) {
@@ -35,43 +30,15 @@ public abstract class Renderer {
         return program;
     }
 
-    private void updateCamera(EfsProgram program, float partialTicks) {
-        float[] floats = new float[16], trans = new float[3];
-
-        double[] prevPos = getRenderViewEntityPrevPos(), curPos = getRenderViewEntityPos();
-
-        if (prevPos != null && curPos != null) {
-            trans[0] += (prevPos[0] - curPos[0]) * partialTicks - prevPos[0];
-            trans[1] += (prevPos[1] - curPos[1]) * partialTicks - prevPos[1];
-            trans[2] += (prevPos[2] - curPos[2]) * partialTicks - prevPos[2];
-        }
-
-        getModelviewMatrix(buffer);
-        buffer.get(floats).clear();
-        for (int i = 0; i < 3; i++) {
-            float t = 0;
-            for (int j = 0; j < 3; j++) t += floats[i + 4 * j] * trans[j];
-            floats[i + 12] += t;
-        }
-        program.setCameraMatrix(floats);
-
-        // update projection matrix
-        getProjectionMatrix(buffer);
-        buffer.get(floats).clear();
-        program.setProjectionMatrix(floats);
-    }
-
-    protected void updateAndRender(float partial, long current, long divider, boolean isPaused) {
-        update(partial, current, divider, isPaused);
-        program.draw();
-    }
-
-    protected void update(float partial, long current, long divider, boolean isPaused) {
+    protected void update(long current, long divider, boolean isPaused,
+                        Matrix4f matView, Vec3f vPos, Vec3f vPrev, float partial,
+                        Matrix4f matProj)
+    {
         EfsProgram program = getProgram();
 
         if (!isPaused) {
-
-            updateCamera(program, partial);
+            program.setCameraMatrix(matView.copy().translatef(new Vec3f(vPrev).linearTo(vPos, partial).negative()).getFloats());
+            program.setProjectionMatrix(matProj.getFloats());
 
             float frames;
 
@@ -92,6 +59,11 @@ public abstract class Renderer {
         }
 
         lastFrameTimer = current;
+    }
+
+    protected void updateAndRender(long current, long divider, boolean isPaused, Matrix4f matView, Vec3f vPos, Vec3f vPrev, float partial, Matrix4f matProj) {
+        update(current, divider, isPaused, matView, vPos, vPrev, partial, matProj);
+        draw();
     }
 
     protected void draw() {
@@ -123,9 +95,4 @@ public abstract class Renderer {
             throw new IllegalStateException();
     }
 
-    protected abstract double[] getRenderViewEntityPos();
-    protected abstract double[] getRenderViewEntityPrevPos();
-
-    protected abstract void getModelviewMatrix(FloatBuffer buffer);
-    protected abstract void getProjectionMatrix(FloatBuffer buffer);
 }

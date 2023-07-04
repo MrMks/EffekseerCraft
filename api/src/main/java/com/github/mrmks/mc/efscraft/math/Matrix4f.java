@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.util;
+package com.github.mrmks.mc.efscraft.math;
 
 public class Matrix4f {
 

@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.mc.efscraft.common.packet.*;
-import com.github.mrmks.mc.efscraft.util.Matrix4f;
+import com.github.mrmks.mc.efscraft.math.Matrix4f;
 
 import java.util.function.Consumer;
 

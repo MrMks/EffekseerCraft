@@ -2,9 +2,8 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.math.Matrix4f;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
@@ -12,38 +11,12 @@ import net.minecraftforge.client.event.RenderLevelLastEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.nio.FloatBuffer;
-
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
 public class RendererImpl extends Renderer {
     protected RendererImpl(RenderingQueue queue) {
         super(queue);
     }
-
-    private final double[] pos = new double[3];
-
-    @Override
-    protected double[] getRenderViewEntityPos() {
-        return pos;
-    }
-
-    @Override
-    protected double[] getRenderViewEntityPrevPos() {
-        return pos;
-    }
-
-    private Matrix4f proj, model;
-    @Override
-    protected void getModelviewMatrix(FloatBuffer buffer) {
-        model.store(buffer);
-    }
-
-    @Override
-    protected void getProjectionMatrix(FloatBuffer buffer) {
-        proj.store(buffer);
-    }
-
 
     private int lastWidth = -1, lastHeight = -1;
     private int depthFBO = -1, depthAttach0, depthAttach1;
@@ -55,9 +28,9 @@ public class RendererImpl extends Renderer {
         lastWidth = width; lastHeight = height;
 
         if (depthFBO < 0) {
-            depthFBO = GlStateManager.glGenFramebuffers();
-            depthAttach0 = GlStateManager.glGenRenderbuffers();
-            depthAttach1 = GlStateManager.glGenRenderbuffers();
+            depthFBO = glGenFramebuffers();
+            depthAttach0 = glGenRenderbuffers();
+            depthAttach1 = glGenRenderbuffers();
         }
 
         glBindRenderbuffer(GL_RENDERBUFFER, depthAttach0);
@@ -93,14 +66,11 @@ public class RendererImpl extends Renderer {
     @SubscribeEvent
     @SuppressWarnings({"removal"})
     public void renderWorldLast(RenderLevelLastEvent event) {
-        proj = event.getProjectionMatrix().copy();
-        model = event.getPoseStack().last().pose().copy();
 
         Minecraft minecraft = Minecraft.getInstance();
 
         Camera camera = minecraft.gameRenderer.getMainCamera();
         Vec3 vec3 = camera.getPosition();
-        pos[0] = vec3.x; pos[1] = vec3.y; pos[2] = vec3.z;
 
         RenderTarget mainFBO = minecraft.getMainRenderTarget();
         int w = mainFBO.viewWidth, h = mainFBO.viewHeight;
@@ -118,7 +88,24 @@ public class RendererImpl extends Renderer {
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO.frameBufferId);
         }
 
-        updateAndRender(event.getPartialTick(), event.getStartNanos(), 1_000_000_000, minecraft.isPaused());
+        com.github.mrmks.mc.efscraft.math.Matrix4f matView, matProj;
+        Vec3f vPos;
+        {
+            float[] floats = new float[16];
+            FLOAT_16.clear();
+            event.getPoseStack().last().pose().store(FLOAT_16);
+            FLOAT_16.get(floats);
+            matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+            FLOAT_16.clear();
+            event.getProjectionMatrix().store(FLOAT_16);
+            FLOAT_16.get(floats);
+            matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+            vPos = new Vec3f(vec3.x, vec3.y, vec3.z);
+        }
+
+        updateAndRender(event.getStartNanos(), 1_000_000_000, minecraft.isPaused(), matView, vPos, vPos, 0, matProj);
 
         if (Minecraft.useShaderTransparency()) {
             glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);
@@ -128,5 +115,13 @@ public class RendererImpl extends Renderer {
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, mainFBO.frameBufferId);
+    }
+
+    void closeResources() {
+        if (depthFBO > 0) {
+            glDeleteFramebuffers(depthFBO);
+            glDeleteRenderbuffers(depthAttach0);
+            glDeleteRenderbuffers(depthAttach1);
+        }
     }
 }
