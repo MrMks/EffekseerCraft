@@ -8,12 +8,12 @@ import java.util.*;
 public class CommandHandler<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD> {
 
     private final Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor;
-    private final EffectMap registry;
+    private final ServerRegistryMap registry;
     private final String port, portVersion;
     private final Map<UUID, PacketHello.State> clients;
     public CommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
         this.adaptor = adaptor;
-        this.registry = new EffectMap(file);
+        this.registry = new ServerRegistryMap(file);
         this.port = port;
         this.portVersion = portVersion;
         this.clients = clients;

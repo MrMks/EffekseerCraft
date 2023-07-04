@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
+import com.github.mrmks.mc.efscraft.common.EventHandlerAbstract;
 import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
@@ -20,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-class EventHandlerImpl extends com.github.mrmks.mc.efscraft.common.EventHandler implements Listener {
+class EventHandlerImpl extends EventHandlerAbstract implements Listener {
 
     private final NetworkWrapper network;
     private final Plugin plugin;

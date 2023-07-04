@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.EventHandler;
+import com.github.mrmks.mc.efscraft.common.EventHandlerAbstract;
 import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.Map;
 import java.util.UUID;
 
-class EventHandlerImpl extends EventHandler {
+class EventHandlerImpl extends EventHandlerAbstract {
 
     private final NetworkWrapper wrapper;
 

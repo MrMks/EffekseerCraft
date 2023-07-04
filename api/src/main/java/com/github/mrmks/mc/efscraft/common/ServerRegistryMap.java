@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-class EffectMap {
+class ServerRegistryMap {
 
     public static class Pojo {
         @SerializedName("extendsFrom") String parent;
@@ -41,7 +41,7 @@ class EffectMap {
         @SerializedName("dynamicInput") float[] dynamics = null;
     }
 
-    private static class Entry extends EffectEntry {
+    private static class Entry extends ServerRegistry {
 
         static final Entry DEFAULT = new Entry();
 
@@ -112,7 +112,7 @@ class EffectMap {
     private CompletableFuture<Map<String, Entry>> future;
     private boolean available = false;
 
-    EffectMap(File file) {
+    ServerRegistryMap(File file) {
         this.file = file;
         reload();
     }
@@ -184,7 +184,7 @@ class EffectMap {
         return new HashSet<>(map.keySet());
     }
 
-    public EffectEntry get(String key) {
+    public ServerRegistry get(String key) {
         return map.get(key);
     }
 

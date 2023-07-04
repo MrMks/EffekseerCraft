@@ -8,7 +8,7 @@ import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayWith;
 import static com.github.mrmks.mc.efscraft.common.CommandUtils.*;
 
 // represent a temporary effect entry and later build a packet from this entry;
-class PacketBuilder extends EffectEntry {
+class PacketBuilder extends ServerRegistry {
 
     PacketBuilder() {
         localPos = new float[3];
@@ -18,7 +18,7 @@ class PacketBuilder extends EffectEntry {
         scale = new float[] {1, 1, 1};
     }
 
-    PacketBuilder(EffectEntry entry) {
+    PacketBuilder(ServerRegistry entry) {
         super(entry);
     }
 

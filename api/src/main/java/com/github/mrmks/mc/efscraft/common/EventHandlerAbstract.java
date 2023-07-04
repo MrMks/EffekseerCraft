@@ -5,7 +5,7 @@ import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.util.*;
 
-public abstract class EventHandler {
+public abstract class EventHandlerAbstract {
 
     private static class Counter {
         int count;
@@ -22,7 +22,7 @@ public abstract class EventHandler {
     private final Map<UUID, PacketHello.State> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
-    protected EventHandler(Map<UUID, PacketHello.State> clients, ILogAdaptor logger) {
+    protected EventHandlerAbstract(Map<UUID, PacketHello.State> clients, ILogAdaptor logger) {
         this.clients = clients;
         this.logger = logger;
     }

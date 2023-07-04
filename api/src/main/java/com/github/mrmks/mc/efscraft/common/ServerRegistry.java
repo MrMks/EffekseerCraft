@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.common;
 
-abstract class EffectEntry {
+abstract class ServerRegistry {
     protected String effect;
     protected int lifespan, skipFrames;
     protected boolean overwrite;
@@ -9,7 +9,7 @@ abstract class EffectEntry {
     protected boolean inheritYaw, inheritPitch;
     protected boolean useHead, useRender;
 
-    protected EffectEntry() {
+    protected ServerRegistry() {
         this.effect = null;
         this.lifespan = -1;
         this.skipFrames = 0;
@@ -25,13 +25,13 @@ abstract class EffectEntry {
         this.useHead = this.useRender = false;
     }
 
-    protected EffectEntry(String effect, int lifespan) {
+    protected ServerRegistry(String effect, int lifespan) {
         this();
         this.effect = effect;
         this.lifespan = lifespan;
     }
 
-    protected EffectEntry(EffectEntry entry) {
+    protected ServerRegistry(ServerRegistry entry) {
         this.effect = entry.effect;
 
         this.localPos = entry.localPos.clone();

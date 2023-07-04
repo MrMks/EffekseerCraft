@@ -7,7 +7,7 @@ import static java.lang.Integer.parseInt;
 
 class CommandUtils {
 
-    static void doConsumeOptions(EffectEntry entry, String[] options) {
+    static void doConsumeOptions(ServerRegistry entry, String[] options) {
         for (int i = 0; i < options.length; i++) {
             String str = options[i];
             if (str.startsWith("--"))
