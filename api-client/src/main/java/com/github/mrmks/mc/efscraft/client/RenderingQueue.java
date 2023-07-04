@@ -69,17 +69,19 @@ public final class RenderingQueue {
         if (asAt) {
             double[] targetPos = convert.getPosition(eid);
             float[] targetRot;
-            if (useHead) {
-                targetRot = convert.getHeadRotation(eid);
-            } else if (useRender) {
-                targetRot = convert.getRenderRotation(eid);
+            if (!iw && !ip) {
+                targetRot = new float[]{-90, 0};
             } else {
-                targetRot = convert.getRotation(eid);
+                if (useHead) {
+                    targetRot = convert.getHeadRotation(eid);
+                } else if (useRender) {
+                    targetRot = convert.getRenderRotation(eid);
+                } else {
+                    targetRot = convert.getRotation(eid);
+                }
+                if (!iw) targetRot[0] = -90f;
+                if (!ip) targetRot[1] = 0f;
             }
-
-            if (!iw) targetRot[0] = 0f;
-            if (!ip) targetRot[1] = 0f;
-
 
             float[] one = new Matrix4f().identity()
                     .translatef(modelPos)
@@ -138,7 +140,7 @@ public final class RenderingQueue {
                 float[] one = new Matrix4f().identity()
                         .translatef(modelPos)
                         .translated(targetPos[0], targetPos[1], targetPos[2])
-                        .rotateMC(modelRot.add(targetRot[0], targetRot[1]))
+                        .rotateMC(new Vec2f(modelRot).add(targetRot[0], targetRot[1]))
                         .mul(base)
                         .getFloats();
 
