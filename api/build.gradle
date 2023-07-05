@@ -3,9 +3,6 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.mrmks.mc'
-version = '0.0.1.1'
-
 repositories {
     mavenCentral()
     mavenLocal()

@@ -1,8 +1,18 @@
+import java.time.LocalDateTime
+
+boolean wipVersion = hasProperty('wipVersion')
+
+version = '0.3.5.0'
+if (wipVersion)
+    version = "wip" + LocalDateTime.now().format("yyyyMMdd.HHmm")
+
+println(version)
+
 subprojects {
     apply plugin: 'java'
 
     group = 'com.github.mrmks.mc'
-    version = '0.3.5.0' // major.protocol.minor.fix
+    version = rootProject.version // major.protocol.minor.fix
 
     java {
         archivesBaseName = 'EffekseerCraft'
