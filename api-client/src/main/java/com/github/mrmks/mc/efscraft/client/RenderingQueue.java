@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public final class RenderingQueue {
+public final class RenderingQueue<ENTITY> {
 
     // a mask that will clear the queue and prevent any further render;
     private final AtomicBoolean clearMark = new AtomicBoolean(false);
@@ -26,10 +26,10 @@ public final class RenderingQueue {
     // client effect registry
     private final Function<String, EfsEffect> effects;
     // a version specific adaptor
-    private final EntityConvert convert;
+    private final EntityConvert<ENTITY> convert;
     private final ILogAdaptor logger;
 
-    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert convert, ILogAdaptor logger) {
+    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert<ENTITY> convert, ILogAdaptor logger) {
         this.effects = getter;
         this.convert = convert;
         this.logger = logger;
@@ -61,32 +61,34 @@ public final class RenderingQueue {
                          boolean iw, boolean ip,
                          boolean useHead, boolean useRender
     ) {
-
-        if (!convert.isValid(eid) || !convert.isAlive(eid)) return;
+        ENTITY entity = convert.findEntity(eid);
+        if (entity == null || !convert.isAlive(entity)) return;
 
         boolean asAt = !(fx || fy || fz || fw || fp);
-        Predicate predicate = (h, l) -> h.exists() && l < lifespan && convert.isValid(eid) && convert.isAlive(eid);
+        Predicate predicate = (h, l) -> {
+            ENTITY ins = convert.findEntity(eid);
+            return h.exists() && l < lifespan && ins != null && convert.isAlive(ins);
+        };
         if (asAt) {
-            double[] targetPos = convert.getPosition(eid);
-            float[] targetRot;
+            Vec3f targetPos = convert.getPosition(entity);
+            Vec2f targetRot;
             if (!iw && !ip) {
-                targetRot = new float[]{-90, 0};
+                targetRot = new Vec2f(-90, 0);
             } else {
                 if (useHead) {
-                    targetRot = convert.getHeadRotation(eid);
+                    targetRot = convert.getHeadRotation(entity);
                 } else if (useRender) {
-                    targetRot = convert.getRenderRotation(eid);
+                    targetRot = convert.getRenderRotation(entity);
                 } else {
-                    targetRot = convert.getRotation(eid);
+                    targetRot = convert.getRotation(entity);
                 }
-                if (!iw) targetRot[0] = -90f;
-                if (!ip) targetRot[1] = 0f;
+                if (!iw) targetRot.add(-targetRot.x() - 90, 0);
+                if (!ip) targetRot.add(0, -targetRot.y());
             }
 
             float[] one = new Matrix4f().identity()
-                    .translatef(modelPos)
-                    .translated(targetPos[0], targetPos[1], targetPos[2])
-                    .rotateMC(new Vec2f(targetRot[0] + 90, targetRot[1]).add(modelRot))
+                    .translatef(new Vec3f(modelPos).add(targetPos))
+                    .rotateMC(new Vec2f(90, 0).add(modelRot).add(targetRot))
                     .mul(base)
                     .getFloats();
             Updater initializer = (h, p) -> {
@@ -98,49 +100,59 @@ public final class RenderingQueue {
             putEntry(key, emitter, effect, overwrite, predicate, initializer, null);
         } else {
 
-            final double[] initPos = convert.getPosition(eid);
-            final float[] initRot = useHead ? convert.getHeadRotation(eid) : useRender ? convert.getRenderRotation(eid) : convert.getRotation(eid);
+            final Vec3f initPos = convert.getPosition(entity);
+            final Vec2f initRot;
+            {
+                if (useHead && convert.canUseHead(entity)) {
+                    initRot = convert.getHeadRotation(entity);
+                } else if (useRender && convert.canUseRender(entity)) {
+                    initRot = convert.getRenderRotation(entity);
+                } else {
+                    initRot = convert.getRotation(entity);
+                }
+            }
 
             Updater updater = (h, p) -> {
-                double[] targetPos = new double[3];
-                float[] targetRot = new float[2];
+                Vec3f targetPos; Vec2f targetRot;
 
                 {
-                    double[] cur = convert.getPosition(eid);
-                    double[] pre = convert.getPrevPosition(eid);
-
-                    boolean[] flags = {fx, fy, fz};
-                    for (int i = 0; i < 3; i++)
-                        targetPos[i] = flags[i] ? pre[i] + (cur[i] - pre[i]) * p : initPos[i];
+                    Vec3f cur = convert.getPosition(entity);
+                    Vec3f pre = convert.getPrevPosition(entity);
+                    
+                    targetPos = pre.copy().linearTo(cur, p);
+                    
+                    targetPos = new Vec3f(
+                            fx ? targetPos.x() : initPos.x(),
+                            fy ? targetPos.y() : initPos.y(),
+                            fz ? targetPos.z() : initPos.z()
+                    );
                 }
 
                 if (fw || fp || iw || ip)
                 {
-                    float[] cur, pre;
-                    if (useHead) {
-                        cur = convert.getHeadRotation(eid); pre = convert.getPrevHeadRotation(eid);
-                    } else if (useRender) {
-                        cur = convert.getRenderRotation(eid); pre = convert.getPrevRenderRotation(eid);
+                    Vec2f cur, pre;
+                    if (useHead && convert.canUseHead(entity)) {
+                        cur = convert.getHeadRotation(entity); pre = convert.getPrevHeadRotation(entity);
+                    } else if (useRender && convert.canUseRender(entity)) {
+                        cur = convert.getRenderRotation(entity); pre = convert.getPrevRenderRotation(entity);
                     } else {
-                        cur = convert.getRotation(eid); pre = convert.getPrevRotation(eid);
+                        cur = convert.getRotation(entity); pre = convert.getPrevRotation(entity);
                     }
 
-                    boolean[] flags = {fw, iw, fp, ip};
-                    for (int i = 0; i < 2; i++) {
-                        float f;
-                        f = flags[i * 2] ? pre[i] + (cur[i] - pre[i]) * p - initRot[i] : 0;
-                        f += flags[i * 2 + 1] ? initRot[i] : 0;
+                    Vec2f tmp = new Vec2f(pre).linearTo(cur, p).minus(initRot);
+                    tmp = new Vec2f(fw ? tmp.x() : 0, fp ? tmp.y() : 0);
+                    tmp.add(iw ? initRot.x() : 0, ip ? initRot.y() : 0);
 
-                        targetRot[i] = f;
-                    }
+                    if (iw) tmp.add(90, 0);
 
-                    if (iw) targetRot[0] += 90;
+                    targetRot = tmp;
+                } else {
+                    targetRot = new Vec2f();
                 }
 
                 float[] one = new Matrix4f().identity()
-                        .translatef(modelPos)
-                        .translated(targetPos[0], targetPos[1], targetPos[2])
-                        .rotateMC(new Vec2f(modelRot).add(targetRot[0], targetRot[1]))
+                        .translatef(new Vec3f(modelPos).add(targetPos))
+                        .rotateMC(new Vec2f(modelRot).add(targetRot))
                         .mul(base)
                         .getFloats();
 

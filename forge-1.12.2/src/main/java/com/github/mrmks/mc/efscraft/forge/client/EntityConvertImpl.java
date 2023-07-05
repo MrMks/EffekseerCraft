@@ -1,97 +1,87 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.EntityConvert;
+import com.github.mrmks.mc.efscraft.math.Vec2f;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 
-public class EntityConvertImpl implements EntityConvert {
+public class EntityConvertImpl implements EntityConvert<Entity> {
 
-    private static final double[] EMPTY_DOUBLE_3 = new double[3];
-    private static final float[] EMPTY_FLOAT_2 = new float[2];
+    private static final Vec2f EMPTY_FLOAT_2 = new Vec2f();
 
-    private Entity findEntity(int entityId) {
-        Entity entity = Minecraft.getMinecraft().world.getEntityByID(entityId);
-        return entity != null && entity.isAddedToWorld() && entity.isEntityAlive() ? entity : null;
+    @Override
+    public Entity findEntity(int entityId) {
+        return Minecraft.getMinecraft().world.getEntityByID(entityId);
     }
 
     @Override
-    public boolean isValid(int entityId) {
-        Entity entity = findEntity(entityId);
-        return entity != null;
+    public boolean isValid(Entity entity) {
+        return entity.isAddedToWorld();
     }
 
     @Override
-    public boolean isAlive(int entityId) {
-        return isValid(entityId);
+    public boolean isAlive(Entity entity) {
+        return entity.isAddedToWorld() && entity.isEntityAlive();
     }
 
     @Override
-    public double[] getPosition(int entityId) {
-        Entity entity = findEntity(entityId);
-
-        return entity == null ? EMPTY_DOUBLE_3 : new double[] {entity.posX, entity.posY, entity.posZ};
+    public Vec3f getPosition(Entity entity) {
+        return new Vec3f(entity.posX, entity.posY, entity.posZ);
     }
 
     @Override
-    public double[] getPrevPosition(int entityId) {
-        Entity entity = findEntity(entityId);
-
-        return entity == null ? EMPTY_DOUBLE_3 : new double[] {entity.prevPosX, entity.prevPosY, entity.prevPosZ};
+    public Vec3f getPrevPosition(Entity entity) {
+        return new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
     }
 
     @Override
-    public float[] getRotation(int entityId) {
-        Entity entity = findEntity(entityId);
-
-        return entity == null ? EMPTY_FLOAT_2 : new float[] {entity.rotationYaw, entity.rotationPitch};
+    public Vec2f getRotation(Entity entity) {
+        return new Vec2f(entity.rotationYaw, entity.rotationPitch);
     }
 
     @Override
-    public float[] getPrevRotation(int entityId) {
-        Entity entity = findEntity(entityId);
-
-        return entity == null ? EMPTY_FLOAT_2 : new float[] {entity.prevRotationYaw, entity.prevRotationPitch};
+    public Vec2f getPrevRotation(Entity entity) {
+        return new Vec2f(entity.prevRotationYaw, entity.prevRotationPitch);
     }
 
-    private EntityLivingBase findEntityLivingBase(int entityId) {
-        Entity entity = findEntity(entityId);
-
+    private EntityLivingBase findEntityLivingBase(Entity entity) {
         return entity instanceof EntityLivingBase ? (EntityLivingBase) entity : null;
     }
 
     @Override
-    public boolean canUseHead(int entityId) {
-        return findEntityLivingBase(entityId) != null;
+    public boolean canUseHead(Entity entity) {
+        return findEntityLivingBase(entity) != null;
     }
 
     @Override
-    public float[] getHeadRotation(int entityId) {
-        EntityLivingBase base = findEntityLivingBase(entityId);
-        return base == null ? EMPTY_FLOAT_2 : new float[] {base.rotationYawHead, base.rotationPitch};
+    public Vec2f getHeadRotation(Entity entity) {
+        EntityLivingBase base = findEntityLivingBase(entity);
+        return base == null ? EMPTY_FLOAT_2 : new Vec2f(base.rotationYawHead, base.rotationPitch);
     }
 
     @Override
-    public float[] getPrevHeadRotation(int entityId) {
-        EntityLivingBase base = findEntityLivingBase(entityId);
-        return base == null ? EMPTY_FLOAT_2 : new float[] {base.prevRotationYawHead, base.prevRotationPitch};
+    public Vec2f getPrevHeadRotation(Entity entity) {
+        EntityLivingBase base = findEntityLivingBase(entity);
+        return base == null ? EMPTY_FLOAT_2 : new Vec2f(base.prevRotationYawHead, base.prevRotationPitch);
     }
 
     @Override
-    public boolean canUseRender(int entityId) {
-        return findEntityLivingBase(entityId) != null;
+    public boolean canUseRender(Entity entity) {
+        return findEntityLivingBase(entity) != null;
     }
 
     @Override
-    public float[] getRenderRotation(int entityId) {
-        EntityLivingBase base = findEntityLivingBase(entityId);
+    public Vec2f getRenderRotation(Entity entity) {
+        EntityLivingBase base = findEntityLivingBase(entity);
 
-        return base == null ? EMPTY_FLOAT_2 : new float[] {base.renderYawOffset, 0};
+        return base == null ? EMPTY_FLOAT_2 : new Vec2f(base.renderYawOffset, base.rotationPitch);
     }
 
     @Override
-    public float[] getPrevRenderRotation(int entityId) {
-        EntityLivingBase base = findEntityLivingBase(entityId);
-        return base == null ? EMPTY_FLOAT_2 : new float[] {base.prevRenderYawOffset, 0};
+    public Vec2f getPrevRenderRotation(Entity entity) {
+        EntityLivingBase base = findEntityLivingBase(entity);
+        return base == null ? EMPTY_FLOAT_2 : new Vec2f(base.prevRenderYawOffset, base.rotationPitch);
     }
 }

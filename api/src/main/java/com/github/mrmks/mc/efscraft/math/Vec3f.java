@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@SuppressWarnings("unused")
 public class Vec3f {
     float x, y, z;
     public Vec3f() {}
@@ -18,8 +19,14 @@ public class Vec3f {
     public float[] store() { return toArray(); }
     public Vec3f copy() { return new Vec3f(x, y, z); }
 
+    public float x() { return x; }
+    public float y() { return y; }
+    public float z() { return z; }
+
     public Vec3f add(Vec3f o) { set(x + o.x, y + o.y, z + o.z); return this; }
     public Vec3f add(float x, float y, float z) { set(this.x + x, this.y + y, this.z + z); return this; }
+    public Vec3f minus(Vec3f o) { set(x - o.x, y - o.y, z - o.z); return this; }
+    public Vec3f minus(float ox, float oy, float oz) { set(x - ox, y - oy, z - oz); return this; }
     public Vec3f negative() { set(-x, -y, -z); return this; }
 
     public Vec3f linearTo(Vec3f o, float f) {

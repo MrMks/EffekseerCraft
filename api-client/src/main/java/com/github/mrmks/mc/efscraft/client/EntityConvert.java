@@ -1,28 +1,42 @@
 package com.github.mrmks.mc.efscraft.client;
 
-public interface EntityConvert {
+import com.github.mrmks.mc.efscraft.math.Vec2f;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
 
-    boolean isValid(int entityId);
+public interface EntityConvert<ENTITY> {
 
-    boolean isAlive(int entityId);
+    /**
+     * @return a instance of entity, or null if target entity is absent;
+     */
+    ENTITY findEntity(int entityId);
 
-    double[] getPosition(int entityId);
+    /**
+     * @return true if the entity is a valid entity that exist in the game; false otherwise;
+     */
+    boolean isValid(ENTITY entity);
 
-    double[] getPrevPosition(int entityId);
+    /**
+     * @return true if the entity is valid AND alive in the game; false otherwise;
+     */
+    boolean isAlive(ENTITY entity);
 
-    float[] getRotation(int entityId);
+    Vec3f getPosition(ENTITY entity);
 
-    float[] getPrevRotation(int entityId);
+    Vec3f getPrevPosition(ENTITY entity);
 
-    boolean canUseHead(int entityId);
+    Vec2f getRotation(ENTITY entity);
 
-    float[] getHeadRotation(int entityId);
+    Vec2f getPrevRotation(ENTITY entity);
 
-    float[] getPrevHeadRotation(int entityId);
+    boolean canUseHead(ENTITY entity);
 
-    boolean canUseRender(int entityId);
+    Vec2f getHeadRotation(ENTITY entity);
 
-    float[] getRenderRotation(int entityId);
+    Vec2f getPrevHeadRotation(ENTITY entity);
 
-    float[] getPrevRenderRotation(int entityId);
+    boolean canUseRender(ENTITY entity);
+
+    Vec2f getRenderRotation(ENTITY entity);
+
+    Vec2f getPrevRenderRotation(ENTITY entity);
 }

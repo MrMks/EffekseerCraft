@@ -30,7 +30,7 @@ public class ClientProxy extends CommonProxy {
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(resources);
             resources.onResourceManagerReload(mc.getResourceManager(), it -> true);
 
-            RenderingQueue queue = new RenderingQueue(resources::get, new EntityConvertImpl(), logAdaptor);
+            RenderingQueue<?> queue = new RenderingQueue<>(resources::get, new EntityConvertImpl(), logAdaptor);
             RendererImpl renderer = new RendererImpl(queue);
             MinecraftForge.EVENT_BUS.register(renderer);
 

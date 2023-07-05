@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@SuppressWarnings("unused")
 public class Vec2f {
     float x, y;
     public Vec2f() {}
@@ -18,8 +19,13 @@ public class Vec2f {
     public float[] store() { return toArray(); }
     public Vec2f copy() { return new Vec2f(x, y); }
 
+    public float x() { return x; }
+    public float y() { return y; }
+
     public Vec2f add(Vec2f o) { set(x + o.x, y + o.y); return this; }
     public Vec2f add(float x, float y) { set(this.x + x, this.y + y); return this; }
+    public Vec2f minus(Vec2f o) { set(x - o.x, y - o.y); return this; }
+    public Vec2f minus(float ox, float oy) { set(x - ox, y - oy); return this; }
     public Vec2f negative() { set(-x, -y); return this; }
 
     public Vec2f linearTo(Vec2f o, float partial) {
