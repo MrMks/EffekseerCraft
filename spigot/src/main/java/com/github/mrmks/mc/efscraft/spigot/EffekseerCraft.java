@@ -1,13 +1,18 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
+import com.google.common.collect.ImmutableMap;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,14 +23,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EffekseerCraft extends JavaPlugin {
 
     private final boolean forgeDetected;
-//    private EffectRegistry registry;
 
     public EffekseerCraft() {
         boolean flag = false;
         try {
-            // it is possible that we are used as a plugin along with forge, but it is non-necessary;
-            // we are only accessible via commands, so it is not important about who register those commands.
-            Class.forName("com.github.mrmks.mc.efscraft.forge.EfsCraft");
+            // we will not work together with mods, it is not necessary.
+            Class.forName("com.github.mrmks.mc.efscraft.forge.EffekseerCraft");
             flag = true;
         } catch (ClassNotFoundException e) {}
         forgeDetected = flag;
@@ -33,12 +36,35 @@ public class EffekseerCraft extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        if (forgeDetected) return;
+        if (forgeDetected) {
+            PluginDescriptionFile desc = getDescription();
+            Map<String, Map<String, Object>> commands = desc.getCommands();
+            commands = new HashMap<>(commands);
+            commands.remove("effek");
+            commands = ImmutableMap.copyOf(commands);
+
+            try {
+                Field field = desc.getClass().getDeclaredField("commands");
+                field.setAccessible(true);
+                field.set(desc, commands);
+            } catch (Throwable tr) {
+                tr.printStackTrace();
+            }
+
+            return;
+        }
     }
 
     @Override
     public void onEnable() {
-        if (forgeDetected) return;
+        if (forgeDetected) {
+            getServer().getScheduler().runTaskLater(this, () -> {
+                getLogger().warning("Found mod side efscraft, plugin side will disable itself.");
+                getServer().getPluginManager().disablePlugin(this);
+            }, 1L);
+
+            return;
+        }
 
         ILogAdaptor adaptor = new LogAdaptor(getLogger());
         NetworkWrapper network = new NetworkWrapper(this);
@@ -57,7 +83,8 @@ public class EffekseerCraft extends JavaPlugin {
             getLogger().warning("Unable to load lang/en_us.lang");
         }
 
-        getCommand("effek").setExecutor(new CommandAdaptor(this, network, clients, localize));
+        PluginCommand command = getCommand("effek");
+        if (command != null) command.setExecutor(new CommandAdaptor(this, network, clients, localize));
 
         EventHandlerImpl listener = new EventHandlerImpl(this, network, clients, adaptor);
         getServer().getPluginManager().registerEvents(listener, this);
@@ -78,6 +105,7 @@ public class EffekseerCraft extends JavaPlugin {
         getServer().getScheduler().cancelTasks(this);
         HandlerList.unregisterAll(this);
 
-        getCommand("effek").setExecutor(null);
+        PluginCommand command = getCommand("effek");
+        if (command != null) command.setExecutor(null);
     }
 }
