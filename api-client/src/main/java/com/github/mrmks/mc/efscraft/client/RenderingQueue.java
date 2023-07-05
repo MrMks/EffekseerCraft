@@ -82,8 +82,7 @@ public final class RenderingQueue<ENTITY> {
                 } else {
                     targetRot = convert.getRotation(entity);
                 }
-                if (!iw) targetRot.add(-targetRot.x() - 90, 0);
-                if (!ip) targetRot.add(0, -targetRot.y());
+                targetRot = new Vec2f(iw ? targetRot.x() : -90, ip ? targetRot.y() : 0);
             }
 
             float[] one = new Matrix4f().identity()
