@@ -264,11 +264,17 @@ public final class RenderingQueue<ENTITY> {
     }
 
     void createDebug() {
+
+        String key = "<DEBUG>", emitter = "<DEBUG>";
+
+        if (lookup.getOrDefault(key, Collections.emptyMap()).containsKey(emitter))
+            return;
+
         Matrix4f local = new Matrix4f().identity();
         Vec3f pos = new Vec3f();
         Vec2f rot = new Vec2f();
 
-        commandPlayAt("laser03", "laser03", "debug", true,
+        commandPlayAt(key, emitter, "laser03", true,
                 0, 203, null,
                 local, pos, rot, pos, rot);
     }
