@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.common.Properties;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
@@ -11,10 +12,7 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import java.nio.ByteBuffer;
-
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
-import static org.lwjgl.opengl.GL11.*;
 
 class RendererImpl extends Renderer {
 
@@ -23,13 +21,11 @@ class RendererImpl extends Renderer {
     private final int programDepth, programPlain;
     private final int texColor, texColorOverlay, texDepthBackup, texDepthWorking, texDepthOverlay;
     private int texColorOrigin;
-    private final boolean translucent;
 
     private int lastWidth = -1, lastHeight = -1;
 
-    RendererImpl(RenderingQueue queue, boolean translucent) {
+    RendererImpl(RenderingQueue<?> queue) {
         super(queue);
-        this.translucent = translucent;
 
         // bind vertex buffer
         float[] data = {
@@ -162,12 +158,12 @@ class RendererImpl extends Renderer {
         int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
 
         for (int i = 0; i < INT_16.limit(); i++) {
-            glBindTextureMC(GL_TEXTURE_2D, INT_16.get(i));
+            glBindTexture(GL_TEXTURE_2D, INT_16.get(i));
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         }
 
-        glBindTextureMC(GL_TEXTURE_2D, originTex);
+        glBindTexture(GL_TEXTURE_2D, originTex);
     }
 
     protected float[] getModelviewMatrix() {
@@ -205,19 +201,19 @@ class RendererImpl extends Renderer {
 
             int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
 
-            glBindTextureMC(GL_TEXTURE_2D, texColor);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, (ByteBuffer) null);
-            glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
-            glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
-            glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, (ByteBuffer) null);
+            glBindTexture(GL_TEXTURE_2D, texColor);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, 0);
+            glBindTexture(GL_TEXTURE_2D, texDepthBackup);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
+            glBindTexture(GL_TEXTURE_2D, texDepthWorking);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
+            glBindTexture(GL_TEXTURE_2D, texDepthOverlay);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
 
-            glBindTextureMC(GL_TEXTURE_2D, texColorOverlay);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, (ByteBuffer) null);
+            glBindTexture(GL_TEXTURE_2D, texColorOverlay);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, 0);
 
-            glBindTextureMC(GL_TEXTURE_2D, originTex);
+            glBindTexture(GL_TEXTURE_2D, originTex);
 
             if (workingFBO <= 0) {
                 colorAttachBuf = glGenRenderbuffers();
@@ -295,7 +291,7 @@ class RendererImpl extends Renderer {
 
         Minecraft mc = Minecraft.getMinecraft();
 
-        if (translucent && openglSupported())
+        if (Properties.ENABLE_TRANSPARENCY && openglSupported())
         {
             // record current states
             int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
@@ -305,7 +301,7 @@ class RendererImpl extends Renderer {
             boolean[] originCaps = new boolean[caps.length];
             for (int i = 0; i < caps.length; i++) {
                 originCaps[i] = glIsEnabled(caps[i]);
-                if (originCaps[i]) glDisableMC(caps[i]);
+                if (originCaps[i]) glDisable(caps[i]);
             }
             int originUnit = glGetInteger(GL_ACTIVE_TEXTURE);
             int[] originTextures = new int[4];
@@ -322,7 +318,7 @@ class RendererImpl extends Renderer {
                 FLOAT_16.clear();
                 glGetFloat(GL_COLOR_CLEAR_VALUE, FLOAT_16);
                 FLOAT_16.get(cls);
-                glDepthMaskMC(true);
+                glDepthMask(true);
                 glClearColor(0, 0, 0, 0);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -337,7 +333,7 @@ class RendererImpl extends Renderer {
 
                 // copy depth to texDepthBackup
                 glActiveTexture(GL_TEXTURE0);
-                glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
+                glBindTexture(GL_TEXTURE_2D, texDepthBackup);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
                 // bind origin framebuffers back
@@ -358,9 +354,9 @@ class RendererImpl extends Renderer {
                 restoreDrawBuffers(draws);
 
                 // setup states
-                glDepthMaskMC(false);
-                glDepthMaskMC(true);
-                glBlendFuncSeparateMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                glDepthMask(false);
+                glDepthMask(true);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
                 int error = glGetError();
                 if (error != GL_NO_ERROR)
@@ -369,7 +365,7 @@ class RendererImpl extends Renderer {
             else
             {
                 // restore states
-                glDepthMaskMC(false);
+                glDepthMask(false);
 
                 // backup origin program;
                 int originProgram = glGetInteger(GL_CURRENT_PROGRAM);
@@ -377,13 +373,13 @@ class RendererImpl extends Renderer {
 
                 // setup textures
                 glActiveTexture(GL_TEXTURE0);
-                glBindTextureMC(GL_TEXTURE_2D, texColorOverlay);
+                glBindTexture(GL_TEXTURE_2D, texColorOverlay);
                 glActiveTexture(GL_TEXTURE0 + 1);
-                glBindTextureMC(GL_TEXTURE_2D, texDepthBackup);
+                glBindTexture(GL_TEXTURE_2D, texDepthBackup);
                 glActiveTexture(GL_TEXTURE0 + 2);
-                glBindTextureMC(GL_TEXTURE_2D, texDepthWorking);
+                glBindTexture(GL_TEXTURE_2D, texDepthWorking);
                 glActiveTexture(GL_TEXTURE0 + 3);
-                glBindTextureMC(GL_TEXTURE_2D, texDepthOverlay);
+                glBindTexture(GL_TEXTURE_2D, texDepthOverlay);
 
                 // copy color to texColorOverlay
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
@@ -392,7 +388,7 @@ class RendererImpl extends Renderer {
                 glActiveTexture(GL_TEXTURE0);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
                 glReadBuffer(rb);
-                glBindTextureMC(GL_TEXTURE_2D, texColor);
+                glBindTexture(GL_TEXTURE_2D, texColor);
 
                 // bind origin color attachment 0
                 glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorOrigin, 0);
@@ -412,16 +408,16 @@ class RendererImpl extends Renderer {
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
                 // draw backup's color to working;
-                glEnableMC(GL_BLEND);
-                glBlendFuncMC(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                glBindTextureMC(GL_TEXTURE_2D, texColorOverlay);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                glBindTexture(GL_TEXTURE_2D, texColorOverlay);
                 drawRectangle(programPlain);
-                glDisableMC(GL_BLEND);
-                glBlendFuncMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                glBindTextureMC(GL_TEXTURE_2D, texColor);
+                glDisable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glBindTexture(GL_TEXTURE_2D, texColor);
 
                 // draw effect and generate stencils
-                glEnableMC(GL_STENCIL_TEST);
+                glEnable(GL_STENCIL_TEST);
                 glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilMask(0xff);
@@ -445,30 +441,30 @@ class RendererImpl extends Renderer {
                 drawRectangle(programPlain);
 
                 // draw depth back
-                glEnableMC(GL_BLEND);
-                glDisableMC(GL_STENCIL_TEST);
-                glEnableMC(GL_DEPTH_TEST);
-                glDepthFuncMC(GL_ALWAYS);
-                glDepthMaskMC(true);
+                glEnable(GL_BLEND);
+                glDisable(GL_STENCIL_TEST);
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_ALWAYS);
+                glDepthMask(true);
                 drawRectangle(programDepth);
-                glDisableMC(GL_BLEND);
-                glEnableMC(GL_STENCIL_TEST);
-                glDisableMC(GL_DEPTH_TEST);
-                glDepthFuncMC(GL_LEQUAL);
-                glDepthMaskMC(false);
+                glDisable(GL_BLEND);
+                glEnable(GL_STENCIL_TEST);
+                glDisable(GL_DEPTH_TEST);
+                glDepthFunc(GL_LEQUAL);
+                glDepthMask(false);
 
                 // draw effect again in stencils
                 draw();
 
                 // draw translucent layer again
                 glActiveTexture(GL_TEXTURE0);
-                glBindTextureMC(GL_TEXTURE_2D, texColorOverlay);
-                glEnableMC(GL_BLEND);
-                glBlendFuncMC(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                glBindTexture(GL_TEXTURE_2D, texColorOverlay);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 drawRectangle(programPlain);
-                glBindTextureMC(GL_TEXTURE_2D, texColor);
-                glDisableMC(GL_BLEND);
-                glBlendFuncMC(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glBindTexture(GL_TEXTURE_2D, texColor);
+                glDisable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                 // we got every thing we need, copy them to originDraw
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
@@ -489,13 +485,13 @@ class RendererImpl extends Renderer {
             // restore to recorded states
             for (int i = 0; i < caps.length; i++) {
                 if (originCaps[i])
-                    glEnableMC(caps[i]);
+                    glEnable(caps[i]);
                 else
-                    glDisableMC(caps[i]);
+                    glDisable(caps[i]);
             }
             for (int i = 0; i < originTextures.length; i++) {
                 glActiveTexture(GL_TEXTURE0 + i);
-                glBindTextureMC(GL_TEXTURE_2D, originTextures[i]);
+                glBindTexture(GL_TEXTURE_2D, originTextures[i]);
             }
             glActiveTexture(originUnit);
         }

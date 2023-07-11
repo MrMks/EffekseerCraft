@@ -17,9 +17,9 @@ public class ClientProxy extends CommonProxy {
 
         super.initialize(event);
 
-        Configuration cfg = new Configuration(configFile);
-        boolean translucent = cfg.getBoolean("renderTranslucent", "client", true, "Apply some kind of translucent effects, this will significantly affect fps");
-        cfg.save();
+//        Configuration cfg = new Configuration(configFile);
+//        boolean translucent = cfg.getBoolean("renderTranslucent", "client", true, "Apply some kind of translucent effects, this will significantly affect fps");
+//        cfg.save();
 
         if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL)) {
 
@@ -37,7 +37,7 @@ public class ClientProxy extends CommonProxy {
             // we let Minecraft call us when the thread about to exit;
             // such a function is completed by runtime bytecode transform;
             RenderingQueue<?> queue = new RenderingQueue<>(resources::get, new EntityConvertImpl(), logAdaptor);
-            RendererImpl renderer = new RendererImpl(queue, translucent);
+            RendererImpl renderer = new RendererImpl(queue);
             MinecraftForge.EVENT_BUS.register(renderer);
 
             // register callbacks

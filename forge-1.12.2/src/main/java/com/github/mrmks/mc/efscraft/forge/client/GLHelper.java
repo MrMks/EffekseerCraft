@@ -10,43 +10,43 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
+@SuppressWarnings({"SameParameterValue"})
 class GLHelper {
 
-    // buffer related;
-    static final int GL_ARRAY_BUFFER = OpenGlHelper.GL_ARRAY_BUFFER;
-    static final int GL_STATIC_DRAW = OpenGlHelper.GL_STATIC_DRAW;
-    static final int GL_DRAW_BUFFER0 = GL20.GL_DRAW_BUFFER0;
+    // commons
+    static final int GL_FALSE = GL11.GL_FALSE;
 
-    // shaders and programs
-    static final int GL_VERTEX_SHADER = OpenGlHelper.GL_VERTEX_SHADER;
-    static final int GL_FRAGMENT_SHADER = OpenGlHelper.GL_FRAGMENT_SHADER;
-    static final int GL_COMPILE_STATUS = OpenGlHelper.GL_COMPILE_STATUS;
-    static final int GL_LINK_STATUS = OpenGlHelper.GL_LINK_STATUS;
-    static final int GL_INFO_LOG_LENGTH = 0x8B84;
-    static final int GL_CURRENT_PROGRAM = 0x8B8D;
+    // filters
+    static final int GL_NEAREST = GL11.GL_NEAREST;
+    static final int GL_LINEAR = GL11.GL_LINEAR;
 
-    // textures
-    static final int GL_TEXTURE0 = OpenGlHelper.defaultTexUnit;
+    // formats
+    static final int GL_RGBA = GL11.GL_RGBA;
+    static final int GL_RGBA16F = GL30.GL_RGBA16F;
+    static final int GL_DEPTH_COMPONENT = GL11.GL_DEPTH_COMPONENT;
     static final int GL_DEPTH_COMPONENT24 = GL14.GL_DEPTH_COMPONENT24;
-    static final int GL_ACTIVE_TEXTURE = GL13.GL_ACTIVE_TEXTURE;
+    static final int GL_DEPTH24_STENCIL8 = GL30.GL_DEPTH24_STENCIL8;
 
-    // framebuffers
-    static final int GL_FRAMEBUFFER = OpenGlHelper.GL_FRAMEBUFFER;
-    static final int GL_FRAMEBUFFER_BINDING = 0x8CA6;
-    static final int GL_READ_FRAMEBUFFER = 0x8CA8;
-    static final int GL_READ_FRAMEBUFFER_BINDING = 0x8CAA;
-    static final int GL_DRAW_FRAMEBUFFER = 0x8CA9;
-    static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
-    static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
-    static final int GL_DEPTH_ATTACHMENT = OpenGlHelper.GL_DEPTH_ATTACHMENT;
-    static final int GL_STENCIL_ATTACHMENT = GL30.GL_STENCIL_ATTACHMENT;
+    // types
+    static final int GL_FLOAT = GL11.GL_FLOAT;
+    static final int GL_UNSIGNED_INT = GL11.GL_UNSIGNED_INT;
 
-    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE;
-    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
+    // masks
+    static final int GL_COLOR_BUFFER_BIT = GL11.GL_COLOR_BUFFER_BIT;
+    static final int GL_DEPTH_BUFFER_BIT = GL11.GL_DEPTH_BUFFER_BIT;
+    static final int GL_STENCIL_BUFFER_BIT = GL11.GL_STENCIL_BUFFER_BIT;
+
+    // factors
+    static final int GL_ONE = GL11.GL_ONE;
+    static final int GL_SRC_ALPHA = GL11.GL_SRC_ALPHA;
+    static final int GL_ONE_MINUS_SRC_ALPHA = GL11.GL_ONE_MINUS_SRC_ALPHA;
+
+    // funcs
+    static final int GL_ALWAYS = GL11.GL_ALWAYS;
+    static final int GL_NOTEQUAL = GL11.GL_NOTEQUAL;
+    static final int GL_LEQUAL = GL11.GL_LEQUAL;
 
     // internal formats
-    static final int GL_RGBA16F = GL30.GL_RGBA16F;
-    static final int GL_DEPTH24_STENCIL8 = GL30.GL_DEPTH24_STENCIL8;
 
     private static final ByteBuffer BYTE_64 = BufferUtils.createByteBuffer(64);
     static final IntBuffer INT_16 = BYTE_64.asIntBuffer();
@@ -80,8 +80,44 @@ class GLHelper {
         return overwholeSupport;
     }
 
+    // gets
+    static final int GL_MODELVIEW_MATRIX = GL11.GL_MODELVIEW_MATRIX;
+    static final int GL_PROJECTION_MATRIX = GL11.GL_PROJECTION_MATRIX;
+    static final int GL_VIEWPORT = GL11.GL_VIEWPORT;
+    static final int GL_COLOR_CLEAR_VALUE = GL11.GL_COLOR_CLEAR_VALUE;
+    static int glGetInteger(int target) {
+        return GlStateManager.glGetInteger(target);
+    }
+
+    static void glGetInteger(int target, IntBuffer buffer) {
+        GlStateManager.glGetInteger(target, buffer);
+    }
+
+    static void glGetFloat(int target, FloatBuffer buffer) {
+        GL11.glGetFloat(target, buffer);
+    }
+
+    static final int GL_NO_ERROR = GL11.GL_NO_ERROR;
+    static int glGetError() {
+        return GL11.glGetError();
+    }
+
     // statues management
-    static void glEnableMC(int cap) {
+    static final int GL_ALPHA_TEST = GL11.GL_ALPHA_TEST;
+    static final int GL_BLEND = GL11.GL_BLEND;
+    static final int GL_COLOR_MATERIAL = GL11.GL_COLOR_MATERIAL;
+    static final int GL_COLOR_LOGIC_OP = GL11.GL_COLOR_LOGIC_OP;
+    static final int GL_CULL_FACE = GL11.GL_CULL_FACE;
+    static final int GL_DEPTH_TEST = GL11.GL_DEPTH_TEST;
+    static final int GL_FOG = GL11.GL_FOG;
+    static final int GL_LIGHTING = GL11.GL_LIGHTING;
+    static final int GL_STENCIL_TEST = GL11.GL_STENCIL_TEST;
+
+    static boolean glIsEnabled(int cap) {
+        return GL11.glIsEnabled(cap);
+    }
+
+    static void glEnable(int cap) {
         switch (cap) {
             case GL11.GL_ALPHA_TEST:         GlStateManager.enableAlpha(); break;
             case GL11.GL_BLEND:              GlStateManager.enableBlend(); break;
@@ -95,7 +131,7 @@ class GLHelper {
         }
     }
 
-    static void glDisableMC(int cap) {
+    static void glDisable(int cap) {
         switch (cap) {
             case GL11.GL_ALPHA_TEST:         GlStateManager.disableAlpha(); break;
             case GL11.GL_BLEND:              GlStateManager.disableBlend(); break;
@@ -109,23 +145,37 @@ class GLHelper {
         }
     }
 
-    static void glDepthMaskMC(boolean mask) {
+    static void glDepthMask(boolean mask) {
         GlStateManager.depthMask(mask);
     }
 
-    static void glDepthFuncMC(int func) {
+    static void glDepthFunc(int func) {
         GlStateManager.depthFunc(func);
     }
 
-    static void glBlendFuncMC(int src, int tar) {
+    static void glBlendFunc(int src, int tar) {
         GlStateManager.blendFunc(src, tar);
     }
 
-    static void glBlendFuncSeparateMC(int srcColor, int tarColor, int srcAlpha, int tarAlpha) {
+    static void glBlendFuncSeparate(int srcColor, int tarColor, int srcAlpha, int tarAlpha) {
         GlStateManager.tryBlendFuncSeparate(srcColor, tarColor, srcAlpha, tarAlpha);
     }
 
+    static final int GL_KEEP = GL11.GL_KEEP;
+    static final int GL_REPLACE = GL11.GL_REPLACE;
+    static void glStencilOp(int sfail, int dfail, int pass) {
+        GL11.glStencilOp(sfail, dfail, pass);
+    }
+    static void glStencilFunc(int func, int ref, int mask) {
+        GL11.glStencilFunc(func, ref, mask);
+    }
+    static void glStencilMask(int mask) {
+        GL11.glStencilMask(mask);
+    }
+
     // buffers
+    static final int GL_ARRAY_BUFFER = OpenGlHelper.GL_ARRAY_BUFFER;
+    static final int GL_STATIC_DRAW = OpenGlHelper.GL_STATIC_DRAW;
     static int glGenBuffers() {
         return OpenGlHelper.glGenBuffers();
     }
@@ -146,11 +196,11 @@ class GLHelper {
         OpenGlHelper.glDeleteBuffers(buffer);
     }
 
-    static void glDrawBuffers(IntBuffer bufs) {
-        GL20.glDrawBuffers(bufs);
-    }
-
     // shaders
+    static final int GL_VERTEX_SHADER = OpenGlHelper.GL_VERTEX_SHADER;
+    static final int GL_FRAGMENT_SHADER = OpenGlHelper.GL_FRAGMENT_SHADER;
+    static final int GL_COMPILE_STATUS = OpenGlHelper.GL_COMPILE_STATUS;
+    static final int GL_INFO_LOG_LENGTH = 0x8B84;
     static int glCreateShader(int type) {
         return OpenGlHelper.glCreateShader(type);
     }
@@ -179,6 +229,8 @@ class GLHelper {
     }
 
     // programs
+    static final int GL_CURRENT_PROGRAM = 0x8B8D;
+    static final int GL_LINK_STATUS = OpenGlHelper.GL_LINK_STATUS;
     static int glCreateProgram() {
         return OpenGlHelper.glCreateProgram();
     }
@@ -263,6 +315,18 @@ class GLHelper {
     }
 
     // framebuffers
+    static final int GL_FRAMEBUFFER = OpenGlHelper.GL_FRAMEBUFFER;
+    static final int GL_FRAMEBUFFER_BINDING = 0x8CA6; // get
+    static final int GL_READ_FRAMEBUFFER = 0x8CA8;
+    static final int GL_READ_FRAMEBUFFER_BINDING = 0x8CAA; // get
+    static final int GL_DRAW_FRAMEBUFFER = 0x8CA9;
+    static final int GL_DRAW_FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING; // get
+    static final int GL_COLOR_ATTACHMENT0 = OpenGlHelper.GL_COLOR_ATTACHMENT0;
+    static final int GL_DEPTH_ATTACHMENT = OpenGlHelper.GL_DEPTH_ATTACHMENT;
+    static final int GL_STENCIL_ATTACHMENT = GL30.GL_STENCIL_ATTACHMENT;
+    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE;
+    static final int GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME = GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
+
     static int glGenFramebuffers() {
         return OpenGlHelper.glGenFramebuffers();
     }
@@ -319,8 +383,42 @@ class GLHelper {
         OpenGlHelper.glFramebufferRenderbuffer(targrt, attachment, bufTarget, buf);
     }
 
-    // textures
-    static void glBindTextureMC(int target, int texture) {
+    // textures and samplers
+    static final int GL_TEXTURE_2D = GL11.GL_TEXTURE_2D;
+    static final int GL_TEXTURE0 = OpenGlHelper.defaultTexUnit;
+    static final int GL_ACTIVE_TEXTURE = GL13.GL_ACTIVE_TEXTURE;
+    static final int GL_TEXTURE_MIN_FILTER = GL11.GL_TEXTURE_MIN_FILTER;
+    static final int GL_TEXTURE_MAG_FILTER = GL11.GL_TEXTURE_MAG_FILTER;
+    static final int GL_TEXTURE_BINDING_2D = GL11.GL_TEXTURE_BINDING_2D; // get
+    static void glGenTextures(IntBuffer buffer) {
+        GL11.glGenTextures(buffer);
+    }
+
+    static void glDeleteTextures(int id) {
+        GlStateManager.deleteTexture(id);
+    }
+
+    static void glTexParameteri(int target, int pname, int pvalue) {
+        GL11.glTexParameteri(target, pname, pvalue);
+    }
+
+    static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, ByteBuffer buffer) {
+        GL11.glTexImage2D(target, level, internalformat, width, height, border, format, type, buffer);
+    }
+
+    static void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, long pointer) {
+        if (pointer == 0) {
+            glTexImage2D(target, level, internalformat, width, height, border, format, type, (ByteBuffer) null);
+        } else {
+            GL11.glTexImage2D(target, level, internalformat, width, height, border, format, type, pointer);
+        }
+    }
+
+    static void glCopyTexSubImage2D(int target, int level, int xo, int yo, int x, int y, int w, int h) {
+        GL11.glCopyTexSubImage2D(target, level, xo, yo, x, y, w, h);
+    }
+
+    static void glBindTexture(int target, int texture) {
         if (target == GL11.GL_TEXTURE_2D) {
             GlStateManager.bindTexture(texture);
         } else {
@@ -335,6 +433,37 @@ class GLHelper {
     // client state management;
     static void glClientActiveTexture(int texture) {
         OpenGlHelper.setClientActiveTexture(texture);
+    }
+
+    // read and draw buffer, MRT
+    static final int GL_READ_BUFFER = GL11.GL_READ_BUFFER;
+    static final int GL_DRAW_BUFFER = GL11.GL_DRAW_BUFFER;
+    static final int GL_DRAW_BUFFER0 = GL20.GL_DRAW_BUFFER0;
+
+    static void glDrawBuffer(int target) {
+        GL11.glDrawBuffer(target);
+    }
+
+    static void glDrawBuffers(IntBuffer bufs) {
+        GL20.glDrawBuffers(bufs);
+    }
+
+    static void glReadBuffer(int buffer) {
+        GL11.glReadBuffer(buffer);
+    }
+
+    // draws
+    static final int GL_TRIANGLE_FAN = GL11.GL_TRIANGLE_FAN;
+    static void glDrawArrays(int mode, int first, int count) {
+        GlStateManager.glDrawArrays(mode, first, count);
+    }
+
+    static void glClearColor(float red, float green, float blue, float alpha) {
+        GlStateManager.clearColor(red, green, blue, alpha);
+    }
+
+    static void glClear(int bits) {
+        GlStateManager.clear(bits);
     }
 
 }
