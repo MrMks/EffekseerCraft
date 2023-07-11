@@ -53,6 +53,7 @@ minecraft {
             property 'file.encoding', 'UTF-8'
             property 'fml.coreMods.load', 'com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin'
             property 'efscraft.log.debug', 'true'
+            property 'efscraft.effect.debug', 'true'
 
             mods {
                 grouparticle {
