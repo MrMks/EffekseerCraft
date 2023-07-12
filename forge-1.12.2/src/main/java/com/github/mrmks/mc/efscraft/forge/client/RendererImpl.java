@@ -229,9 +229,11 @@ class RendererImpl extends Renderer {
             if (workingFBO <= 0) {
                 workingFBO = glGenFramebuffers();
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
-                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorAttachBuf);
-                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
-                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
+                if (Properties.ENABLE_TRANSPARENCY) {
+                    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorAttachBuf);
+                    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
+                    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
+                }
 
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDraw);
             }
@@ -497,15 +499,52 @@ class RendererImpl extends Renderer {
         }
         else
         {
-            if (!event.prev) {
-                Entity entity = mc.getRenderViewEntity();
-                Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-                Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+            if (openglSupported())
+            {
+                int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
+                if (event.prev)
+                {
+                    glBindTexture(GL_TEXTURE_2D, texDepthBackup);
+                    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
+                }
+                else
+                {
+                    glBindTexture(GL_TEXTURE_2D, texDepthWorking);
+                    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
-                updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
-                        new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-                        new Matrix4f(getProjectionMatrix())
-                );
+                    int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
+
+                    glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
+                    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthBackup, 0);
+                    glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+                    Entity entity = mc.getRenderViewEntity();
+                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
+                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+                            new Matrix4f(getProjectionMatrix())
+                    );
+
+                    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthWorking, 0);
+                    glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+                    glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
+                }
+                glBindTexture(GL_TEXTURE_2D, originTex);
+            }
+            else
+            {
+                if (!event.prev) {
+                    Entity entity = mc.getRenderViewEntity();
+                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+
+                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
+                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+                            new Matrix4f(getProjectionMatrix())
+                    );
+                }
             }
         }
     }
