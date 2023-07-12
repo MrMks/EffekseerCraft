@@ -99,7 +99,7 @@ dependencies {
     shade rootProject.project(':api-client'), {
         transitive = false
     }
-    containDep "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer", {
+    shade "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer", {
         transitive = false
     }
 }
@@ -115,7 +115,7 @@ processResources {
 // Example for how to get properties into the manifest for reading at runtime.
 jar {
     archiveClassifier.set 'forge-1.12.2'
-    from( project.configurations.shade.collect { it.isDirectory() ? it : zipTree(it)} )
+    from( project.configurations.shade.collect { it.isDirectory() ? it : zipTree(it)} ).exclude( 'META-INF/' )
     manifest {
         attributes([
 //                "Specification-Title"     : "EffekseerCraft",
@@ -127,7 +127,7 @@ jar {
 //                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
                 "FMLCorePlugin": "com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin",
                 "FMLCorePluginContainsFMLMod": true,
-                "ContainedDeps": configurations.containDep.files.collect {it.name}.join(' ')
+//                "ContainedDeps": configurations.containDep.files.collect {it.name}.join(' ')
         ])
     }
 
