@@ -17,44 +17,54 @@ public class MixinWorldRenderer {
 
     @Inject(
             method = "renderLevel",
-            at = {
-                    @At(
-                            value = "INVOKE",
-                            target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
-                            shift = At.Shift.BEFORE,
-                            ordinal = 5
-                    ),
-                    @At(
-                            value = "FIELD",
-                            target = "Lnet/minecraft/client/renderer/WorldRenderer;transparencyChain:Lnet/minecraft/client/shader/ShaderGroup;",
-                            shift = At.Shift.BEFORE,
-                            ordinal = 3
-                    )
-            }
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
+                    shift = At.Shift.BEFORE,
+                    ordinal = 5
+            )
     )
     private void prevRenderEffect(MatrixStack pMatrixStack, float pPartialTicks, long pFinishTimeNano, boolean pDrawBlockOutline, ActiveRenderInfo pActiveRenderInfo, GameRenderer pGameRenderer, LightTexture pLightmap, Matrix4f pProjection, CallbackInfo ci) {
-        ClientEventHooks.dispatchRenderEvent(pPartialTicks, pFinishTimeNano, pMatrixStack.last().pose(), pProjection, pActiveRenderInfo, true);
+        ClientEventHooks.dispatchRenderEvent(pPartialTicks, pFinishTimeNano, pMatrixStack.last().pose(), pProjection, pActiveRenderInfo, true, false);
     }
 
     @Inject(
             method = "renderLevel",
-            at = {
-                    @At(
-                            value = "INVOKE",
-                            target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
-                            shift = At.Shift.AFTER,
-                            ordinal = 5
-                    ),
-                    @At(
-                            value = "INVOKE",
-                            target = "Lnet/minecraft/client/shader/ShaderGroup;process(F)V",
-                            shift = At.Shift.AFTER,
-                            ordinal = 1
-                    )
-            }
+            at = @At(
+                    value = "FIELD",
+                    target = "Lnet/minecraft/client/renderer/WorldRenderer;transparencyChain:Lnet/minecraft/client/shader/ShaderGroup;",
+                    shift = At.Shift.BEFORE,
+                    ordinal = 3
+            )
+    )
+    private void prevRenderEffectShader(MatrixStack pMatrixStack, float pPartialTicks, long pFinishTimeNano, boolean pDrawBlockOutline, ActiveRenderInfo pActiveRenderInfo, GameRenderer pGameRenderer, LightTexture pLightmap, Matrix4f pProjection, CallbackInfo ci) {
+        ClientEventHooks.dispatchRenderEvent(pPartialTicks, pFinishTimeNano, pMatrixStack.last().pose(), pProjection, pActiveRenderInfo, true, true);
+    }
+
+    @Inject(
+            method = "renderLevel",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/WorldRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/matrix/MatrixStack;DDD)V",
+                    shift = At.Shift.AFTER,
+                    ordinal = 5
+            )
     )
     private void postRenderEffect(MatrixStack pMatrixStack, float pPartialTicks, long pFinishTimeNano, boolean pDrawBlockOutline, ActiveRenderInfo pActiveRenderInfo, GameRenderer pGameRenderer, LightTexture pLightmap, Matrix4f pProjection, CallbackInfo ci) {
-        ClientEventHooks.dispatchRenderEvent(pPartialTicks, pFinishTimeNano, pMatrixStack.last().pose(), pProjection, pActiveRenderInfo, false);
+        ClientEventHooks.dispatchRenderEvent(pPartialTicks, pFinishTimeNano, pMatrixStack.last().pose(), pProjection, pActiveRenderInfo, false, false);
+    }
+
+    @Inject(
+            method = "renderLevel",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/shader/ShaderGroup;process(F)V",
+                    shift = At.Shift.AFTER,
+                    ordinal = 1
+            )
+    )
+    private void postRenderEffectShader(MatrixStack pMatrixStack, float pPartialTicks, long pFinishTimeNano, boolean pDrawBlockOutline, ActiveRenderInfo pActiveRenderInfo, GameRenderer pGameRenderer, LightTexture pLightmap, Matrix4f pProjection, CallbackInfo ci) {
+        ClientEventHooks.dispatchRenderEvent(pPartialTicks, pFinishTimeNano, pMatrixStack.last().pose(), pProjection, pActiveRenderInfo, false, true);
     }
 
 }

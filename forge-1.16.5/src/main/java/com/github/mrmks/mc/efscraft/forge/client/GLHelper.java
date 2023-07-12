@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+@SuppressWarnings("SameParameterValue")
 public class GLHelper {
     static final boolean apiSupport = GlStateManager.supportsFramebufferBlit();
 
@@ -240,8 +241,15 @@ public class GLHelper {
     static final int GL_DEPTH_COMPONENT24 = GL20.GL_DEPTH_COMPONENT24;
     static final int GL_DEPTH24_STENCIL8 = GL30.GL_DEPTH24_STENCIL8;
 
+    static int glGenRenderbuffers() {
+        return GL30.glGenRenderbuffers();
+    }
     static void glGenRenderbuffers(int[] names) {
         GL30.glGenRenderbuffers(names);
+    }
+
+    static void glDeleteRenderbuffers(int name) {
+        GL30.glDeleteRenderbuffers(name);
     }
 
     static void glDeleteRenderbuffers(int[] name) {

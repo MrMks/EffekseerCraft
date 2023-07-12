@@ -2,6 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.common.Properties;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -16,7 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
 public class RendererImpl extends Renderer {
-    protected RendererImpl(RenderingQueue queue) {
+    protected RendererImpl(RenderingQueue<?> queue) {
         super(queue);
     }
 
@@ -46,7 +47,7 @@ public class RendererImpl extends Renderer {
     }
 
     private int lastFancy = -1;
-    private final Drawer[] drawers = new Drawer[] {new DrawerFancy(), new DrawerPerfect()};
+    private final Drawer[] drawers = new Drawer[] {new DrawerFancy(), new DrawerPerfect(), new DrawerNonTransparency()};
 
     @SubscribeEvent
     public void renderParticle(RenderParticleEvent event) {
@@ -77,14 +78,18 @@ public class RendererImpl extends Renderer {
         if (!apiSupport)
             return;
 
-        int current = Minecraft.useShaderTransparency() ? 1 : 0;
+        int current = Properties.ENABLE_TRANSPARENCY ? (event.shader ? 1 : 0) : 2;
         if (current != lastFancy) {
             if (lastFancy == 0 || lastFancy == 1)
                 drawers[lastFancy].detach();
             lastFancy = current;
             drawers[current].attach();
         }
-        drawers[current].drawEffect(event.prev);
+        INT_16.clear();
+        glGetIntegerv(GL_VIEWPORT, INT_16);
+        int w = INT_16.get(2), h = INT_16.get(3);
+        INT_16.clear();
+        drawers[current].drawEffect(w, h, event.prev);
     }
 
     @SubscribeEvent
@@ -105,19 +110,21 @@ public class RendererImpl extends Renderer {
         private final float partial;
         private final long nano;
         private final boolean prev;
-        public RenderParticleEvent(float partial, long nano, Matrix4f cam, Matrix4f proj, ActiveRenderInfo info, boolean prev) {
+        private final boolean shader;
+        public RenderParticleEvent(float partial, long nano, Matrix4f cam, Matrix4f proj, ActiveRenderInfo info, boolean prev, boolean shader) {
             this.partial = partial;
             this.nano = nano;
             this.cam = cam;
             this.proj = proj;
             this.info = info;
             this.prev = prev;
+            this.shader = shader;
         }
     }
 
     private interface Drawer {
         default void attach() {}
-        void drawEffect(boolean prev);
+        void drawEffect(int w, int h, boolean prev);
         default void detach() {}
         void cleanup();
     }
@@ -328,12 +335,9 @@ public class RendererImpl extends Renderer {
         }
 
         @Override
-        public void drawEffect(boolean prev) {
-            INT_16.clear();
-            glGetIntegerv(GL_VIEWPORT, INT_16);
+        public void drawEffect(int w, int h, boolean prev) {
 
-            int w, h;
-            resize(w = INT_16.get(2), h = INT_16.get(3));
+            resize(w, h);
 
             int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
             int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
@@ -513,11 +517,7 @@ public class RendererImpl extends Renderer {
         }
 
         @Override
-        public void drawEffect(boolean prev) {
-
-            INT_16.clear();
-            glGetIntegerv(GL_VIEWPORT, INT_16);
-            int w = INT_16.get(2), h = INT_16.get(3);
+        public void drawEffect(int w, int h, boolean prev) {
 
             resize(w, h);
 
@@ -558,6 +558,89 @@ public class RendererImpl extends Renderer {
                 glDeleteFramebuffers(depthFBO);
                 glDeleteRenderbuffers(new int[]{depthAttach0, depthAttach1});
             }
+        }
+    }
+
+    private class DrawerNonTransparency implements Drawer {
+
+        private int workingFBO, depthAttach0, depthAttach1;
+        private int lastWidth, lastHeight;
+
+        private void resize(int w, int h) {
+
+            if (lastWidth == w && lastHeight == h)
+                return;
+
+            lastWidth = w; lastHeight = h;
+
+            if (workingFBO <= 0) {
+                workingFBO = glGenFramebuffers();
+                depthAttach0 = glGenRenderbuffers();
+                depthAttach1 = glGenRenderbuffers();
+            }
+
+            glBindRenderbuffer(GL_RENDERBUFFER, depthAttach0);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthAttach1);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        }
+
+        @Override
+        public void drawEffect(int w, int h, boolean prev) {
+            resize(w, h);
+
+            int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
+            int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
+
+            int mainFBO = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
+
+            if (prev)
+            {
+                // copy depth buffer
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
+                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach0);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            }
+            else
+            {
+                // backup depth buffer
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
+                glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+                // use copied depth buffer
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO);
+                glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach0);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+                // draw effects
+                draw();
+
+                // restore depth buffer
+                glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            }
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
+        }
+
+        @Override
+        public void cleanup() {
+            if (workingFBO > 0)
+                glDeleteFramebuffers(workingFBO);
+
+            if (depthAttach0 > 0)
+                glDeleteRenderbuffers(depthAttach0);
+
+            if (depthAttach1 > 0)
+                glDeleteRenderbuffers(depthAttach1);
         }
     }
 }
