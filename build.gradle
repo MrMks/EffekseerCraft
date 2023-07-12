@@ -11,7 +11,7 @@ if (!useWipVersion) {
 LocalDateTime now = LocalDateTime.now()
 String wipVer = "wip." + now.format('yyyy.MM.dd.HH') + '.' + now.getMinute().intdiv(30) * 30
 
-version = useWipVersion ? wipVer : '0.3.5.0'
+version = useWipVersion ? wipVer : '0.3.5.1'
 
 println(version)
 
