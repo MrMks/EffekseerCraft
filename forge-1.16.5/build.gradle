@@ -160,7 +160,7 @@ dependencies {
     shade rootProject.project(':api-client'), {
         transitive = true
     }
-    implementation "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer"
+    shade "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
