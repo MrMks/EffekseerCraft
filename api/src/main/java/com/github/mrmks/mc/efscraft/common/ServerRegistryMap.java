@@ -64,17 +64,17 @@ class ServerRegistryMap {
 
             this.overwrite = getOrDefault(pojo.overwriteConflict, parent.overwrite);
 
-            this.followX = getOrDefault(pojo.followX, parent.followX);
-            this.followY = getOrDefault(pojo.followY, parent.followY);
-            this.followZ = getOrDefault(pojo.followZ, parent.followZ);
-            this.followYaw = getOrDefault(pojo.followYaw, parent.followYaw);
-            this.followPitch = getOrDefault(pojo.followPitch, parent.followPitch);
+            this.followArgs.followX = getOrDefault(pojo.followX, parent.followArgs.followX);
+            this.followArgs.followY = getOrDefault(pojo.followY, parent.followArgs.followY);
+            this.followArgs.followZ = getOrDefault(pojo.followZ, parent.followArgs.followZ);
+            this.followArgs.followYaw = getOrDefault(pojo.followYaw, parent.followArgs.followYaw);
+            this.followArgs.followPitch = getOrDefault(pojo.followPitch, parent.followArgs.followPitch);
 
-            this.inheritYaw = getOrDefault(pojo.inheritYaw, parent.inheritYaw);
-            this.inheritPitch = getOrDefault(pojo.inheritPitch, parent.inheritPitch);
+            this.followArgs.baseOnCurrentYaw = getOrDefault(pojo.inheritYaw, parent.followArgs.baseOnCurrentYaw);
+            this.followArgs.baseOnCurrentPitch = getOrDefault(pojo.inheritPitch, parent.followArgs.baseOnCurrentPitch);
 
-            this.useHead = getOrDefault(pojo.useHead, parent.useHead);
-            this.useRender = getOrDefault(pojo.useRender, parent.useRender);
+            this.followArgs.directionFromHead = getOrDefault(pojo.useHead, parent.followArgs.directionFromHead);
+            this.followArgs.directionFromBody = getOrDefault(pojo.useRender, parent.followArgs.directionFromBody);
 
             this.localPos = getOrDefault(pojo.posLocal, parent.localPos).clone();
             this.modelPos = getOrDefault(pojo.posModel, parent.modelPos).clone();

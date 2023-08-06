@@ -26,11 +26,11 @@ class CommandUtils {
                     case 'f': {
                         for (int j = bi; j < str.length(); j++) {
                             switch (str.charAt(j)) {
-                                case 'x': entry.followX = flag; break;
-                                case 'y': entry.followY = flag; break;
-                                case 'z': entry.followZ = flag; break;
-                                case 'w': entry.followYaw = flag; break;
-                                case 'p': entry.followPitch = flag; break;
+                                case 'x': entry.followArgs.followX = flag; break;
+                                case 'y': entry.followArgs.followY = flag; break;
+                                case 'z': entry.followArgs.followZ = flag; break;
+                                case 'w': entry.followArgs.followYaw = flag; break;
+                                case 'p': entry.followArgs.followPitch = flag; break;
                             }
                         }
                         break;
@@ -39,9 +39,9 @@ class CommandUtils {
                         for (int j = bi; j < str.length(); j++) {
                             int p = str.charAt(j);
                             if (p == 'h')
-                                entry.useHead = flag;
+                                entry.followArgs.directionFromHead = flag;
                             else if (p == 'r')
-                                entry.useRender = flag;
+                                entry.followArgs.directionFromBody = flag;
                         }
                         break;
                     }
@@ -49,9 +49,9 @@ class CommandUtils {
                         for (int j = bi; j < str.length(); j++) {
                             int p = str.charAt(j);
                             if (p == 'w')
-                                entry.inheritYaw = flag;
+                                entry.followArgs.baseOnCurrentYaw = flag;
                             else if (p == 'p')
-                                entry.inheritPitch = flag;
+                                entry.followArgs.baseOnCurrentPitch = flag;
                         }
                         break;
                     }

@@ -16,14 +16,14 @@ public class TestParseArgument {
         Assertions.assertArrayEquals(new float[] {0, 10, 0}, builder.localPos);
         Assertions.assertArrayEquals(new float[] {30, 0}, builder.modelRot);
 
-        Assertions.assertFalse(builder.followX);
-        Assertions.assertFalse(builder.followY);
-        Assertions.assertFalse(builder.followZ);
-        Assertions.assertTrue(builder.followYaw);
-        Assertions.assertTrue(builder.followPitch);
+        Assertions.assertFalse(builder.followArgs.followX);
+        Assertions.assertFalse(builder.followArgs.followY);
+        Assertions.assertFalse(builder.followArgs.followZ);
+        Assertions.assertTrue(builder.followArgs.followYaw);
+        Assertions.assertTrue(builder.followArgs.followPitch);
 
-        Assertions.assertTrue(builder.inheritYaw);
-        Assertions.assertFalse(builder.inheritPitch);
+        Assertions.assertTrue(builder.followArgs.baseOnCurrentYaw);
+        Assertions.assertFalse(builder.followArgs.baseOnCurrentPitch);
 
         Assertions.assertTrue(builder.overwrite);
 

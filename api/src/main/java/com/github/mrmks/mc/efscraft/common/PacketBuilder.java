@@ -41,15 +41,15 @@ class PacketBuilder extends ServerRegistry {
 
     NetworkPacket buildPlayWith(String key, String emitter, int entityId) {
         SPacketPlayWith play = new SPacketPlayWith(key, effect, emitter, lifespan, entityId)
-                .markFollowX(followX)
-                .markFollowY(followY)
-                .markFollowZ(followZ)
-                .markFollowYaw(followYaw)
-                .markFollowPitch(followPitch)
-                .markInheritYaw(inheritYaw)
-                .markInheritPitch(inheritPitch)
-                .markUseHead(useHead)
-                .markUseRender(useRender);
+                .markFollowX(followArgs.followX)
+                .markFollowY(followArgs.followY)
+                .markFollowZ(followArgs.followZ)
+                .markFollowYaw(followArgs.followYaw)
+                .markFollowPitch(followArgs.followPitch)
+                .markInheritYaw(followArgs.baseOnCurrentYaw)
+                .markInheritPitch(followArgs.baseOnCurrentPitch)
+                .markUseHead(followArgs.directionFromHead)
+                .markUseRender(followArgs.directionFromBody);
 
         return buildCommon(play);
     }

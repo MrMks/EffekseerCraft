@@ -1,13 +1,39 @@
 package com.github.mrmks.mc.efscraft.common;
 
 abstract class ServerRegistry {
+
+    static class FollowArguments {
+
+        protected boolean followX, followY, followZ, followYaw, followPitch;
+        protected boolean baseOnCurrentYaw, baseOnCurrentPitch;
+        protected boolean directionFromHead, directionFromBody;
+
+        private FollowArguments() {
+            this.followX = this.followY = this.followZ = this.followYaw = this.followPitch = false;
+            this.baseOnCurrentYaw = this.baseOnCurrentPitch = true;
+            this.directionFromHead = this.directionFromBody = false;
+        }
+
+        private FollowArguments(FollowArguments other) {
+            this.followX = other.followX;
+            this.followY = other.followY;
+            this.followZ = other.followZ;
+            this.followYaw = other.followYaw;
+            this.followPitch = other.followPitch;
+
+            this.baseOnCurrentYaw = other.baseOnCurrentYaw;
+            this.baseOnCurrentPitch = other.baseOnCurrentPitch;
+
+            this.directionFromHead = other.directionFromHead;
+            this.directionFromBody = other.directionFromBody;
+        }
+    }
+
     protected String effect;
     protected int lifespan, skipFrames;
     protected boolean overwrite;
     protected float[] localPos, localRot, modelPos, modelRot, scale, dynamic;
-    protected boolean followX, followY, followZ, followYaw, followPitch;
-    protected boolean inheritYaw, inheritPitch;
-    protected boolean useHead, useRender;
+    protected FollowArguments followArgs;
 
     protected ServerRegistry() {
         this.effect = null;
@@ -20,9 +46,8 @@ abstract class ServerRegistry {
         this.scale = new float[] {1, 1, 1};
         this.dynamic = null;
 
-        this.followX = this.followY = this.followZ = this.followYaw = this.followPitch = false;
-        this.inheritYaw = this.inheritPitch = true;
-        this.useHead = this.useRender = false;
+        this.followArgs = new FollowArguments();
+
     }
 
     protected ServerRegistry(String effect, int lifespan) {
@@ -31,31 +56,21 @@ abstract class ServerRegistry {
         this.lifespan = lifespan;
     }
 
-    protected ServerRegistry(ServerRegistry entry) {
-        this.effect = entry.effect;
+    protected ServerRegistry(ServerRegistry other) {
+        this.effect = other.effect;
 
-        this.localPos = entry.localPos.clone();
-        this.localRot = entry.localRot.clone();
-        this.modelPos = entry.modelPos.clone();
-        this.modelRot = entry.modelRot.clone();
-        this.scale = entry.scale.clone();
-        this.dynamic = entry.dynamic == null ? null : entry.dynamic.clone();
+        this.localPos = other.localPos.clone();
+        this.localRot = other.localRot.clone();
+        this.modelPos = other.modelPos.clone();
+        this.modelRot = other.modelRot.clone();
+        this.scale = other.scale.clone();
+        this.dynamic = other.dynamic == null ? null : other.dynamic.clone();
 
-        this.followX = entry.followX;
-        this.followY = entry.followY;
-        this.followZ = entry.followZ;
-        this.followYaw = entry.followYaw;
-        this.followPitch = entry.followPitch;
+        this.followArgs = new FollowArguments(other.followArgs);
 
-        this.inheritYaw = entry.inheritYaw;
-        this.inheritPitch = entry.inheritPitch;
+        this.overwrite = other.overwrite;
 
-        this.useHead = entry.useHead;
-        this.useRender = entry.useRender;
-
-        this.overwrite = entry.overwrite;
-
-        this.skipFrames = entry.skipFrames;
-        this.lifespan = entry.lifespan;
+        this.skipFrames = other.skipFrames;
+        this.lifespan = other.lifespan;
     }
 }
