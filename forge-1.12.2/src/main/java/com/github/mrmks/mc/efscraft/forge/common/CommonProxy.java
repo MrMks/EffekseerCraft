@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
@@ -20,14 +20,14 @@ public class CommonProxy {
     private String modVersion;
     private File configurationFolder;
     protected Logger logger;
-    protected ILogAdaptor logAdaptor;
+    protected LogAdaptor logAdaptor;
     protected File configFile;
 
     public void preInitialize(FMLPreInitializationEvent event) {
         configurationFolder = event.getModConfigurationDirectory();
         modVersion = event.getModMetadata().version;
         logger = event.getModLog();
-        logAdaptor = new LogAdaptor(logger);
+        logAdaptor = LogAdaptor.of(logger);
         configFile = event.getSuggestedConfigurationFile();
     }
 

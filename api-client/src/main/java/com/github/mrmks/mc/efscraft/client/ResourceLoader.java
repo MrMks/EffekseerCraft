@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.efkseer4j.EfsEffect;
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,8 +20,8 @@ public abstract class ResourceLoader<RM, RL> {
         return createLocation("efscraft", "effects/" + effect + "/" + resource);
     }
 
-    protected final ILogAdaptor logger;
-    protected ResourceLoader(ILogAdaptor adaptor) {
+    protected final LogAdaptor logger;
+    protected ResourceLoader(LogAdaptor adaptor) {
         this.logger = adaptor;
     }
 

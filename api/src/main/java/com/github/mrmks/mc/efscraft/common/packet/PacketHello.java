@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 
 import java.io.DataInput;
@@ -53,9 +53,9 @@ public class PacketHello implements NetworkPacket {
     public static final class ServerHandler implements NetworkPacket.ServerHandler<PacketHello, NetworkPacket> {
 
         private final Map<UUID, State> clients;
-        private final ILogAdaptor logger;
+        private final LogAdaptor logger;
 
-        public ServerHandler(Map<UUID, State> clients, ILogAdaptor logger) {
+        public ServerHandler(Map<UUID, State> clients, LogAdaptor logger) {
             this.clients = clients;
             this.logger = logger;
         }

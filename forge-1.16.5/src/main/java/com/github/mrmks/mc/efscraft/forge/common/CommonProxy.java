@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.FolderName;
@@ -23,7 +23,7 @@ public class CommonProxy {
     protected static final Logger LOGGER = LogManager.getLogger("efscraft");
 
     protected final NetworkWrapper wrapper;
-    protected final ILogAdaptor logAdaptor = new LogAdaptor(LOGGER);
+    protected final LogAdaptor logAdaptor = LogAdaptor.of(LOGGER);
     private final Map<UUID, PacketHello.State> compatibleClients = new ConcurrentHashMap<>();
     private final String modVersion;
 

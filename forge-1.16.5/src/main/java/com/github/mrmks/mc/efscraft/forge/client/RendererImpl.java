@@ -2,7 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
-import com.github.mrmks.mc.efscraft.common.Properties;
+import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -78,7 +78,7 @@ public class RendererImpl extends Renderer {
         if (!apiSupport)
             return;
 
-        int current = Properties.ENABLE_TRANSPARENCY ? (event.shader ? 1 : 0) : 2;
+        int current = PropertyFlags.ENABLE_TRANSPARENCY ? (event.shader ? 1 : 0) : 2;
         if (current != lastFancy) {
             if (lastFancy == 0 || lastFancy == 1)
                 drawers[lastFancy].detach();

@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.google.common.collect.ImmutableMap;
 import org.bukkit.command.PluginCommand;
@@ -30,7 +30,9 @@ public class EffekseerCraft extends JavaPlugin {
             // we will not work together with mods, it is not necessary.
             Class.forName("com.github.mrmks.mc.efscraft.forge.EffekseerCraft");
             flag = true;
-        } catch (ClassNotFoundException e) {}
+        } catch (ClassNotFoundException e) {
+            // we are not working with mods;
+        }
         forgeDetected = flag;
     }
 
@@ -66,7 +68,7 @@ public class EffekseerCraft extends JavaPlugin {
             return;
         }
 
-        ILogAdaptor adaptor = new LogAdaptor(getLogger());
+        LogAdaptor adaptor = LogAdaptor.of(getLogger());
         NetworkWrapper network = new NetworkWrapper(this);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);

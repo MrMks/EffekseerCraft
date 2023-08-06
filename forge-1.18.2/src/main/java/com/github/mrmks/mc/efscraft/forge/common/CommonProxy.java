@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -26,7 +26,7 @@ public class CommonProxy {
     protected final String version;
 
     protected final NetworkWrapper wrapper = new NetworkWrapper();
-    protected final ILogAdaptor logAdaptor = new LogAdaptor(LOGGER);
+    protected final LogAdaptor logAdaptor = LogAdaptor.of(LOGGER);
     private final Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
 
     public CommonProxy(String version) {

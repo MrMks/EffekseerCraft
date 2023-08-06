@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.efkseer4j.EfsProgram;
-import com.github.mrmks.mc.efscraft.common.Properties;
+import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
@@ -52,7 +52,7 @@ public abstract class Renderer {
                     frames = Math.min((current - lastFrameTimer) * 60f / divider, 10);
             }
 
-            if (Properties.ENABLE_CREATE_DEBUG_EFFECT)
+            if (PropertyFlags.ENABLE_CREATE_DEBUG_EFFECT)
                 queue.createDebug();
 
             // strange enough, but we will not update when frames is 0

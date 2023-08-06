@@ -2,7 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
 import com.github.mrmks.mc.efscraft.client.RenderingQueue;
-import com.github.mrmks.mc.efscraft.common.Properties;
+import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
@@ -229,7 +229,7 @@ class RendererImpl extends Renderer {
             if (workingFBO <= 0) {
                 workingFBO = glGenFramebuffers();
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
-                if (Properties.ENABLE_TRANSPARENCY) {
+                if (PropertyFlags.ENABLE_TRANSPARENCY) {
                     glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorAttachBuf);
                     glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
                     glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
@@ -293,7 +293,7 @@ class RendererImpl extends Renderer {
 
         Minecraft mc = Minecraft.getMinecraft();
 
-        if (Properties.ENABLE_TRANSPARENCY && openglSupported())
+        if (PropertyFlags.ENABLE_TRANSPARENCY && openglSupported())
         {
             // record current states
             int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);

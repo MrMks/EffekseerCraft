@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.common.EventHandlerAbstract;
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.entity.player.EntityPlayer;
@@ -19,7 +19,7 @@ class EventHandlerImpl extends EventHandlerAbstract {
 
     private final NetworkWrapper wrapper;
 
-    EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, ILogAdaptor adaptor) {
+    EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, LogAdaptor adaptor) {
         super(clients, adaptor);
         this.wrapper = wrapper;
     }

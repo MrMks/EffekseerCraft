@@ -18,11 +18,11 @@ public abstract class EventHandlerAbstract {
         }
     }
 
-    private final ILogAdaptor logger;
+    private final LogAdaptor logger;
     private final Map<UUID, PacketHello.State> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
-    protected EventHandlerAbstract(Map<UUID, PacketHello.State> clients, ILogAdaptor logger) {
+    protected EventHandlerAbstract(Map<UUID, PacketHello.State> clients, LogAdaptor logger) {
         this.clients = clients;
         this.logger = logger;
     }

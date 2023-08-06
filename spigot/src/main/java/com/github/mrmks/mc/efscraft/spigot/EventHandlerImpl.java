@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.EventHandlerAbstract;
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
@@ -25,7 +25,7 @@ class EventHandlerImpl extends EventHandlerAbstract implements Listener {
 
     private final NetworkWrapper network;
     private final Plugin plugin;
-    EventHandlerImpl(Plugin plugin, NetworkWrapper network, Map<UUID, PacketHello.State> clients, ILogAdaptor adaptor) {
+    EventHandlerImpl(Plugin plugin, NetworkWrapper network, Map<UUID, PacketHello.State> clients, LogAdaptor adaptor) {
         super(clients, adaptor);
         this.plugin = plugin;
         this.network = network;

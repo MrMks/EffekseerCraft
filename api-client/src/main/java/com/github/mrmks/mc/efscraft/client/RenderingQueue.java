@@ -3,7 +3,7 @@ package com.github.mrmks.mc.efscraft.client;
 import com.github.mrmks.efkseer4j.EfsEffect;
 import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
-import com.github.mrmks.mc.efscraft.common.ILogAdaptor;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
@@ -27,9 +27,9 @@ public final class RenderingQueue<ENTITY> {
     private final Function<String, EfsEffect> effects;
     // a version specific adaptor
     private final EntityConvert<ENTITY> convert;
-    private final ILogAdaptor logger;
+    private final LogAdaptor logger;
 
-    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert<ENTITY> convert, ILogAdaptor logger) {
+    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert<ENTITY> convert, LogAdaptor logger) {
         this.effects = getter;
         this.convert = convert;
         this.logger = logger;
