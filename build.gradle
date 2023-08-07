@@ -5,7 +5,7 @@ boolean useWipVersion = hasProperty('wipVersion')
 if (!useWipVersion) {
     var out = new StringBuilder()
     'git rev-parse --abbrev-ref HEAD'.execute().waitForProcessOutput(out, null)
-    useWipVersion = out.contains('develop')
+    useWipVersion = out.contains('develop') || out.contains("feature")
 }
 
 LocalDateTime now = LocalDateTime.now()
