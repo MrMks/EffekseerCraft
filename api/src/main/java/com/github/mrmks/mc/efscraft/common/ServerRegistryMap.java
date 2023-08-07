@@ -1,45 +1,26 @@
 package com.github.mrmks.mc.efscraft.common;
 
+import com.github.mrmks.mc.efscraft.common.registry.PojoUpdate;
+import com.github.mrmks.mc.efscraft.common.registry.PojoV1;
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Type;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 class ServerRegistryMap {
 
-    public static class Pojo {
-        @SerializedName("extendsFrom") String parent;
-        @SerializedName("effect") String effect;
-        @SerializedName("lifespan") Integer lifespan;
-        @SerializedName("skipFrame") Integer skipFrame;
-        @SerializedName("scale") float[] scale;
-        @SerializedName("rotateLocal") float[] rotateLocal;
-        @SerializedName("rotateModel") float[] rotateModel;
-        @SerializedName("translateLocal") float[] posLocal;
-        @SerializedName("translateModel") float[] posModel;
-        @SerializedName("overwriteConflict") Boolean overwriteConflict = null;
-
-        // properties for SPacketPlayWith
-        @SerializedName("followX") Boolean followX = null;
-        @SerializedName("followY") Boolean followY = null;
-        @SerializedName("followZ") Boolean followZ = null;
-        @SerializedName("followYaw") Boolean followYaw = null;
-        @SerializedName("followPitch") Boolean followPitch = null;
-        @SerializedName("useHead") Boolean useHead = null;
-        @SerializedName("useRender") Boolean useRender = null;
-        @SerializedName("inheritYaw") Boolean inheritYaw = null;
-        @SerializedName("inheritPitch") Boolean inheritPitch = null;
-        @SerializedName("dynamicInput") float[] dynamics = null;
-    }
+    private static final int CURRENT_VER = 1;
 
     private static class Entry extends ServerRegistry {
 
@@ -51,7 +32,7 @@ class ServerRegistryMap {
             this.valid = false;
         }
 
-        Entry(Entry parent, Pojo pojo) {
+        Entry(Entry parent, PojoV1 pojo) {
             if (parent == null) parent = DEFAULT;
 
             this.effect = getOrDefault(pojo.effect, parent.effect);
@@ -64,17 +45,17 @@ class ServerRegistryMap {
 
             this.overwrite = getOrDefault(pojo.overwriteConflict, parent.overwrite);
 
-            this.followArgs.followX = getOrDefault(pojo.followX, parent.followArgs.followX);
-            this.followArgs.followY = getOrDefault(pojo.followY, parent.followArgs.followY);
-            this.followArgs.followZ = getOrDefault(pojo.followZ, parent.followArgs.followZ);
-            this.followArgs.followYaw = getOrDefault(pojo.followYaw, parent.followArgs.followYaw);
-            this.followArgs.followPitch = getOrDefault(pojo.followPitch, parent.followArgs.followPitch);
+            this.followArgs.followX = getOrDefault(pojo.followArgs.followX, parent.followArgs.followX);
+            this.followArgs.followY = getOrDefault(pojo.followArgs.followY, parent.followArgs.followY);
+            this.followArgs.followZ = getOrDefault(pojo.followArgs.followZ, parent.followArgs.followZ);
+            this.followArgs.followYaw = getOrDefault(pojo.followArgs.followYaw, parent.followArgs.followYaw);
+            this.followArgs.followPitch = getOrDefault(pojo.followArgs.followPitch, parent.followArgs.followPitch);
 
-            this.followArgs.baseOnCurrentYaw = getOrDefault(pojo.inheritYaw, parent.followArgs.baseOnCurrentYaw);
-            this.followArgs.baseOnCurrentPitch = getOrDefault(pojo.inheritPitch, parent.followArgs.baseOnCurrentPitch);
+            this.followArgs.baseOnCurrentYaw = getOrDefault(pojo.followArgs.inheritYaw, parent.followArgs.baseOnCurrentYaw);
+            this.followArgs.baseOnCurrentPitch = getOrDefault(pojo.followArgs.inheritPitch, parent.followArgs.baseOnCurrentPitch);
 
-            this.followArgs.directionFromHead = getOrDefault(pojo.useHead, parent.followArgs.directionFromHead);
-            this.followArgs.directionFromBody = getOrDefault(pojo.useRender, parent.followArgs.directionFromBody);
+            this.followArgs.directionFromHead = getOrDefault(pojo.followArgs.useHead, parent.followArgs.directionFromHead);
+            this.followArgs.directionFromBody = getOrDefault(pojo.followArgs.useRender, parent.followArgs.directionFromBody);
 
             this.localPos = getOrDefault(pojo.posLocal, parent.localPos).clone();
             this.modelPos = getOrDefault(pojo.posModel, parent.modelPos).clone();
@@ -105,15 +86,14 @@ class ServerRegistryMap {
         }
     }
 
-    private static final Type type = new TypeToken<HashMap<String, Pojo>>() {}.getType();
     private static final Runnable EMPTY = () -> {};
     private final Map<String, Entry> map = new ConcurrentHashMap<>();
-    private final File file;
+    private final File[] files;
     private CompletableFuture<Map<String, Entry>> future;
     private boolean available = false;
 
-    ServerRegistryMap(File file) {
-        this.file = file;
+    ServerRegistryMap(File... file) {
+        this.files = file;
         reload();
     }
 
@@ -127,28 +107,55 @@ class ServerRegistryMap {
             future.join(); // wait here, and throw out any exception in necessary;
         }
 
-        if (file.exists()) {
-            future = CompletableFuture.supplyAsync(this::asyncLoad);
-            future.thenRun(runnable);
-        } else {
-            future = CompletableFuture.completedFuture(Collections.emptyMap());
-            future.thenRun(runnable);
-        }
+        future = CompletableFuture.supplyAsync(this::asyncLoad);
+        future.thenRun(runnable);
     }
 
-    private Map<String, Entry> asyncLoad() {
-        if (file.exists()) {
-            Gson gson = new Gson();
+    private Map<String, Entry> asyncLoad0(File file) {
+        if (file != null && file.exists() && file.canRead() && file.canWrite()) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            JsonObject basePojo;
+            JsonObject content;
+
             try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-                Map<String, Pojo> tmp = gson.fromJson(reader, type);
+                basePojo = gson.fromJson(reader, JsonObject.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return Collections.emptyMap();
+            }
+
+            int version = basePojo.has("cfgVersion") ? basePojo.get("cfgVersion").getAsInt() : 0;
+            if (version == 0) {
+                try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
+                    content = gson.fromJson(reader, JsonObject.class);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return Collections.emptyMap();
+                }
+            } else {
+                content = basePojo.get("content").getAsJsonObject();
+            }
+
+            Map<String, PojoV1> tmp = PojoUpdate.update(PojoV1.class, gson, content, version);
+
+            if (tmp != null) {
+                try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    JsonObject writeObj = new JsonObject();
+                    writeObj.add("cfgVersion", new JsonPrimitive(CURRENT_VER));
+                    writeObj.add("content", gson.toJsonTree(tmp));
+                    gson.toJson(writeObj, writer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 Map<String, Entry> baked = new HashMap<>();
                 int size;
                 do {
                     size = baked.size();
-                    Iterator<Map.Entry<String, Pojo>> iterator = tmp.entrySet().iterator();
+                    Iterator<Map.Entry<String, PojoV1>> iterator = tmp.entrySet().iterator();
                     while (iterator.hasNext()) {
-                        Map.Entry<String, Pojo> entry = iterator.next();
-                        Pojo node = entry.getValue();
+                        Map.Entry<String, PojoV1> entry = iterator.next();
+                        PojoV1 node = entry.getValue();
                         Entry parentNode = null;
 
                         if (node.parent == null || (parentNode = baked.get(node.parent)) != null) {
@@ -162,11 +169,21 @@ class ServerRegistryMap {
                     }
                 } while (size != baked.size() && !tmp.isEmpty());
                 return baked;
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
         return Collections.emptyMap();
+    }
+
+    private Map<String, Entry> asyncLoad() {
+
+        if (files == null)
+            return Collections.emptyMap();
+
+        Map<String, Entry> baked = new HashMap<>();
+        for (File file : files)
+            baked.putAll(asyncLoad0(file));
+
+        return baked.isEmpty() ? Collections.emptyMap() : baked;
     }
 
     private void checkFuture() {
