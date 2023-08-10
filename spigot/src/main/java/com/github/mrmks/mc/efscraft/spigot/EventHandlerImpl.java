@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.common.EventHandlerAbstract;
+import com.github.mrmks.mc.efscraft.common.EfsEventHandler;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-class EventHandlerImpl extends EventHandlerAbstract implements Listener {
+class EventHandlerImpl extends EfsEventHandler implements Listener {
 
     private final NetworkWrapper network;
     private final Plugin plugin;
@@ -40,7 +40,7 @@ class EventHandlerImpl extends EventHandlerAbstract implements Listener {
         tickAndUpdate();
     }
 
-    @Override
+//    @Override
     protected void sendMessage(UUID uuid, NetworkPacket message) {
         Player player = Bukkit.getPlayer(uuid);
 

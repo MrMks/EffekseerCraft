@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.CommandHandler;
+import com.github.mrmks.mc.efscraft.common.EfsCommandHandler;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.google.common.base.Splitter;
@@ -36,16 +36,16 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEntity, CommandContext<CommandSource>, CommandSource, World> {
+public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, PlayerEntity, CommandContext<CommandSource>, CommandSource, World> {
 
     private static final Splitter SPLITTER = Splitter.on(' ');
 
     private final NetworkWrapper wrapper;
-    private final CommandHandler<Entity, PlayerEntity, CommandContext<CommandSource>, CommandSource, World> handler;
+    private final EfsCommandHandler<Entity, PlayerEntity, CommandContext<CommandSource>, CommandSource, World> handler;
 
     CommandAdaptor(NetworkWrapper wrapper, File file, Map<UUID, PacketHello.State> clients, String modVersion) {
         this.wrapper = wrapper;
-        this.handler = new CommandHandler<>(this, file, "forge", modVersion, clients);
+        this.handler = new EfsCommandHandler<>(this, file, "forge", modVersion, clients);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     @Override
-    public PlayerEntity findPlayer(CommandContext<CommandSource> server, CommandSource sender, String toFound) throws CommandHandler.CommandException {
+    public PlayerEntity findPlayer(CommandContext<CommandSource> server, CommandSource sender, String toFound) throws EfsCommandHandler.CommandException {
         try {
             return EntityArgument.getPlayer(server, "target");
         } catch (CommandSyntaxException e) {
@@ -77,7 +77,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     @Override
-    public Entity findEntity(CommandContext<CommandSource> server, CommandSource iCommandSource, String toFound) throws CommandHandler.CommandException {
+    public Entity findEntity(CommandContext<CommandSource> server, CommandSource iCommandSource, String toFound) throws EfsCommandHandler.CommandException {
         try {
             return EntityArgument.getEntity(server, "target");
         } catch (CommandSyntaxException e) {
@@ -112,7 +112,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
     }
 
     @Override
-    public World findWorld(CommandContext<CommandSource> server, CommandSource sender, String str) throws CommandHandler.CommandException {
+    public World findWorld(CommandContext<CommandSource> server, CommandSource sender, String str) throws EfsCommandHandler.CommandException {
         try {
             return DimensionArgument.getDimension(server, "dim");
         } catch (CommandSyntaxException e) {
@@ -150,7 +150,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
         source.sendSuccess(new TranslationTextComponent(msg, objects), false);
     }
 
-    private static class ExceptionWrapper extends CommandHandler.CommandException {
+    private static class ExceptionWrapper extends EfsCommandHandler.CommandException {
 
         final CommandSyntaxException exception;
 
@@ -237,7 +237,7 @@ public class CommandAdaptor implements CommandHandler.Adaptor<Entity, PlayerEnti
         Pair<String, String[]> pair = parseInput(context.getInput().substring(1));
         try {
             handler.dispatchExecute(pair.getLeft(), pair.getRight(), context, context.getSource());
-        } catch (CommandHandler.CommandException e) {
+        } catch (EfsCommandHandler.CommandException e) {
             if (e instanceof ExceptionWrapper)
                 throw ((ExceptionWrapper) e).exception;
             else

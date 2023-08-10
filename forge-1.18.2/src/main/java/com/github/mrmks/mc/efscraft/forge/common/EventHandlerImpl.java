@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.EventHandlerAbstract;
+import com.github.mrmks.mc.efscraft.common.EfsEventHandler;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
@@ -15,7 +15,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import java.util.Map;
 import java.util.UUID;
 
-public class EventHandlerImpl extends EventHandlerAbstract {
+public class EventHandlerImpl extends EfsEventHandler {
 
     private final NetworkWrapper wrapper;
     EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, LogAdaptor logger) {
@@ -41,7 +41,7 @@ public class EventHandlerImpl extends EventHandlerAbstract {
         }
     }
 
-    @Override
+//    @Override
     protected void sendMessage(UUID uuid, NetworkPacket message) {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null) {

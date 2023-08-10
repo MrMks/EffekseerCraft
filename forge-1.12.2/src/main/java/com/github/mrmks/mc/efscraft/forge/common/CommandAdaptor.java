@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.CommandHandler;
+import com.github.mrmks.mc.efscraft.common.EfsCommandHandler;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.command.CommandBase;
@@ -23,10 +23,10 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CommandAdaptor extends CommandBase implements CommandHandler.Adaptor<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> {
+public class CommandAdaptor extends CommandBase implements EfsCommandHandler.Adaptor<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> {
 
     private final NetworkWrapper wrapper;
-    private final CommandHandler<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> handler;
+    private final EfsCommandHandler<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> handler;
 
     @Override
     public boolean hasPermission(MinecraftServer server, ICommandSender sender, String node) {
@@ -48,7 +48,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     }
 
     @Override
-    public EntityPlayer findPlayer(MinecraftServer server, ICommandSender sender, String toFound) throws CommandHandler.CommandException {
+    public EntityPlayer findPlayer(MinecraftServer server, ICommandSender sender, String toFound) throws EfsCommandHandler.CommandException {
         try {
             return getPlayer(server, sender, toFound);
         } catch (CommandException e) {
@@ -57,7 +57,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     }
 
     @Override
-    public Entity findEntity(MinecraftServer server, ICommandSender sender, String toFound) throws CommandHandler.CommandException {
+    public Entity findEntity(MinecraftServer server, ICommandSender sender, String toFound) throws EfsCommandHandler.CommandException {
         try {
             return getEntity(server, sender, toFound);
         } catch (CommandException e) {
@@ -121,7 +121,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     }
 
     @Override
-    public World findWorld(MinecraftServer server, ICommandSender sender, String str) throws CommandHandler.CommandException {
+    public World findWorld(MinecraftServer server, ICommandSender sender, String str) throws EfsCommandHandler.CommandException {
         try {
             return DimensionManager.getWorld(parseInt(str));
         } catch (CommandException e) {
@@ -134,7 +134,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
         return sender instanceof Entity ? getEntityPosAngle((Entity) sender) : new float[5];
     }
 
-    private static class CommandExceptionWrapper extends CommandHandler.CommandException {
+    private static class CommandExceptionWrapper extends EfsCommandHandler.CommandException {
         CommandException ce;
         protected CommandExceptionWrapper(CommandException e) {
             super(e.getMessage(), e.getErrorObjects());
@@ -146,7 +146,7 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
 
     CommandAdaptor(NetworkWrapper wrapper, File file, Map<UUID, PacketHello.State> clients, String modVersion) {
         this.wrapper = wrapper;
-        this.handler = new CommandHandler<>(this, file, "forge", modVersion, clients);
+        this.handler = new EfsCommandHandler<>(this, file, "forge", modVersion, clients);
     }
 
     @Override @Nonnull
@@ -163,10 +163,10 @@ public class CommandAdaptor extends CommandBase implements CommandHandler.Adapto
     public void execute(@Nullable MinecraftServer server, @Nullable ICommandSender sender, @Nullable String[] args) throws CommandException {
         try {
             handler.dispatchExecute("effek", args, server, sender);
-        } catch (CommandHandler.CommandException e) {
+        } catch (EfsCommandHandler.CommandException e) {
             if (e instanceof CommandExceptionWrapper)
                 throw ((CommandExceptionWrapper) e).ce;
-            if (e instanceof CommandHandler.WrongUsageException)
+            if (e instanceof EfsCommandHandler.WrongUsageException)
                 throw new WrongUsageException(e.getMessage(), e.getParams());
             else
                 throw new CommandException(e.getMessage(), e.getParams());

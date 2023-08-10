@@ -45,7 +45,8 @@ public class MessageCodec {
         NetworkPacket handle(DataInput input, MessageContext context) throws IOException {
 
             T packet = supplier.get();
-            codec.read(packet, input);
+            if (codec != null)
+                codec.read(packet, input);
 
             NetworkPacket reply = null;
             if (context.isRemote()) {

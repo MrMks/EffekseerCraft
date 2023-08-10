@@ -97,6 +97,11 @@ class ServerRegistryMap {
         reload();
     }
 
+    ServerRegistryMap(List<File> file) {
+        this.files = file.toArray(new File[0]);
+        reload();
+    }
+
     public void reload() {
         reload(EMPTY);
     }

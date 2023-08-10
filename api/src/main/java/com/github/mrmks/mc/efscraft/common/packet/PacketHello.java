@@ -1,13 +1,16 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
+import com.github.mrmks.mc.efscraft.common.IEfsEvent;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PacketHello implements NetworkPacket {
 
@@ -71,6 +74,23 @@ public class PacketHello implements NetworkPacket {
                     logger.logWarning("Received hello packet from unexpected client " + sender);
                 }
             }
+
+            return null;
+        }
+    }
+
+    public static final class InternalServerHandler implements NetworkPacket.ServerHandler<PacketHello, NetworkPacket> {
+
+        private final Consumer<IEfsEvent> consumer;
+
+        public InternalServerHandler(Consumer<IEfsEvent> consumer) {
+            this.consumer = consumer;
+        }
+
+        @Override
+        public NetworkPacket handlePacket(PacketHello packet, UUID sender) {
+            IEfsEvent event = new EfsPlayerEvent.Verify(sender, packet.version);
+            consumer.accept(event);
 
             return null;
         }
