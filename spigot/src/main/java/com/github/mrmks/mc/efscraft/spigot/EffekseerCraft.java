@@ -3,7 +3,6 @@ package com.github.mrmks.mc.efscraft.spigot;
 import com.github.mrmks.mc.efscraft.common.*;
 import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
 import com.github.mrmks.mc.efscraft.common.event.EfsTickEvent;
-import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -19,11 +18,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerChannelEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -34,8 +30,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * We will not provide api for this, please use commands instead;
@@ -91,7 +89,7 @@ public class EffekseerCraft extends JavaPlugin {
         LogAdaptor logger = LogAdaptor.of(getLogger());
         EfsAdaptorImpl adaptor = new EfsAdaptorImpl(this);
 
-        EfsServer<Entity, Player, World, CommandSender, ByteArrayDataOutput, ByteArrayDataInput, Server> server = new EfsServer<>(
+        EfsServerImpl server = new EfsServerImpl(
                 adaptor,
                 logger,
                 Collections.singletonList(new File(getDataFolder(), "effects.json")),
@@ -131,30 +129,6 @@ public class EffekseerCraft extends JavaPlugin {
             CommandHandler commandHandler = new CommandHandler(server, localize);
             command.setExecutor(commandHandler);
         }
-
-        if (true)
-            return;
-
-        NetworkWrapper network = new NetworkWrapper(this);
-
-        getServer().getMessenger().registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
-        getServer().getMessenger().registerIncomingPluginChannel(this, Constants.CHANNEL_KEY, network);
-
-        Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
-
-        network.register(PacketHello.class, new PacketHello.ServerHandler(clients, logger));
-
-//        PluginCommand command = getCommand("effek");
-        if (command != null) command.setExecutor(new CommandAdaptor(this, network, clients, localize));
-
-        EventHandlerImpl listener = new EventHandlerImpl(this, network, clients, logger);
-        getServer().getPluginManager().registerEvents(listener, this);
-        getServer().getScheduler().runTaskTimer(this, listener::tick, 0, 0);
-        try {
-            getServer().getPluginManager().registerEvents(listener.channelListener(), this);
-        } catch (NoClassDefFoundError error) {
-            getServer().getPluginManager().registerEvents(listener.loginListener(), this);
-        }
     }
 
     @Override
@@ -168,6 +142,12 @@ public class EffekseerCraft extends JavaPlugin {
 
         PluginCommand command = getCommand("effek");
         if (command != null) command.setExecutor(null);
+    }
+
+    private static class EfsServerImpl extends EfsServer<Server, World, Entity, Player, CommandSender, ByteArrayDataOutput, ByteArrayDataInput> {
+        public EfsServerImpl(EfsAdaptorImpl adaptor, LogAdaptor logger, List<File> registries, EfsServerEnv env, String implVer, boolean autoReply) {
+            super(adaptor, logger, registries, env, implVer, autoReply);
+        }
     }
 
     static class EventHandler implements Listener {
@@ -188,10 +168,10 @@ public class EffekseerCraft extends JavaPlugin {
 
     static class CommandHandler implements TabExecutor {
 
-        EfsServer<?,?,?,CommandSender,?,?,Server> server;
+        EfsServer<Server,?,?,?,CommandSender,?,?> server;
         Localize localize;
 
-        CommandHandler(EfsServer<?,?,?,CommandSender,?,?,Server> server, Localize localize) {
+        CommandHandler(EfsServer<Server,?,?,?,CommandSender,?,?> server, Localize localize) {
             this.server = server;
             this.localize = localize;
         }

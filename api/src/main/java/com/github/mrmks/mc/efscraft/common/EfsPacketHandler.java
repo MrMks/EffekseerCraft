@@ -13,13 +13,13 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class EfsPacketHandler<EN, PL extends EN, DO extends DataOutput, DI extends DataInput, CTX> {
+public class EfsPacketHandler<SV, EN, PL extends EN, DO extends DataOutput, DI extends DataInput> {
 
-    private final EfsServer<EN, PL, ?, ?, DO, DI, CTX> server;
+    private final EfsServer<SV, ?, EN, PL, ?, DO, DI> server;
     private final MessageCodec codec;
     private final boolean autoReply;
 
-    EfsPacketHandler(EfsServer<EN, PL, ?, ?, DO, DI, CTX> server, boolean autoReply) {
+    EfsPacketHandler(EfsServer<SV, ?, EN, PL, ?, DO, DI> server, boolean autoReply) {
         this.server = server;
         this.codec = new MessageCodec();
         this.autoReply = autoReply;
@@ -57,24 +57,24 @@ public class EfsPacketHandler<EN, PL extends EN, DO extends DataOutput, DI exten
         }
     }
 
-    void sendToClient(CTX ctx, PL player, NetworkPacket packet) {
+    void sendToClient(SV svr, PL player, NetworkPacket packet) {
 
         DO output = server.adaptor.createPacket();
 
         try {
             codec.writeOutput(packet, output);
-            server.adaptor.sendPacket(ctx, Collections.singleton(player), pl -> true, output);
+            server.adaptor.sendPacket(svr, Collections.singleton(player), pl -> true, output);
         } catch (IOException e) {
             server.logger.logWarning("Unable to encode a packet to stream", e);
         }
     }
 
-    void sendToClient(CTX ctx, Collection<PL> players, Predicate<PL> test, NetworkPacket packet) {
+    void sendToClient(SV svr, Collection<PL> players, Predicate<PL> test, NetworkPacket packet) {
         DO output = server.adaptor.createPacket();
 
         try {
             codec.writeOutput(packet, output);
-            server.adaptor.sendPacket(ctx, players, test, output);
+            server.adaptor.sendPacket(svr, players, test, output);
         } catch (IOException e) {
             server.logger.logWarning("Unable to encode a packet to stream", e);
         }

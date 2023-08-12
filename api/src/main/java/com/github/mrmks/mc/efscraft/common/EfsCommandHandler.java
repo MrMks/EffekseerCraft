@@ -9,15 +9,14 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD> {
+public class EfsCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTITY, SENDER> {
 
-//    private final Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor;
-    private final IEfsServerAdaptor<ENTITY, PLAYER, WORLD, SENDER, ?, ?, CTX> adaptor;
+    private final IEfsServerAdaptor<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> adaptor;
     private final ServerRegistryMap registry;
     private final String port, portVersion;
     private final Map<UUID, PacketHello.State> clients;
-    private final EfsServer<ENTITY, PLAYER, WORLD, SENDER, ?, ?, CTX> server;
-    public EfsCommandHandler(Adaptor<ENTITY, PLAYER, CTX, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
+    private final EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server;
+    public EfsCommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
         this.adaptor = null;
         this.server = null;
         this.registry = new ServerRegistryMap(file);
@@ -26,7 +25,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         this.clients = clients;
     }
 
-    EfsCommandHandler(EfsServer<ENTITY, PLAYER, WORLD, SENDER, ?, ?, CTX> server, List<File> files) {
+    EfsCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server, List<File> files) {
         this.server = server;
         this.adaptor = server.adaptor;
         this.registry = new ServerRegistryMap(files);
@@ -50,7 +49,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         return getListMatchLastArg(args, Arrays.asList(collection));
     }
 
-    private void sendNearby(CTX ctx, SENDER sender, Collection<PLAYER> targets, NetworkPacket message, float x, float y, float z, int dist) {
+    private void sendNearby(SERVER server, SENDER sender, Collection<PLAYER> targets, NetworkPacket message, float x, float y, float z, int dist) {
 
         int chunkX = floorInt(x) >> 4, chunkY = floorInt(y) >> 4, chunkZ = floorInt(z) >> 4;
 
@@ -69,7 +68,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             return inClamp(chunkX, cx, dist) && inClamp(chunkY, cy, dist) && inClamp(chunkZ, cz, 10);
         };
 
-        this.server.packetHandler.sendToClient(ctx, targets, filter, message);
+        this.server.packetHandler.sendToClient(server, targets, filter, message);
     }
 
     private static int floorInt(float value) {
@@ -110,28 +109,28 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         }
     }
 
-    public void dispatchExecute(String label, String[] args, CTX ctx, SENDER sender) throws CommandException {
-        if ("effek".equals(label) && adaptor.hasPermission(ctx, sender, "efscraft.command")) {
+    public void dispatchExecute(String label, String[] args, SERVER server, SENDER sender) throws CommandException {
+        if ("effek".equals(label) && adaptor.hasPermission(server, sender, "efscraft.command")) {
             if (args.length < 1) throw new WrongUsageException("commands.effek.usage");
             else {
                 String sub = args[0];
                 String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 
                 switch (sub) {
-                    case "play": executePlay(subArgs, ctx, sender); break;
-                    case "trigger": executeTrigger(subArgs, ctx, sender); break;
-                    case "stop": executeStop(subArgs, ctx, sender); break;
-                    case "clear": executeClear(subArgs, ctx, sender); break;
-                    case "reload": executeReload(subArgs, ctx, sender); break;
-                    case "version": executeVersion(subArgs, ctx, sender); break;
+                    case "play": executePlay(subArgs, server, sender); break;
+                    case "trigger": executeTrigger(subArgs, server, sender); break;
+                    case "stop": executeStop(subArgs, server, sender); break;
+                    case "clear": executeClear(subArgs, server, sender); break;
+                    case "reload": executeReload(subArgs, server, sender); break;
+                    case "version": executeVersion(subArgs, server, sender); break;
                     default: throw new WrongUsageException("commands.effek.usage");
                 }
             }
         }
     }
 
-    public List<String> dispatchComplete(String label, String[] args, CTX ctx, SENDER sender) {
-        if (!"effek".equals(label) || !adaptor.hasPermission(ctx, sender, "efscraft.command"))
+    public List<String> dispatchComplete(String label, String[] args, SERVER server, SENDER sender) {
+        if (!"effek".equals(label) || !adaptor.hasPermission(server, sender, "efscraft.command"))
             return Collections.emptyList();
 
         if (args.length == 1) {
@@ -141,12 +140,12 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 
             switch (sub) {
-                case "play":    return completePlay(subArgs, ctx, sender);
-                case "trigger": return completeTrigger(subArgs, ctx, sender);
-                case "stop":    return completeStop(subArgs, ctx, sender);
-                case "clear":   return completeClear(subArgs, ctx, sender);
-                case "reload":  return completeReload(subArgs, ctx, sender);
-                case "version": return completeVersion(subArgs, ctx, sender);
+                case "play":    return completePlay(subArgs, server, sender);
+                case "trigger": return completeTrigger(subArgs, server, sender);
+                case "stop":    return completeStop(subArgs, server, sender);
+                case "clear":   return completeClear(subArgs, server, sender);
+                case "reload":  return completeReload(subArgs, server, sender);
+                case "version": return completeVersion(subArgs, server, sender);
                 default:        return Collections.emptyList();
             }
         } else {
@@ -154,7 +153,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         }
     }
 
-    private void executePlay(String[] args, CTX ctx, SENDER sender) throws CommandException {
+    private void executePlay(String[] args, SERVER server, SENDER sender) throws CommandException {
         if (args.length < 4) {
             throw new WrongUsageException("commands.effek.play.usage");
         } else {
@@ -162,7 +161,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
 
             if (registry.isExist(effect)) {
                 if ("on".equals(action)) {
-                    ENTITY entity = adaptor.findEntity(ctx, sender, args[3]);
+                    ENTITY entity = adaptor.findEntity(server, sender, args[3]);
 
                     if (entity == null)
                         throw new EntityNotFoundException(args[3]);
@@ -182,13 +181,13 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
                     Collection<PLAYER> players = adaptor.getPlayersInWorld(world);
                     int dist = adaptor.getWorldViewDistance(world);
 
-                    sendNearby(ctx, sender, players, message, pos.x(), pos.y(), pos.z(), dist);
+                    sendNearby(server, sender, players, message, pos.x(), pos.y(), pos.z(), dist);
 
                 } else if ("at".equals(action)) {
                     if (args.length < 9)
                         throw new CommandException("commands.effek.play.usage");
 
-                    WORLD world = adaptor.getWorld(ctx, sender, args[3]);
+                    WORLD world = adaptor.getWorld(server, sender, args[3]);
 
                     if (world == null)
                         throw new WorldNotFoundException(args[3]);
@@ -218,7 +217,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
                     Collection<PLAYER> players = adaptor.getPlayersInWorld(world);
                     int dist = adaptor.getWorldViewDistance(world);
 
-                    sendNearby(ctx, sender, players, message, x, y, z, dist);
+                    sendNearby(server, sender, players, message, x, y, z, dist);
                 }
             } else {
                 throw new EffectNotFoundException(effect);
@@ -226,9 +225,9 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         }
     }
 
-    private List<String> completePlay(String[] args, CTX ctx, SENDER sender) {
+    private List<String> completePlay(String[] args, SERVER server, SENDER sender) {
         if (args.length < 5) {
-            return completeBasic(args, 0, ctx, sender);
+            return completeBasic(args, 0, server, sender);
         } else if (args.length < 10) {
             if ("at".equals(args[2])) return getListMatchLastArg(args, "~");
             else return Collections.emptyList();
@@ -237,7 +236,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         }
     }
 
-    private void executeTrigger(String[] args, CTX ctx, SENDER sender) throws CommandException {
+    private void executeTrigger(String[] args, SERVER server, SENDER sender) throws CommandException {
         // effek trigger 1 effect emitter on entity
         // effek trigger 1 effect emitter at world posx posy posz
         if (args.length < 4) {
@@ -248,7 +247,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             ActionAt actionAt = (effect, emitter, posAngle, followings) -> new SPacketTrigger(effect, emitter, triggerId);
 
             try {
-                executeBasic(args, 1, ctx, sender, false, actionAt, actionOn);
+                executeBasic(args, 1, server, sender, false, actionAt, actionOn);
             } catch (WrongUsageException wue) {
                 if (wue == WrongUsageException.PLACEHOLDER)
                     throw new WrongUsageException("commands.effek.trigger.usage");
@@ -258,17 +257,17 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         }
     }
 
-    private List<String> completeTrigger(String[] args, CTX ctx, SENDER sender) {
+    private List<String> completeTrigger(String[] args, SERVER server, SENDER sender) {
         if (args.length <= 1) {
             return getListMatchLastArg(args, "0", "1", "2", "3");
         } else if (args.length < 6) {
-            return completeBasic(args, 1, ctx, sender);
+            return completeBasic(args, 1, server, sender);
         } else if (args.length < 9 && "at".equals(args[3])) {
             return getListMatchLastArg(args, "~");
         } else return Collections.emptyList();
     }
 
-    private void executeStop(String[] args, CTX ctx, SENDER sender) throws CommandException {
+    private void executeStop(String[] args, SERVER server, SENDER sender) throws CommandException {
         if (args.length < 4) {
             throw new WrongUsageException("commands.effek.stop.usage");
         } else {
@@ -277,7 +276,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             ActionAt actionAt = (effect, emitter, posAngle, followings) -> new SPacketStop(effect, emitter);
 
             try {
-                executeBasic(args, 0, ctx, sender, false, actionAt, actionOn);
+                executeBasic(args, 0, server, sender, false, actionAt, actionOn);
             } catch (WrongUsageException wue) {
                 if (wue == WrongUsageException.PLACEHOLDER)
                     throw new WrongUsageException("commands.effek.stop.usage");
@@ -287,9 +286,9 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         }
     }
 
-    private List<String> completeStop(String[] args, CTX ctx, SENDER sender) {
+    private List<String> completeStop(String[] args, SERVER server, SENDER sender) {
         if (args.length < 5) {
-            return completeBasic(args, 0, ctx, sender);
+            return completeBasic(args, 0, server, sender);
         } else if (args.length < 8 && "at".equals(args[2])) {
             return getListMatchLastArg(args, "~");
         } else {
@@ -307,7 +306,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
         NetworkPacket accept(String effect, String emitter, int entity, String[] followings);
     }
 
-    private void executeBasic(String[] args, int index, CTX ctx, SENDER sender, boolean hasRot, ActionAt actionAt, ActionOn actionOn) throws CommandException {
+    private void executeBasic(String[] args, int index, SERVER server, SENDER sender, boolean hasRot, ActionAt actionAt, ActionOn actionOn) throws CommandException {
 
         if (args.length < index + 4)
             throw WrongUsageException.PLACEHOLDER;
@@ -318,7 +317,7 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             throw new EffectNotFoundException(effect);
 
         if ("on".equalsIgnoreCase(action)) {
-            ENTITY entity = adaptor.findEntity(ctx, sender, args[index + 3]);
+            ENTITY entity = adaptor.findEntity(server, sender, args[index + 3]);
 
             if (entity == null)
                 throw new EntityNotFoundException(args[index + 3]);
@@ -337,13 +336,13 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             Collection<PLAYER> players = adaptor.getPlayersInWorld(world);
             int dist = adaptor.getWorldViewDistance(world);
 
-            sendNearby(ctx, sender, players, message, pos.x(), pos.y(), pos.z(), dist);
+            sendNearby(server, sender, players, message, pos.x(), pos.y(), pos.z(), dist);
         } else if ("at".equalsIgnoreCase(action)) {
 
             if (args.length < index + 7)
                 throw WrongUsageException.PLACEHOLDER;
 
-            WORLD world = adaptor.getWorld(ctx, sender, args[index + 3]);
+            WORLD world = adaptor.getWorld(server, sender, args[index + 3]);
             if (world == null)
                 throw new WorldNotFoundException(args[index + 3]);
 
@@ -381,13 +380,13 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             Collection<PLAYER> players = adaptor.getPlayersInWorld(world);
             int dist = adaptor.getWorldViewDistance(world);
 
-            sendNearby(ctx, sender, players, message, x, y, z, dist);
+            sendNearby(server, sender, players, message, x, y, z, dist);
         } else {
             throw WrongUsageException.PLACEHOLDER;
         }
     }
 
-    private List<String> completeBasic(String[] args, int index, CTX ctx, SENDER sender) {
+    private List<String> completeBasic(String[] args, int index, SERVER server, SENDER sender) {
         if (args.length == index + 1) {
             return getListMatchLastArg(args, registry.keySets());
         } else if (args.length == index + 2) {
@@ -396,46 +395,46 @@ public class EfsCommandHandler<ENTITY, PLAYER extends ENTITY, CTX, SENDER, WORLD
             return getListMatchLastArg(args, "on", "at");
         } else if (args.length == index + 4) {
             if ("on".equals(args[index + 2])) {
-                return getListMatchLastArg(args, adaptor.getPlayersInServer(ctx, sender).stream().map(adaptor::getPlayerName).collect(Collectors.toList()));
+                return getListMatchLastArg(args, adaptor.getPlayersInServer(server, sender).stream().map(adaptor::getPlayerName).collect(Collectors.toList()));
             } else if ("at".equals(args[index + 2])) {
-                return getListMatchLastArg(args, adaptor.getWorlds(ctx, sender).stream().map(adaptor::getWorldName).collect(Collectors.toList()));
+                return getListMatchLastArg(args, adaptor.getWorlds(server, sender).stream().map(adaptor::getWorldName).collect(Collectors.toList()));
             } else {
                 return Collections.emptyList();
             }
         } else return Collections.emptyList();
     }
 
-    private void executeClear(String[] args, CTX ctx, SENDER sender) throws CommandException {
+    private void executeClear(String[] args, SERVER server, SENDER sender) throws CommandException {
         if (args.length < 1) {
             throw new WrongUsageException("commands.effek.clear.usage");
         } else {
-            PLAYER player = adaptor.findPlayer(ctx, sender, args[0]);
+            PLAYER player = adaptor.findPlayer(server, sender, args[0]);
             if (player != null)
-                this.server.packetHandler.sendToClient(ctx, player, new SPacketClear());
+                this.server.packetHandler.sendToClient(server, player, new SPacketClear());
             else
                 throw new EntityNotFoundException(args[0]);
         }
     }
 
-    private List<String> completeClear(String[] args, CTX ctx, SENDER sender) {
+    private List<String> completeClear(String[] args, SERVER server, SENDER sender) {
         if (args.length == 1) {
-            return getListMatchLastArg(args, adaptor.getPlayersInServer(ctx, sender).stream().map(adaptor::getPlayerName).collect(Collectors.toList()));
+            return getListMatchLastArg(args, adaptor.getPlayersInServer(server, sender).stream().map(adaptor::getPlayerName).collect(Collectors.toList()));
         } else return Collections.emptyList();
     }
 
-    private void executeReload(String[] args, CTX ctx, SENDER sender) throws CommandException {
-        registry.reload(() -> adaptor.sendMessage(ctx, sender, "commands.effek.reload.success", new Object[0], true));
+    private void executeReload(String[] args, SERVER server, SENDER sender) throws CommandException {
+        registry.reload(() -> adaptor.sendMessage(server, sender, "commands.effek.reload.success", new Object[0], true));
     }
 
-    private List<String> completeReload(String[] args, CTX ctx, SENDER sender) {
+    private List<String> completeReload(String[] args, SERVER server, SENDER sender) {
         return Collections.emptyList();
     }
 
-    private void executeVersion(String[] args, CTX ctx, SENDER sender) throws CommandException {
-        adaptor.sendMessage(ctx, sender, "commands.effek.version.display", new Object[]{portVersion, Integer.toString(Constants.PROTOCOL_VERSION), port}, false);
+    private void executeVersion(String[] args, SERVER server, SENDER sender) throws CommandException {
+        adaptor.sendMessage(server, sender, "commands.effek.version.display", new Object[]{portVersion, Integer.toString(Constants.PROTOCOL_VERSION), port}, false);
     }
 
-    private List<String> completeVersion(String[] args, CTX ctx, SENDER sender) {
+    private List<String> completeVersion(String[] args, SERVER server, SENDER sender) {
         return Collections.emptyList();
     }
 

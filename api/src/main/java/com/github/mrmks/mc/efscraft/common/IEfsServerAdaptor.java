@@ -20,7 +20,7 @@ import java.util.function.Predicate;
  * @param <DI>
  * @param <CTX>
  */
-public interface IEfsServerAdaptor<EN, PL extends EN, WO, SE, DA extends DataOutput, DI extends DataInput, CTX> {
+public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends DataOutput, DI extends DataInput> {
 
     // test if a sender has some permission.
     boolean hasPermission(CTX ctx, SE sender, String permissionNode);

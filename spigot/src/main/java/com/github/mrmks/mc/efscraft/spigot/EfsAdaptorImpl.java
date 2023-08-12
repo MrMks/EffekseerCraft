@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class EfsAdaptorImpl implements IEfsServerAdaptor<Entity, Player, World, CommandSender, ByteArrayDataOutput, ByteArrayDataInput, Server> {
+public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, Player, CommandSender, ByteArrayDataOutput, ByteArrayDataInput> {
 
     private final Plugin plugin;
     EfsAdaptorImpl(Plugin plugin) {

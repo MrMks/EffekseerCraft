@@ -49,7 +49,7 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
     private static final Splitter SPLITTER = Splitter.on(' ');
 
     private final NetworkWrapper wrapper;
-    private final EfsCommandHandler<Entity, Player, CommandContext<CommandSourceStack>, CommandSourceStack, Level> handler;
+    private final EfsCommandHandler<CommandContext<CommandSourceStack>, Level, Entity, Player, CommandSourceStack> handler;
 
     CommandAdaptor(NetworkWrapper wrapper, File file, Map<UUID, PacketHello.State> clients, String modVersion) {
         this.wrapper = wrapper;

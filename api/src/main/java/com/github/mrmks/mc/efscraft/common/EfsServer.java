@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EfsServer<EN, PL extends EN, WO, SE, DO extends DataOutput, DI extends DataInput, CTX> {
+public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI extends DataInput> {
 
-    protected final IEfsServerAdaptor<EN, PL, WO, SE, DO, DI, CTX> adaptor;
-    protected final EfsCommandHandler<EN, PL, CTX, SE, WO> commandHandler;
-    protected final EfsPacketHandler<EN, PL, DO, DI, CTX> packetHandler;
+    protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor;
+    protected final EfsCommandHandler<SV, WO, EN, PL, SE> commandHandler;
+    protected final EfsPacketHandler<SV, EN, PL, DO, DI> packetHandler;
     protected final EfsEventHandler eventHandler;
 
     final Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
@@ -24,7 +24,7 @@ public class EfsServer<EN, PL extends EN, WO, SE, DO extends DataOutput, DI exte
     protected final String implVer;
 
     public EfsServer(
-            IEfsServerAdaptor<EN, PL, WO, SE, DO, DI, CTX> adaptor,
+            IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor,
             LogAdaptor logger,
             List<File> registries,
             EfsServerEnv env,
@@ -42,12 +42,12 @@ public class EfsServer<EN, PL extends EN, WO, SE, DO extends DataOutput, DI exte
     }
 
     // commands
-    public void executeCommands(String label, String[] args, SE sender, CTX ctx) throws EfsCommandHandler.CommandException {
-        commandHandler.dispatchExecute(label, args, ctx, sender);
+    public void executeCommands(String label, String[] args, SE sender, SV server) throws EfsCommandHandler.CommandException {
+        commandHandler.dispatchExecute(label, args, server, sender);
     }
 
-    public List<String> completeCommands(String label, String[] args, SE sender, CTX ctx) {
-        return commandHandler.dispatchComplete(label, args, ctx, sender);
+    public List<String> completeCommands(String label, String[] args, SE sender, SV server) {
+        return commandHandler.dispatchComplete(label, args, server, sender);
     }
 
     // events

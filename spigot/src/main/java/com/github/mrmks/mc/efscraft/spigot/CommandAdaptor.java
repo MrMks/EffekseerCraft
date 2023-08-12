@@ -25,7 +25,7 @@ public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<En
     private final Plugin plugin;
     private final NetworkWrapper wrapper;
     private final Localize localize;
-    private final EfsCommandHandler<Entity, Player, Server, CommandSender, World> handler;
+    private final EfsCommandHandler<Server, World, Entity, Player, CommandSender> handler;
 
     @Override
     public boolean hasPermission(Server server, CommandSender sender, String node) {

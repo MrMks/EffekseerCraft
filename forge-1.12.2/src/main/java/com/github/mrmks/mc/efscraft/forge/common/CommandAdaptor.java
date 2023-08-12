@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class CommandAdaptor extends CommandBase implements EfsCommandHandler.Adaptor<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> {
 
     private final NetworkWrapper wrapper;
-    private final EfsCommandHandler<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> handler;
+    private final EfsCommandHandler<MinecraftServer, World, Entity, EntityPlayer, ICommandSender> handler;
 
     @Override
     public boolean hasPermission(MinecraftServer server, ICommandSender sender, String node) {
