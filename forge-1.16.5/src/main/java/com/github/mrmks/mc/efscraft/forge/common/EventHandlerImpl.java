@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
-import com.github.mrmks.mc.efscraft.common.EfsEventHandler;
+import com.github.mrmks.mc.efscraft.common.EfsServerEventHandler;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,7 +15,7 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import java.util.Map;
 import java.util.UUID;
 
-class EventHandlerImpl extends EfsEventHandler {
+class EventHandlerImpl extends EfsServerEventHandler {
 
     private final NetworkWrapper wrapper;
     EventHandlerImpl(NetworkWrapper wrapper, Map<UUID, PacketHello.State> clients, LogAdaptor adaptor) {

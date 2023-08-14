@@ -113,7 +113,7 @@ public class EffekseerCraft extends JavaPlugin {
         EventHandler eventHandler = new EventHandler(server);
         getServer().getPluginManager().registerEvents(eventHandler, this);
         // and tick
-        getServer().getScheduler().runTaskTimer(this, () -> server.receiveEvent(new EfsTickEvent()), 0, 0);
+        getServer().getScheduler().runTaskTimer(this, () -> server.receiveEvent(EfsTickEvent.INSTANCE), 0, 0);
 
         // localize
         Localize localize = new Localize();
@@ -180,7 +180,7 @@ public class EffekseerCraft extends JavaPlugin {
         public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
             try {
                 server.executeCommands(label, args, sender, Bukkit.getServer());
-            } catch (EfsCommandHandler.CommandException e) {
+            } catch (EfsServerCommandHandler.CommandException e) {
                 if (sender instanceof Player) {
                     TranslatableComponent component = new TranslatableComponent(e.getMessage(), e.getParams());
                     component.setColor(ChatColor.RED);

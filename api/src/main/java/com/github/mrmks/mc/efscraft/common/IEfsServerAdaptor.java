@@ -31,8 +31,8 @@ public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends Da
      * @param toFind a string fo indicate which entity to find, we always try UUID version of this method first, therefore, if this method is called, this will not be a uuid;
      * @return null if entity can not be found in given world
      */
-    EN findEntity(CTX ctx, SE sender, String toFind) throws EfsCommandHandler.CommandException;
-    PL findPlayer(CTX ctx, SE sender, String toFind) throws EfsCommandHandler.CommandException;
+    EN findEntity(CTX ctx, SE sender, String toFind) throws EfsServerCommandHandler.CommandException;
+    PL findPlayer(CTX ctx, SE sender, String toFind) throws EfsServerCommandHandler.CommandException;
 
     /**
      * @return null if entity can not be found in given world
@@ -48,8 +48,8 @@ public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends Da
     /**
      * @return null if desired world can not be found;
      */
-    WO getWorld(CTX ctx, String world) throws EfsCommandHandler.CommandException;
-    WO getWorld(CTX ctx, SE sender, String world) throws EfsCommandHandler.CommandException;
+    WO getWorld(CTX ctx, String world) throws EfsServerCommandHandler.CommandException;
+    WO getWorld(CTX ctx, SE sender, String world) throws EfsServerCommandHandler.CommandException;
 
     int getEntityId(EN entity);
     UUID getEntityUUID(EN entity);
@@ -71,6 +71,6 @@ public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends Da
     void sendPacket(Collection<PL> players, Predicate<PL> test, DA output);
     void sendPacket(CTX ctx, Collection<PL> players, Predicate<PL> test, DA output);
 
-
     void sendMessage(CTX ctx, SE sender, String msg, Object[] args, boolean scheduled);
+//    void sendMessage(CTX ctx, PL player, String msg, Object[] args, boolean scheduled, boolean validPlayer);
 }

@@ -13,13 +13,13 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class EfsPacketHandler<SV, EN, PL extends EN, DO extends DataOutput, DI extends DataInput> {
+public class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends DataOutput, DI extends DataInput> {
 
     private final EfsServer<SV, ?, EN, PL, ?, DO, DI> server;
     private final MessageCodec codec;
     private final boolean autoReply;
 
-    EfsPacketHandler(EfsServer<SV, ?, EN, PL, ?, DO, DI> server, boolean autoReply) {
+    EfsServerPacketHandler(EfsServer<SV, ?, EN, PL, ?, DO, DI> server, boolean autoReply) {
         this.server = server;
         this.codec = new MessageCodec();
         this.autoReply = autoReply;

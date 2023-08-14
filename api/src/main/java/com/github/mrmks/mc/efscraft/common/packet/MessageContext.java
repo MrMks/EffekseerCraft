@@ -4,6 +4,8 @@ import java.util.UUID;
 
 public class MessageContext {
 
+    public static final MessageContext AT_CLIENT = new MessageContext(null);
+
     private final boolean remote;
     private final UUID sender;
     public MessageContext(UUID sender) {

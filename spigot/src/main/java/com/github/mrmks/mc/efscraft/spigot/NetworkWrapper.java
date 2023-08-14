@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import java.io.*;
 import java.util.logging.Level;
 
+@Deprecated
 class NetworkWrapper implements PluginMessageListener {
 
     private final MessageCodec codec = new MessageCodec();

@@ -6,7 +6,7 @@ import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.util.*;
 
-public class EfsEventHandler {
+public class EfsServerEventHandler {
 
     private static class Counter {
         int count;
@@ -25,19 +25,19 @@ public class EfsEventHandler {
 
     private final EfsServer<?, ?, ?, ?, ?, ?, ?> server;
 
-    EfsEventHandler(EfsServer<?, ?, ?, ?, ?, ?, ?> server) {
+    EfsServerEventHandler(EfsServer<?, ?, ?, ?, ?, ?, ?> server) {
         this.server = server;
         this.logger = server.logger;
         this.clients = server.clients;
     }
 
-    protected EfsEventHandler(Map<UUID, PacketHello.State> clients, LogAdaptor logger) {
+    protected EfsServerEventHandler(Map<UUID, PacketHello.State> clients, LogAdaptor logger) {
         this.clients = clients;
         this.logger = logger;
         this.server = null;
     }
 
-    void receive(IEfsEvent event) {
+    void receive(IEfsServerEvent event) {
         if (event instanceof EfsTickEvent) {
             tickAndUpdate();
         } else if (event instanceof EfsPlayerEvent) {

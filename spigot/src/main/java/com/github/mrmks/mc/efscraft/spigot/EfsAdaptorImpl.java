@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.common.EfsCommandHandler;
+import com.github.mrmks.mc.efscraft.common.EfsServerCommandHandler;
 import com.github.mrmks.mc.efscraft.common.IEfsServerAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
@@ -92,12 +92,12 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
     }
 
     @Override
-    public World getWorld(Server server, String world) throws EfsCommandHandler.CommandException {
+    public World getWorld(Server server, String world) throws EfsServerCommandHandler.CommandException {
         return null;
     }
 
     @Override
-    public World getWorld(Server server, CommandSender sender, String toFind) throws EfsCommandHandler.CommandException {
+    public World getWorld(Server server, CommandSender sender, String toFind) throws EfsServerCommandHandler.CommandException {
         World world = null;
         try {
             UUID uuid = UUID.fromString(toFind);

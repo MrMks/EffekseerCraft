@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.EfsCommandHandler;
+import com.github.mrmks.mc.efscraft.common.EfsServerCommandHandler;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.google.common.base.Splitter;
@@ -40,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player, CommandContext<CommandSourceStack>, CommandSourceStack, Level> {
+public class CommandAdaptor implements EfsServerCommandHandler.Adaptor<Entity, Player, CommandContext<CommandSourceStack>, CommandSourceStack, Level> {
 
     static final Map<String, PermissionNode<Boolean>> NODES = ImmutableMap.of(
             "efscraft.command", new PermissionNode<>("efscraft", "command", PermissionTypes.BOOLEAN, ((p, u, c) -> p == null || p.server.getPlayerList().isOp(p.getGameProfile()) ? Boolean.TRUE : Boolean.FALSE))
@@ -49,11 +49,11 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
     private static final Splitter SPLITTER = Splitter.on(' ');
 
     private final NetworkWrapper wrapper;
-    private final EfsCommandHandler<CommandContext<CommandSourceStack>, Level, Entity, Player, CommandSourceStack> handler;
+    private final EfsServerCommandHandler<CommandContext<CommandSourceStack>, Level, Entity, Player, CommandSourceStack> handler;
 
     CommandAdaptor(NetworkWrapper wrapper, File file, Map<UUID, PacketHello.State> clients, String modVersion) {
         this.wrapper = wrapper;
-        this.handler = new EfsCommandHandler<>(this, file, "forge", modVersion, clients);
+        this.handler = new EfsServerCommandHandler<>(this, file, "forge", modVersion, clients);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
     }
 
     @Override
-    public Player findPlayer(CommandContext<CommandSourceStack> server, CommandSourceStack sender, String toFound) throws EfsCommandHandler.CommandException {
+    public Player findPlayer(CommandContext<CommandSourceStack> server, CommandSourceStack sender, String toFound) throws EfsServerCommandHandler.CommandException {
         try {
             return EntityArgument.getPlayer(server, "target");
         } catch (CommandSyntaxException e) {
@@ -91,7 +91,7 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
     }
 
     @Override
-    public Entity findEntity(CommandContext<CommandSourceStack> server, CommandSourceStack iCommandSourceStack, String toFound) throws EfsCommandHandler.CommandException {
+    public Entity findEntity(CommandContext<CommandSourceStack> server, CommandSourceStack iCommandSourceStack, String toFound) throws EfsServerCommandHandler.CommandException {
         try {
             return EntityArgument.getEntity(server, "target");
         } catch (CommandSyntaxException e) {
@@ -126,7 +126,7 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
     }
 
     @Override
-    public Level findWorld(CommandContext<CommandSourceStack> server, CommandSourceStack sender, String str) throws EfsCommandHandler.CommandException {
+    public Level findWorld(CommandContext<CommandSourceStack> server, CommandSourceStack sender, String str) throws EfsServerCommandHandler.CommandException {
         try {
             return DimensionArgument.getDimension(server, "dim");
         } catch (CommandSyntaxException e) {
@@ -164,7 +164,7 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
         source.sendSuccess(new TranslatableComponent(msg, objects), false);
     }
 
-    private static class ExceptionWrapper extends EfsCommandHandler.CommandException {
+    private static class ExceptionWrapper extends EfsServerCommandHandler.CommandException {
 
         final CommandSyntaxException exception;
 
@@ -251,7 +251,7 @@ public class CommandAdaptor implements EfsCommandHandler.Adaptor<Entity, Player,
         Pair<String, String[]> pair = parseInput(context.getInput().substring(1));
         try {
             handler.dispatchExecute(pair.getLeft(), pair.getRight(), context, context.getSource());
-        } catch (EfsCommandHandler.CommandException e) {
+        } catch (EfsServerCommandHandler.CommandException e) {
             if (e instanceof ExceptionWrapper)
                 throw ((ExceptionWrapper) e).exception;
             else

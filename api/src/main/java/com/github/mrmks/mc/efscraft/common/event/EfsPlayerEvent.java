@@ -1,10 +1,10 @@
 package com.github.mrmks.mc.efscraft.common.event;
 
-import com.github.mrmks.mc.efscraft.common.IEfsEvent;
+import com.github.mrmks.mc.efscraft.common.IEfsServerEvent;
 
 import java.util.UUID;
 
-public abstract class EfsPlayerEvent implements IEfsEvent {
+public abstract class EfsPlayerEvent implements IEfsServerEvent {
     private final UUID player;
     private EfsPlayerEvent(UUID uuid) {
         this.player = uuid;

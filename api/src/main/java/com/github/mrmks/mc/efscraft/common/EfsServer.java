@@ -14,9 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI extends DataInput> {
 
     protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor;
-    protected final EfsCommandHandler<SV, WO, EN, PL, SE> commandHandler;
-    protected final EfsPacketHandler<SV, EN, PL, DO, DI> packetHandler;
-    protected final EfsEventHandler eventHandler;
+    protected final EfsServerCommandHandler<SV, WO, EN, PL, SE> commandHandler;
+    protected final EfsServerPacketHandler<SV, EN, PL, DO, DI> packetHandler;
+    protected final EfsServerEventHandler eventHandler;
 
     final Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
     protected final LogAdaptor logger;
@@ -36,13 +36,13 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
         this.env = env;
         this.implVer = implVer;
 
-        this.commandHandler = new EfsCommandHandler<>(this, registries);
-        this.packetHandler = new EfsPacketHandler<>(this, autoReply);
-        this.eventHandler = new EfsEventHandler(this);
+        this.commandHandler = new EfsServerCommandHandler<>(this, registries);
+        this.packetHandler = new EfsServerPacketHandler<>(this, autoReply);
+        this.eventHandler = new EfsServerEventHandler(this);
     }
 
     // commands
-    public void executeCommands(String label, String[] args, SE sender, SV server) throws EfsCommandHandler.CommandException {
+    public void executeCommands(String label, String[] args, SE sender, SV server) throws EfsServerCommandHandler.CommandException {
         commandHandler.dispatchExecute(label, args, server, sender);
     }
 
@@ -51,7 +51,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
     }
 
     // events
-    public void receiveEvent(IEfsEvent event) {
+    public void receiveEvent(IEfsServerEvent event) {
         eventHandler.receive(event);
     }
 

@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import com.github.mrmks.mc.efscraft.common.IEfsEvent;
+import com.github.mrmks.mc.efscraft.common.IEfsServerEvent;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
@@ -81,15 +81,15 @@ public class PacketHello implements NetworkPacket {
 
     public static final class InternalServerHandler implements NetworkPacket.ServerHandler<PacketHello, NetworkPacket> {
 
-        private final Consumer<IEfsEvent> consumer;
+        private final Consumer<IEfsServerEvent> consumer;
 
-        public InternalServerHandler(Consumer<IEfsEvent> consumer) {
+        public InternalServerHandler(Consumer<IEfsServerEvent> consumer) {
             this.consumer = consumer;
         }
 
         @Override
         public NetworkPacket handlePacket(PacketHello packet, UUID sender) {
-            IEfsEvent event = new EfsPlayerEvent.Verify(sender, packet.version);
+            IEfsServerEvent event = new EfsPlayerEvent.Verify(sender, packet.version);
             consumer.accept(event);
 
             return null;

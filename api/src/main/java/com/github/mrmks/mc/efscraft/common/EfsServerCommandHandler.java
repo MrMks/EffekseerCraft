@@ -9,14 +9,14 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class EfsCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTITY, SENDER> {
+public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTITY, SENDER> {
 
     private final IEfsServerAdaptor<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> adaptor;
     private final ServerRegistryMap registry;
     private final String port, portVersion;
     private final Map<UUID, PacketHello.State> clients;
     private final EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server;
-    public EfsCommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
+    public EfsServerCommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
         this.adaptor = null;
         this.server = null;
         this.registry = new ServerRegistryMap(file);
@@ -25,7 +25,7 @@ public class EfsCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTITY, SEN
         this.clients = clients;
     }
 
-    EfsCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server, List<File> files) {
+    EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server, List<File> files) {
         this.server = server;
         this.adaptor = server.adaptor;
         this.registry = new ServerRegistryMap(files);

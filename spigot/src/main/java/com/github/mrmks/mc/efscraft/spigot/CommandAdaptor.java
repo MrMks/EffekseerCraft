@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.common.EfsCommandHandler;
+import com.github.mrmks.mc.efscraft.common.EfsServerCommandHandler;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.md_5.bungee.api.ChatColor;
@@ -20,12 +20,13 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<Entity, Player, Server, CommandSender, World> {
+@Deprecated
+public class CommandAdaptor implements TabExecutor, EfsServerCommandHandler.Adaptor<Entity, Player, Server, CommandSender, World> {
 
     private final Plugin plugin;
     private final NetworkWrapper wrapper;
     private final Localize localize;
-    private final EfsCommandHandler<Server, World, Entity, Player, CommandSender> handler;
+    private final EfsServerCommandHandler<Server, World, Entity, Player, CommandSender> handler;
 
     @Override
     public boolean hasPermission(Server server, CommandSender sender, String node) {
@@ -43,7 +44,7 @@ public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<En
     }
 
     @Override
-    public Player findPlayer(Server server, CommandSender sender, String toFound) throws EfsCommandHandler.CommandException {
+    public Player findPlayer(Server server, CommandSender sender, String toFound) throws EfsServerCommandHandler.CommandException {
         Player player = server.getPlayer(toFound);
         if (player == null) {
             try {
@@ -52,13 +53,13 @@ public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<En
             } catch (IllegalArgumentException ignored) {}
         }
 
-        if (player == null) throw new EfsCommandHandler.CommandException("commands.generic.player.notFound", toFound) {};
+        if (player == null) throw new EfsServerCommandHandler.CommandException("commands.generic.player.notFound", toFound) {};
 
         return player;
     }
 
     @Override
-    public Entity findEntity(Server server, CommandSender sender, String toFound) throws EfsCommandHandler.CommandException {
+    public Entity findEntity(Server server, CommandSender sender, String toFound) throws EfsServerCommandHandler.CommandException {
         Entity entity = null;
         try {
             UUID uuid = UUID.fromString(toFound);
@@ -72,7 +73,7 @@ public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<En
             entity = server.getPlayer(toFound);
         }
 
-        if (entity == null) throw new EfsCommandHandler.CommandException("commands.generic.entity.notFound", toFound) {};
+        if (entity == null) throw new EfsServerCommandHandler.CommandException("commands.generic.entity.notFound", toFound) {};
 
         return entity;
     }
@@ -104,7 +105,7 @@ public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<En
     }
 
     @Override
-    public World findWorld(Server server, CommandSender sender, String str) throws EfsCommandHandler.CommandException {
+    public World findWorld(Server server, CommandSender sender, String str) throws EfsServerCommandHandler.CommandException {
         return server.getWorld(str);
     }
 
@@ -160,14 +161,14 @@ public class CommandAdaptor implements TabExecutor, EfsCommandHandler.Adaptor<En
         this.plugin = plugin;
         this.localize = localize;
 
-        this.handler = new EfsCommandHandler<>(this, new File(plugin.getDataFolder(), "effects.json"), "spigot", plugin.getDescription().getVersion(), clients);
+        this.handler = new EfsServerCommandHandler<>(this, new File(plugin.getDataFolder(), "effects.json"), "spigot", plugin.getDescription().getVersion(), clients);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         try {
             handler.dispatchExecute(label, args, plugin.getServer(), sender);
-        } catch (EfsCommandHandler.CommandException e) {
+        } catch (EfsServerCommandHandler.CommandException e) {
             sendMessage0(sender, e.getMessage(), e.getParams(), true);
         }
         return true;

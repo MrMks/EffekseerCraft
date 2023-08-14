@@ -1,6 +1,6 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.common.EfsEventHandler;
+import com.github.mrmks.mc.efscraft.common.EfsServerEventHandler;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
@@ -21,7 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-class EventHandlerImpl extends EfsEventHandler implements Listener {
+@Deprecated
+class EventHandlerImpl extends EfsServerEventHandler implements Listener {
 
     private final NetworkWrapper network;
     private final Plugin plugin;
