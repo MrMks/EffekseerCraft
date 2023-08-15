@@ -1,7 +1,6 @@
 package com.github.mrmks.mc.efscraft.client;
 
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
-import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -24,13 +23,12 @@ public class EfsClient<EN, PL extends EN, DI extends DataInput, DO extends DataO
         this.logger = logger;
         this.adaptor = adaptor;
 
-        EfsDrawingQueue<EN> queue = new EfsDrawingQueue<>(this);
-
         this.resources = new EfsResourceManager(this);
-        this.renderer = new EfsRenderer(this, queue);
-
-        this.packetHandler = new EfsClientPacketHandler<>(this, autoReply, queue);
         this.eventHandler = new EfsClientEventHandler(this);
+
+        EfsDrawingQueue<EN> queue = new EfsDrawingQueue<>(this);
+        this.renderer = new EfsRenderer(this, queue);
+        this.packetHandler = new EfsClientPacketHandler<>(this, autoReply, queue);
     }
 
     public DO receivePacket(DI dataInput) throws IOException {

@@ -16,7 +16,6 @@ public class EfsRenderer {
     EfsRenderer(EfsClient<?,?,?,?> client, EfsDrawingQueue<?> queue) {
         this.client = client;
         this.queue = queue;
-        getProgram();
     }
 
     void update(float partial, long nanoNow, boolean pausing, Matrix4f matProj, Matrix4f matModel) {
