@@ -1,9 +1,9 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import com.github.mrmks.mc.efscraft.common.IEfsServerEvent;
+import com.github.mrmks.mc.efscraft.server.IEfsServerEvent;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
+import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 
 import java.io.DataInput;
 import java.io.DataOutput;

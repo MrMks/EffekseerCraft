@@ -5,9 +5,6 @@ import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
 public class EfsRenderEvent implements IEfsClientEvent {
-
-    public enum Phase { START, END }
-
     private final float partial;
     private final long nanoNow;
     private final boolean pausing;

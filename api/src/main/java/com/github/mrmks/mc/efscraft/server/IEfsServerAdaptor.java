@@ -1,5 +1,6 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
+import com.github.mrmks.mc.efscraft.common.IEfsNetworkAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 

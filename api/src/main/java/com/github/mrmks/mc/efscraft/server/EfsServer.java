@@ -1,10 +1,10 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

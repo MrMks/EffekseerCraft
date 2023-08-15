@@ -1,8 +1,11 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.*;
-import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
-import com.github.mrmks.mc.efscraft.common.event.EfsServerEvent;
+import com.github.mrmks.mc.efscraft.server.EfsServer;
+import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
+import com.github.mrmks.mc.efscraft.server.EfsServerEnv;
+import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
+import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;

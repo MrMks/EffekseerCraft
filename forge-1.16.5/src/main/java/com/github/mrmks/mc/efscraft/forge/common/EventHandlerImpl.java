@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
-import com.github.mrmks.mc.efscraft.common.EfsServerEventHandler;
+import com.github.mrmks.mc.efscraft.server.EfsServerEventHandler;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import net.minecraft.entity.player.PlayerEntity;

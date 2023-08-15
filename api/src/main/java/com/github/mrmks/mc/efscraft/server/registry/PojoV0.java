@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.common.registry;
+package com.github.mrmks.mc.efscraft.server.registry;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;

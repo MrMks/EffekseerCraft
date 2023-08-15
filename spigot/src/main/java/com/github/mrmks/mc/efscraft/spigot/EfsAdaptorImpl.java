@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.common.EfsServerCommandHandler;
-import com.github.mrmks.mc.efscraft.common.IEfsServerAdaptor;
+import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
+import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import com.google.common.io.ByteArrayDataInput;

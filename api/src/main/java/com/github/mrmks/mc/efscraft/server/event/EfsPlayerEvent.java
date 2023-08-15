@@ -1,6 +1,6 @@
-package com.github.mrmks.mc.efscraft.common.event;
+package com.github.mrmks.mc.efscraft.server.event;
 
-import com.github.mrmks.mc.efscraft.common.IEfsServerEvent;
+import com.github.mrmks.mc.efscraft.server.IEfsServerEvent;
 
 import java.util.UUID;
 

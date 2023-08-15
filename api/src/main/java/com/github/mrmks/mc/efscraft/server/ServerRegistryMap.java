@@ -1,7 +1,7 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
-import com.github.mrmks.mc.efscraft.common.registry.PojoUpdate;
-import com.github.mrmks.mc.efscraft.common.registry.PojoV1;
+import com.github.mrmks.mc.efscraft.server.registry.PojoUpdate;
+import com.github.mrmks.mc.efscraft.server.registry.PojoV1;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

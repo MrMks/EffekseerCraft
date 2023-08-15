@@ -1,11 +1,11 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayAbstract;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayAt;
 import com.github.mrmks.mc.efscraft.common.packet.SPacketPlayWith;
 
-import static com.github.mrmks.mc.efscraft.common.CommandUtils.*;
+import static com.github.mrmks.mc.efscraft.server.CommandUtils.*;
 
 // represent a temporary effect entry and later build a packet from this entry;
 class PacketBuilder extends ServerRegistry {

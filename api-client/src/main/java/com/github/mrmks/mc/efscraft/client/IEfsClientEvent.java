@@ -1,4 +1,6 @@
 package com.github.mrmks.mc.efscraft.client;
 
-public interface IEfsClientEvent {
+import com.github.mrmks.mc.efscraft.common.IEfsEvent;
+
+public interface IEfsClientEvent extends IEfsEvent {
 }

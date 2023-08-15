@@ -1,7 +1,9 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
-import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
-import com.github.mrmks.mc.efscraft.common.event.EfsServerEvent;
+import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
+import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
+import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.util.*;

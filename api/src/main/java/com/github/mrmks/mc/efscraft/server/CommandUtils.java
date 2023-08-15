@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
 import java.util.Arrays;
 

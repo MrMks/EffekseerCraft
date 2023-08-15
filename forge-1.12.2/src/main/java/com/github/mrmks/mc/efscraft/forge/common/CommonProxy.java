@@ -1,9 +1,11 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.common.*;
-import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
-import com.github.mrmks.mc.efscraft.common.event.EfsServerEvent;
-import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.server.EfsServer;
+import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
+import com.github.mrmks.mc.efscraft.server.EfsServerEnv;
+import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
+import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import net.minecraft.command.CommandBase;
@@ -21,18 +23,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.server.FMLServerHandler;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CommonProxy {
     protected NetworkWrapper wrapper;
@@ -92,7 +89,7 @@ public class CommonProxy {
     }
 
     protected static class EfsServerImpl extends EfsServer<MinecraftServer, WorldServer,
-            Entity, EntityPlayerMP, ICommandSender, ByteBufOutputStream, ByteBufInputStream> {
+                Entity, EntityPlayerMP, ICommandSender, ByteBufOutputStream, ByteBufInputStream> {
 
         public EfsServerImpl(EfsServerAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
             super(adaptor, logger, env, implVer, autoReply);

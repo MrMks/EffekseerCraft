@@ -1,4 +1,4 @@
-package com.github.mrmks.mc.efscraft.common;
+package com.github.mrmks.mc.efscraft.server;
 
 import com.github.mrmks.mc.efscraft.common.packet.MessageCodec;
 import com.github.mrmks.mc.efscraft.common.packet.MessageContext;

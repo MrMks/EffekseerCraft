@@ -2,7 +2,7 @@ package com.github.mrmks.mc.efscraft.forge.common;
 
 import com.github.mrmks.mc.efscraft.client.EfsClient;
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.common.EfsServer;
+import com.github.mrmks.mc.efscraft.server.EfsServer;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;

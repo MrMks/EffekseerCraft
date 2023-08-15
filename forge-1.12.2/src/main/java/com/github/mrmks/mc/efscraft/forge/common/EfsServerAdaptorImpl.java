@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.EfsServerCommandHandler;
-import com.github.mrmks.mc.efscraft.common.IEfsServerAdaptor;
+import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
+import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import io.netty.buffer.ByteBuf;
