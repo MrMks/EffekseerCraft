@@ -107,7 +107,7 @@ public class EffekseerCraft extends JavaPlugin {
         messenger.registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
         messenger.registerIncomingPluginChannel(this, Constants.CHANNEL_KEY, (channel, player, data) -> {
             try {
-                server.receivePacket(player, ByteStreams.newDataInput(data));
+                server.receivePacket(getServer(), player, ByteStreams.newDataInput(data));
             } catch (IOException e) {
                 logger.logWarning("Unable to handle a client packet", e);
             }
@@ -148,7 +148,7 @@ public class EffekseerCraft extends JavaPlugin {
         if (command != null) command.setExecutor(null);
     }
 
-    private static class EfsServerImpl extends EfsServer<Server, World, Entity, Player, CommandSender, ByteArrayDataOutput, ByteArrayDataInput> {
+    private static class EfsServerImpl extends EfsServer<Server, World, Entity, Player, CommandSender, ByteArrayDataInput, ByteArrayDataOutput> {
         public EfsServerImpl(EfsAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
             super(adaptor, logger, env, implVer, autoReply);
         }

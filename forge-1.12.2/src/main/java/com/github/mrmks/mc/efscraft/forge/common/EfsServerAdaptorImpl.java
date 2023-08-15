@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, WorldServer, Entity, EntityPlayerMP, ICommandSender, ByteBufOutputStream, ByteBufInputStream> {
+class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, WorldServer, Entity, EntityPlayerMP, ICommandSender, ByteBufInputStream, ByteBufOutputStream> {
 
     private static class CommandExceptionWrapper extends EfsServerCommandHandler.CommandException {
 

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, Player, CommandSender, ByteArrayDataOutput, ByteArrayDataInput> {
+public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, Player, CommandSender, ByteArrayDataInput, ByteArrayDataOutput> {
 
     private final Plugin plugin;
     EfsAdaptorImpl(Plugin plugin) {
@@ -51,7 +51,7 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
             entity = server.getEntity(uuid);
             if (entity == null)
                 entity = server.getPlayer(uuid);
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException ignored) {}
 
         if (entity == null)
             entity = server.getPlayer(toFind);
@@ -66,7 +66,7 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
         try {
             UUID uuid = UUID.fromString(toFind);
             player = server.getPlayer(uuid);
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException ignored) {}
 
         if (player == null)
             player = server.getPlayer(toFind);
@@ -93,7 +93,7 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
 
     @Override
     public World getWorld(Server server, String world) throws EfsServerCommandHandler.CommandException {
-        return null;
+        return getWorld(server, null, world);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
         try {
             UUID uuid = UUID.fromString(toFind);
             world = server.getWorld(uuid);
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException ignored) {}
 
         if (world == null)
             world = server.getWorld(toFind);

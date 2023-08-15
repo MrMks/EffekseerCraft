@@ -26,6 +26,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public class CommonProxy {
             files.add(file);
         }
 
-        efsServer.receiveEvent(new EfsServerEvent.Start<>(event.getServer(), files));
+        efsServer.receiveEvent(new EfsServerEvent.Start<>(server, files));
 
         event.registerServerCommand(new CommandHandler(efsServer));
     }
@@ -89,7 +90,7 @@ public class CommonProxy {
     }
 
     protected static class EfsServerImpl extends EfsServer<MinecraftServer, WorldServer,
-                Entity, EntityPlayerMP, ICommandSender, ByteBufOutputStream, ByteBufInputStream> {
+                Entity, EntityPlayerMP, ICommandSender, ByteBufInputStream, ByteBufOutputStream> {
 
         public EfsServerImpl(EfsServerAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
             super(adaptor, logger, env, implVer, autoReply);
@@ -104,17 +105,19 @@ public class CommonProxy {
         }
 
         @Override
+        @Nonnull
         public String getName() {
             return "effek";
         }
 
         @Override
-        public String getUsage(ICommandSender sender) {
+        @Nonnull
+        public String getUsage(@Nonnull ICommandSender sender) {
             return "/effek play|stop|trigger|clear [subs...]";
         }
 
         @Override
-        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        public void execute(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
             try {
                 this.server.executeCommands("effek", args, sender, server);
             } catch (EfsServerCommandHandler.CommandException e) {
@@ -123,7 +126,8 @@ public class CommonProxy {
         }
 
         @Override
-        public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+        @Nonnull
+        public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, @Nullable BlockPos targetPos) {
             return this.server.completeCommands("effek", args, sender, server);
         }
     }

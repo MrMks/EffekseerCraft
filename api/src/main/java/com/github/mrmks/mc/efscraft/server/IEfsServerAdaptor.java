@@ -18,29 +18,29 @@ import java.util.function.Predicate;
  * @param <PL> Player
  * @param <WO> World
  * @param <SE> Sender
- * @param <DA> Data
+ * @param <DO> Data
  * @param <DI>
- * @param <CTX>
+ * @param <SV>
  */
-public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends DataOutput, DI extends DataInput>
-    extends IEfsNetworkAdaptor<DI, DA> {
+public interface IEfsServerAdaptor<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO extends DataOutput>
+    extends IEfsNetworkAdaptor<DI, DO> {
 
     // test if a sender has some permission.
-    boolean hasPermission(CTX ctx, SE sender, String permissionNode);
+    boolean hasPermission(SV sv, SE sender, String permissionNode);
 
-    PL getPlayer(CTX ctx, UUID uuid);
+    PL getPlayer(SV sv, UUID uuid);
 
     /**
      * @param toFind a string fo indicate which entity to find, we always try UUID version of this method first, therefore, if this method is called, this will not be a uuid;
      * @return null if entity can not be found in given world
      */
-    EN findEntity(CTX ctx, SE sender, String toFind) throws EfsServerCommandHandler.CommandException;
-    PL findPlayer(CTX ctx, SE sender, String toFind) throws EfsServerCommandHandler.CommandException;
+    EN findEntity(SV sv, SE sender, String toFind) throws EfsServerCommandHandler.CommandException;
+    PL findPlayer(SV sv, SE sender, String toFind) throws EfsServerCommandHandler.CommandException;
 
     /**
      * @return null if entity can not be found in given world
      */
-    EN getEntity(CTX ctx, WO world, UUID uuid);
+    EN getEntity(SV sv, WO world, UUID uuid);
 
     /**
      * @return null if entity is null or can not be cast to a instance of PL;
@@ -51,8 +51,8 @@ public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends Da
     /**
      * @return null if desired world can not be found;
      */
-    WO getWorld(CTX ctx, String world) throws EfsServerCommandHandler.CommandException;
-    WO getWorld(CTX ctx, SE sender, String world) throws EfsServerCommandHandler.CommandException;
+    WO getWorld(SV sv, String world) throws EfsServerCommandHandler.CommandException;
+    WO getWorld(SV sv, SE sender, String world) throws EfsServerCommandHandler.CommandException;
 
     int getEntityId(EN entity);
     UUID getEntityUUID(EN entity);
@@ -64,17 +64,16 @@ public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends Da
     int getWorldViewDistance(WO world);
     Vec3f getSenderPos(SE sender);
 
-    List<WO> getWorlds(CTX ctx);
-    List<WO> getWorlds(CTX ctx, SE sender);
+    List<WO> getWorlds(SV sv);
+    List<WO> getWorlds(SV sv, SE sender);
     List<PL> getPlayersInWorld(WO world);
-    List<PL> getPlayersInServer(CTX ctx);
-    List<PL> getPlayersInServer(CTX ctx, SE sender);
+    List<PL> getPlayersInServer(SV sv);
+    List<PL> getPlayersInServer(SV sv, SE sender);
 
-    DA createOutput();
-    void closeOutput(DA output) throws IOException;
-    void sendPacket(Collection<PL> players, Predicate<PL> test, DA output);
-    void sendPacket(CTX ctx, Collection<PL> players, Predicate<PL> test, DA output);
+    DO createOutput();
+    void closeOutput(DO output) throws IOException;
+    void sendPacket(Collection<PL> players, Predicate<PL> test, DO output);
+    void sendPacket(SV sv, Collection<PL> players, Predicate<PL> test, DO output);
 
-    void sendMessage(CTX ctx, SE sender, String msg, Object[] args, boolean scheduled);
-//    void sendMessage(CTX ctx, PL player, String msg, Object[] args, boolean scheduled, boolean validPlayer);
+    void sendMessage(SV sv, SE sender, String msg, Object[] args, boolean scheduled);
 }

@@ -16,6 +16,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.network.FMLEmbeddedChannel;
 import net.minecraftforge.fml.common.network.FMLOutboundHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
@@ -37,7 +38,7 @@ public class NetworkWrapper {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, BufCan msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, BufCan msg) {
             if (msg != null) {
                 ctx.channel().attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.REPLY);
                 ctx.writeAndFlush(msg).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
@@ -55,7 +56,7 @@ public class NetworkWrapper {
         }
 
         @Override
-        protected void encode(ChannelHandlerContext ctx, BufCan msg, List<Object> out) throws Exception {
+        protected void encode(ChannelHandlerContext ctx, BufCan msg, List<Object> out) {
             String channel = ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get();
             FMLProxyPacket proxy = new FMLProxyPacket(new PacketBuffer(msg.buf), channel);
             WeakReference<FMLProxyPacket> ref = ctx.channel().attr(INBOUNDPACKETTRACKER).get().get();
@@ -74,7 +75,8 @@ public class NetworkWrapper {
             if (toRemote) {
                 outputStream = efsClient.receivePacket(inputStream);
             } else {
-                outputStream = efsServer.receivePacket(((NetHandlerPlayServer) msg.handler()).player, inputStream);
+                NetHandlerPlayServer handler = (NetHandlerPlayServer) msg.handler();
+                outputStream = efsServer.receivePacket(handler.player.world.getMinecraftServer(), handler.player, inputStream);
             }
 
             ctx.channel().attr(INBOUNDPACKETTRACKER).get().set(new WeakReference<>(msg));
@@ -93,7 +95,7 @@ public class NetworkWrapper {
     }
 
     private final EnumMap<Side, FMLEmbeddedChannel> channels;
-    private EfsServer<?, ?, ? super EntityPlayerMP, EntityPlayerMP, ?, ByteBufOutputStream, ByteBufInputStream> efsServer;
+    private EfsServer<MinecraftServer, ?, ? super EntityPlayerMP, EntityPlayerMP, ?, ByteBufInputStream, ByteBufOutputStream> efsServer;
     private EfsClient<?, ?, ByteBufInputStream, ByteBufOutputStream> efsClient;
 
     NetworkWrapper() {
@@ -104,7 +106,7 @@ public class NetworkWrapper {
         this.efsClient = client;
     }
 
-    public void setServer(EfsServer<?,?,? super EntityPlayerMP, EntityPlayerMP,?, ByteBufOutputStream, ByteBufInputStream> server) {
+    public void setServer(EfsServer<MinecraftServer,?,? super EntityPlayerMP, EntityPlayerMP,?, ByteBufInputStream, ByteBufOutputStream> server) {
         this.efsServer = server;
     }
 

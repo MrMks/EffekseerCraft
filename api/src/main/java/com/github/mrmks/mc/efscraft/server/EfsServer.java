@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI extends DataInput> {
+public class EfsServer<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO extends DataOutput> {
 
-    protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor;
+    protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DI, DO> adaptor;
     protected final EfsServerCommandHandler<SV, WO, EN, PL, SE> commandHandler;
-    protected final EfsServerPacketHandler<SV, EN, PL, DO, DI> packetHandler;
+    protected final EfsServerPacketHandler<SV, EN, PL, DI, DO> packetHandler;
     protected final EfsServerEventHandler<SV> eventHandler;
 
     final Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
@@ -24,7 +24,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
     protected final String implVer;
 
     public EfsServer(
-            IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor,
+            IEfsServerAdaptor<SV, WO, EN, PL, SE, DI, DO> adaptor,
             LogAdaptor logger,
             EfsServerEnv env,
             String implVer,
@@ -38,6 +38,8 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
         this.commandHandler = new EfsServerCommandHandler<>(this);
         this.packetHandler = new EfsServerPacketHandler<>(this, autoReply);
         this.eventHandler = new EfsServerEventHandler<>(this);
+
+        this.packetHandler.init();
     }
 
     // commands
@@ -55,7 +57,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
     }
 
     // packets
-    public DO receivePacket(PL receiver, DI dataIn) throws IOException {
-        return packetHandler.receive(receiver, dataIn);
+    public DO receivePacket(SV sv, PL receiver, DI dataIn) throws IOException {
+        return packetHandler.receive(sv, receiver, dataIn);
     }
 }
