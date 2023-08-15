@@ -27,7 +27,7 @@ public class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends DataOutput
         codec.registerServer(PacketHello.class, new PacketHello.InternalServerHandler(event -> server.eventHandler.receive(event)));
     }
 
-    NetworkPacket receive(PL receiver, DI dataIn) throws IOException {
+    DO receive(PL receiver, DI dataIn) throws IOException {
         UUID uuid = server.adaptor.getEntityUUID(receiver);
         NetworkPacket packet = codec.readInput(dataIn, new MessageContext(uuid));
 
@@ -35,12 +35,12 @@ public class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends DataOutput
             sendToClient(receiver, packet);
             return null;
         } else {
-            return packet;
+            return writePacketOutput(packet);
         }
     }
 
-    void sendToClient(UUID receiver, NetworkPacket packet) {
-        PL pl = server.adaptor.getPlayerEntity(server.adaptor.getPlayer(receiver));
+    void sendToClient(SV sv, UUID receiver, NetworkPacket packet) {
+        PL pl = server.adaptor.getPlayerEntity(server.adaptor.getPlayer(sv, receiver));
         if (pl == null)
             return;
 
@@ -48,44 +48,51 @@ public class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends DataOutput
     }
 
     void sendToClient(PL player, NetworkPacket packet) {
-        DO output = server.adaptor.createPacket();
         try {
-            codec.writeOutput(packet, output);
-            server.adaptor.sendPacket(Collections.singleton(player), it -> true, output);
+            DO output = writePacketOutput(packet);
+            if (output != null) {
+                server.adaptor.sendPacket(Collections.singleton(player), it -> true, output);
+                server.adaptor.closeOutput(output);
+            }
         } catch (IOException e) {
             server.logger.logWarning("Unable to encode a packet to stream", e);
         }
     }
 
     void sendToClient(SV svr, PL player, NetworkPacket packet) {
-
-        DO output = server.adaptor.createPacket();
-
         try {
-            codec.writeOutput(packet, output);
-            server.adaptor.sendPacket(svr, Collections.singleton(player), pl -> true, output);
+            DO output = writePacketOutput(packet);
+            if (output != null) {
+                server.adaptor.sendPacket(svr, Collections.singleton(player), pl -> true, output);
+                server.adaptor.closeOutput(output);
+            }
         } catch (IOException e) {
             server.logger.logWarning("Unable to encode a packet to stream", e);
         }
     }
 
     void sendToClient(SV svr, Collection<PL> players, Predicate<PL> test, NetworkPacket packet) {
-        DO output = server.adaptor.createPacket();
-
         try {
-            codec.writeOutput(packet, output);
-            server.adaptor.sendPacket(svr, players, test, output);
+            DO output = writePacketOutput(packet);
+            if (output != null) {
+                server.adaptor.sendPacket(svr, players, test, output);
+                server.adaptor.closeOutput(output);
+            }
         } catch (IOException e) {
             server.logger.logWarning("Unable to encode a packet to stream", e);
         }
     }
 
-    private void closeDataOutput(DO output) {
-        if (output instanceof AutoCloseable) {
-            try (AutoCloseable closeable = (AutoCloseable) output) {} catch (Exception e) {
-                server.logger.logWarning("Unable to close a data output", e);
+    private DO writePacketOutput(NetworkPacket packet) throws IOException {
+        if (packet != null) {
+            DO output = server.adaptor.createOutput();
+            if (codec.writeOutput(packet, output)) {
+                return output;
             }
+            server.adaptor.closeOutput(output);
         }
+
+        return null;
     }
 
 }

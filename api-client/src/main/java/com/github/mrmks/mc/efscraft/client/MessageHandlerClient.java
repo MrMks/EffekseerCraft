@@ -5,12 +5,13 @@ import com.github.mrmks.mc.efscraft.math.Matrix4f;
 
 import java.util.function.Consumer;
 
+@Deprecated
 public final class MessageHandlerClient {
-    private final RenderingQueue queue;
+    private final EfsDrawingQueue queue;
     private final Consumer<Runnable> scheduler;
     private transient boolean compatible = false;
 
-    public MessageHandlerClient(RenderingQueue queue, Consumer<Runnable> scheduler) {
+    public MessageHandlerClient(EfsDrawingQueue queue, Consumer<Runnable> scheduler) {
         this.queue = queue;
         this.scheduler = scheduler;
     }

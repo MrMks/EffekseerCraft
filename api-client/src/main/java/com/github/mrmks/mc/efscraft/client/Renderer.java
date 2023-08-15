@@ -5,14 +5,15 @@ import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
+@Deprecated
 public abstract class Renderer {
     private EfsProgram program = null;
     private Thread createThread = null;
 
-    private final RenderingQueue<?> queue;
+    private final EfsDrawingQueue<?> queue;
     private long lastFrameTimer = -1;
 
-    protected Renderer(RenderingQueue<?> queue) { this.queue = queue; }
+    protected Renderer(EfsDrawingQueue<?> queue) { this.queue = queue; }
 
     private EfsProgram getProgram() {
         synchronized (this) {

@@ -1,12 +1,12 @@
 package com.github.mrmks.mc.efscraft.common;
 
 import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
-import com.github.mrmks.mc.efscraft.common.event.EfsTickEvent;
+import com.github.mrmks.mc.efscraft.common.event.EfsServerEvent;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.util.*;
 
-public class EfsServerEventHandler {
+public class EfsServerEventHandler<SV> {
 
     private static class Counter {
         int count;
@@ -23,14 +23,15 @@ public class EfsServerEventHandler {
     private final Map<UUID, PacketHello.State> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
-    private final EfsServer<?, ?, ?, ?, ?, ?, ?> server;
+    private final EfsServer<SV, ?, ?, ?, ?, ?, ?> server;
 
-    EfsServerEventHandler(EfsServer<?, ?, ?, ?, ?, ?, ?> server) {
+    EfsServerEventHandler(EfsServer<SV, ?, ?, ?, ?, ?, ?> server) {
         this.server = server;
         this.logger = server.logger;
         this.clients = server.clients;
     }
 
+    @Deprecated
     protected EfsServerEventHandler(Map<UUID, PacketHello.State> clients, LogAdaptor logger) {
         this.clients = clients;
         this.logger = logger;
@@ -38,9 +39,19 @@ public class EfsServerEventHandler {
     }
 
     void receive(IEfsServerEvent event) {
-        if (event instanceof EfsTickEvent) {
-            tickAndUpdate();
+        if (event instanceof EfsServerEvent) {
+
+            if (event instanceof EfsServerEvent.Tick) {
+                SV sv = (SV) ((EfsServerEvent.Tick<?>) event).getServer();
+                tickAndUpdate(sv);
+            } else if (event instanceof EfsServerEvent.Start) {
+                server.commandHandler.updateFiles(((EfsServerEvent.Start<?>) event).getFiles());
+            } else if (event instanceof EfsServerEvent.Stop) {
+                server.commandHandler.updateFiles(Collections.emptyList());
+            }
+
         } else if (event instanceof EfsPlayerEvent) {
+
             UUID uuid = ((EfsPlayerEvent) event).getPlayer();
             if (event instanceof EfsPlayerEvent.Join)
                 onLogin(uuid);
@@ -51,6 +62,7 @@ public class EfsServerEventHandler {
 
                 onVerify(uuid, ver);
             }
+
         }
     }
 
@@ -78,6 +90,10 @@ public class EfsServerEventHandler {
     }
 
     protected final void tickAndUpdate() {
+        tickAndUpdate(null);
+    }
+
+    protected final void tickAndUpdate(SV sv) {
         ArrayList<UUID> list = null;
         Iterator<Map.Entry<UUID, Counter>> iterator = pending.entrySet().iterator();
 
@@ -92,7 +108,8 @@ public class EfsServerEventHandler {
                 PacketHello.State state = clients.get(uuid);
                 if (state == null) {
 
-                    server.packetHandler.sendToClient(entry.getKey(), new PacketHello());
+                    if (sv != null)
+                        server.packetHandler.sendToClient(sv, entry.getKey(), new PacketHello());
 
 //                    sendMessage(entry.getKey(), new PacketHello());
                     clients.put(uuid, PacketHello.State.WAITING_FOR_REPLY);

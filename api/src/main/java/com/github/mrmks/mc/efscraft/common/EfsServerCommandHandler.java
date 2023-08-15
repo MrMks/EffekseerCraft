@@ -25,13 +25,17 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
         this.clients = clients;
     }
 
-    EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server, List<File> files) {
+    EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server) {
         this.server = server;
         this.adaptor = server.adaptor;
-        this.registry = new ServerRegistryMap(files);
+        this.registry = new ServerRegistryMap();
         this.port = server.env.name();
         this.portVersion = server.implVer;
         this.clients = server.clients;
+    }
+
+    void updateFiles(List<File> files) {
+        registry.updateFiles(files);
     }
 
     private static List<String> getListMatchLastArg(String[] args, Collection<String> collection) {

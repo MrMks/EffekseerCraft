@@ -1,20 +1,15 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
-import com.github.mrmks.mc.efscraft.client.Renderer;
-import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.common.PropertyFlags;
-import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
-class RendererImpl extends Renderer {
+class RendererImpl {
 
     private int workingFBO, colorAttachBuf, depthAttachBuf;
     private final int vertexBuffer;
@@ -24,8 +19,7 @@ class RendererImpl extends Renderer {
 
     private int lastWidth = -1, lastHeight = -1;
 
-    RendererImpl(RenderingQueue<?> queue) {
-        super(queue);
+    RendererImpl() {
 
         // bind vertex buffer
         float[] data = {
@@ -166,7 +160,7 @@ class RendererImpl extends Renderer {
         glBindTexture(GL_TEXTURE_2D, originTex);
     }
 
-    protected float[] getModelviewMatrix() {
+    static float[] getModelviewMatrix() {
         FLOAT_16.clear();
         glGetFloat(GL_MODELVIEW_MATRIX, FLOAT_16);
         float[] floats = new float[16];
@@ -175,7 +169,7 @@ class RendererImpl extends Renderer {
         return floats;
     }
 
-    protected float[] getProjectionMatrix() {
+    static float[] getProjectionMatrix() {
         FLOAT_16.clear();
         glGetFloat(GL_PROJECTION_MATRIX, FLOAT_16);
         float[] floats = new float[16];
@@ -282,8 +276,7 @@ class RendererImpl extends Renderer {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    @SubscribeEvent
-    public void renderWorld(RenderParticleEvent event) {
+    public void renderWorld(EfsRenderEvent event, Runnable drawer) {
 
         int w, h;
 
@@ -313,7 +306,7 @@ class RendererImpl extends Renderer {
             }
             glActiveTexture(originUnit);
 
-            if (event.prev)
+            if (event instanceof EfsRenderEvent.Prev)
             {
                 // clear working and backup;
                 float[] cls = new float[4];
@@ -428,10 +421,11 @@ class RendererImpl extends Renderer {
                     Entity entity = mc.getRenderViewEntity();
                     Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
                     Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
-                    updateAndRender(event.finishNano, 1_000_000_000L, mc.isGamePaused(),
-                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-                            new Matrix4f(getProjectionMatrix()));
+//                    updateAndRender(event.finishNano, 1_000_000_000L, mc.isGamePaused(),
+//                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+//                            new Matrix4f(getProjectionMatrix()));
                 }
+                drawer.run();
 
                 // copy current working's depth to texDepthWorking
                 glActiveTexture(GL_TEXTURE0 + 2);
@@ -456,7 +450,7 @@ class RendererImpl extends Renderer {
                 glDepthMask(false);
 
                 // draw effect again in stencils
-                draw();
+                drawer.run();
 
                 // draw translucent layer again
                 glActiveTexture(GL_TEXTURE0);
@@ -502,7 +496,7 @@ class RendererImpl extends Renderer {
             if (openglSupported())
             {
                 int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
-                if (event.prev)
+                if (event instanceof EfsRenderEvent.Prev)
                 {
                     glBindTexture(GL_TEXTURE_2D, texDepthBackup);
                     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
@@ -518,13 +512,15 @@ class RendererImpl extends Renderer {
                     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthBackup, 0);
                     glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-                    Entity entity = mc.getRenderViewEntity();
-                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
-                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
-                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-                            new Matrix4f(getProjectionMatrix())
-                    );
+                    drawer.run();
+
+//                    Entity entity = mc.getRenderViewEntity();
+//                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+//                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+//                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
+//                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+//                            new Matrix4f(getProjectionMatrix())
+//                    );
 
                     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthWorking, 0);
                     glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
@@ -535,25 +531,26 @@ class RendererImpl extends Renderer {
             }
             else
             {
-                if (!event.prev) {
-                    Entity entity = mc.getRenderViewEntity();
-                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+                if (event instanceof EfsRenderEvent.Post) {
+//                    Entity entity = mc.getRenderViewEntity();
+//                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+//                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
 
-                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
-                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-                            new Matrix4f(getProjectionMatrix())
-                    );
+//                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
+//                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
+//                            new Matrix4f(getProjectionMatrix())
+//                    );
+                    drawer.run();
                 }
             }
         }
     }
 
-    @SubscribeEvent
-    public void onWorldUnload(WorldEvent.Unload event) {
-        World world = event.getWorld();
-        if (world != null && world.isRemote) unloadRender();
-    }
+//    @SubscribeEvent
+//    public void onWorldUnload(WorldEvent.Unload event) {
+//        World world = event.getWorld();
+//        if (world != null && world.isRemote) unloadRender();
+//    }
 
     public void deleteFramebuffer() {
         if (vertexBuffer >= 0)
@@ -571,10 +568,10 @@ class RendererImpl extends Renderer {
     }
 
     public static class RenderParticleEvent extends Event {
-        private final int pass;
-        private final float partial;
-        private final long finishNano;
-        private final boolean prev;
+        final int pass;
+        final float partial;
+        final long finishNano;
+        final boolean prev;
 
         RenderParticleEvent(int pass, float partial, long finishNano, boolean prev) {
             this.pass = pass;

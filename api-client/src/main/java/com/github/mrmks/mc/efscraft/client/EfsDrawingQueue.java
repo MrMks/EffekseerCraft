@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public final class RenderingQueue<ENTITY> {
+public final class EfsDrawingQueue<ENTITY> {
 
     // a mask that will clear the queue and prevent any further render;
     private final AtomicBoolean clearMark = new AtomicBoolean(false);
@@ -26,13 +26,23 @@ public final class RenderingQueue<ENTITY> {
     // client effect registry
     private final Function<String, EfsEffect> effects;
     // a version specific adaptor
-    private final EntityConvert<ENTITY> convert;
+//    private final EntityConvert<ENTITY> convert;
     private final LogAdaptor logger;
+    private final IEfsClientAdaptor<ENTITY, ?, ?, ?> adaptor;
 
-    public RenderingQueue(Function<String, EfsEffect> getter, EntityConvert<ENTITY> convert, LogAdaptor logger) {
+    @Deprecated
+    public EfsDrawingQueue(Function<String, EfsEffect> getter, EntityConvert<ENTITY> convert, LogAdaptor logger) {
         this.effects = getter;
-        this.convert = convert;
+//        this.convert = convert;
         this.logger = logger;
+        this.adaptor = null;
+    }
+
+    EfsDrawingQueue(EfsClient<ENTITY, ?, ?, ?> client) {
+        this.effects = client.resources::getOrLoad;
+//        this.convert = null;
+        this.logger = client.logger;
+        this.adaptor = client.adaptor;
     }
 
     private void putEntry(String key, String emitter, String effect, boolean overwrite,
@@ -61,26 +71,26 @@ public final class RenderingQueue<ENTITY> {
                          boolean iw, boolean ip,
                          boolean useHead, boolean useRender
     ) {
-        ENTITY entity = convert.findEntity(eid);
-        if (entity == null || !convert.isAlive(entity)) return;
+        ENTITY entity = adaptor.findEntity(eid);
+        if (entity == null || !adaptor.isAlive(entity)) return;
 
         boolean asAt = !(fx || fy || fz || fw || fp);
         Predicate predicate = (h, l) -> {
-            ENTITY ins = convert.findEntity(eid);
-            return h.exists() && l < lifespan && ins != null && convert.isAlive(ins);
+            ENTITY ins = adaptor.findEntity(eid);
+            return h.exists() && l < lifespan && ins != null && adaptor.isAlive(ins);
         };
         if (asAt) {
-            Vec3f targetPos = convert.getPosition(entity);
+            Vec3f targetPos = adaptor.getEntityPos(entity);
             Vec2f targetRot;
             if (!iw && !ip) {
                 targetRot = new Vec2f(-90, 0);
             } else {
                 if (useHead) {
-                    targetRot = convert.getHeadRotation(entity);
+                    targetRot = adaptor.getEntityHeadAngle(entity);
                 } else if (useRender) {
-                    targetRot = convert.getRenderRotation(entity);
+                    targetRot = adaptor.getEntityBodyAngle(entity);
                 } else {
-                    targetRot = convert.getRotation(entity);
+                    targetRot = adaptor.getEntityAngle(entity);
                 }
                 targetRot = new Vec2f(iw ? targetRot.x() : -90, ip ? targetRot.y() : 0);
             }
@@ -99,15 +109,15 @@ public final class RenderingQueue<ENTITY> {
             putEntry(key, emitter, effect, overwrite, predicate, initializer, null);
         } else {
 
-            final Vec3f initPos = convert.getPosition(entity);
+            final Vec3f initPos = adaptor.getEntityPos(entity);
             final Vec2f initRot;
             {
-                if (useHead && convert.canUseHead(entity)) {
-                    initRot = convert.getHeadRotation(entity);
-                } else if (useRender && convert.canUseRender(entity)) {
-                    initRot = convert.getRenderRotation(entity);
+                if (useHead && adaptor.canUseHead(entity)) {
+                    initRot = adaptor.getEntityHeadAngle(entity);
+                } else if (useRender && adaptor.canUseBody(entity)) {
+                    initRot = adaptor.getEntityBodyAngle(entity);
                 } else {
-                    initRot = convert.getRotation(entity);
+                    initRot = adaptor.getEntityAngle(entity);
                 }
             }
 
@@ -115,8 +125,8 @@ public final class RenderingQueue<ENTITY> {
                 Vec3f targetPos; Vec2f targetRot;
 
                 {
-                    Vec3f cur = convert.getPosition(entity);
-                    Vec3f pre = convert.getPrevPosition(entity);
+                    Vec3f cur = adaptor.getEntityPos(entity);
+                    Vec3f pre = adaptor.getEntityPrevPos(entity);
                     
                     targetPos = pre.copy().linearTo(cur, p);
                     
@@ -130,12 +140,12 @@ public final class RenderingQueue<ENTITY> {
                 if (fw || fp || iw || ip)
                 {
                     Vec2f cur, pre;
-                    if (useHead && convert.canUseHead(entity)) {
-                        cur = convert.getHeadRotation(entity); pre = convert.getPrevHeadRotation(entity);
-                    } else if (useRender && convert.canUseRender(entity)) {
-                        cur = convert.getRenderRotation(entity); pre = convert.getPrevRenderRotation(entity);
+                    if (useHead && adaptor.canUseHead(entity)) {
+                        cur = adaptor.getEntityHeadAngle(entity); pre = adaptor.getEntityHeadPrevAngle(entity);
+                    } else if (useRender && adaptor.canUseBody(entity)) {
+                        cur = adaptor.getEntityBodyAngle(entity); pre = adaptor.getEntityBodyPrevAngle(entity);
                     } else {
-                        cur = convert.getRotation(entity); pre = convert.getPrevRotation(entity);
+                        cur = adaptor.getEntityAngle(entity); pre = adaptor.getEntityPrevAngle(entity);
                     }
 
                     Vec2f tmp = new Vec2f(pre).linearTo(cur, p).minus(initRot);

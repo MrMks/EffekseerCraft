@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
 
+@Deprecated
 public abstract class ResourceLoader<RM, RL> {
 
     private interface LoadPredicate {

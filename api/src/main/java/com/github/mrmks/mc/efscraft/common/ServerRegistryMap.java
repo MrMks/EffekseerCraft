@@ -88,7 +88,7 @@ class ServerRegistryMap {
 
     private static final Runnable EMPTY = () -> {};
     private final Map<String, Entry> map = new ConcurrentHashMap<>();
-    private final File[] files;
+    private File[] files;
     private CompletableFuture<Map<String, Entry>> future;
     private boolean available = false;
 
@@ -99,6 +99,13 @@ class ServerRegistryMap {
 
     ServerRegistryMap(List<File> file) {
         this.files = file.toArray(new File[0]);
+        reload();
+    }
+
+    ServerRegistryMap() {}
+
+    public void updateFiles(List<File> files) {
+        this.files = files.toArray(new File[0]);
         reload();
     }
 

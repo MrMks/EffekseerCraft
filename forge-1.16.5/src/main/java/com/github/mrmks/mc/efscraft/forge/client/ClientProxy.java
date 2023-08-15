@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EffekSeer4J;
+import com.github.mrmks.mc.efscraft.client.EfsDrawingQueue;
 import com.github.mrmks.mc.efscraft.client.MessageHandlerClient;
-import com.github.mrmks.mc.efscraft.client.RenderingQueue;
 import com.github.mrmks.mc.efscraft.common.packet.*;
 import com.github.mrmks.mc.efscraft.forge.EffekseerCraft;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
@@ -30,7 +30,7 @@ public class ClientProxy extends CommonProxy {
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(resources);
             resources.onResourceManagerReload(mc.getResourceManager(), it -> true);
 
-            RenderingQueue<?> queue = new RenderingQueue<>(resources::get, new EntityConvertImpl(), logAdaptor);
+            EfsDrawingQueue<?> queue = new EfsDrawingQueue<>(resources::get, new EntityConvertImpl(), logAdaptor);
             RendererImpl renderer = new RendererImpl(queue);
             MinecraftForge.EVENT_BUS.register(renderer);
 

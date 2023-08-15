@@ -39,8 +39,8 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
     }
 
     @Override
-    public Player getPlayer(UUID uuid) {
-        return Bukkit.getPlayer(uuid);
+    public Player getPlayer(Server ctx, UUID uuid) {
+        return ctx.getPlayer(uuid);
     }
 
     @Override
@@ -194,9 +194,12 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
     }
 
     @Override
-    public ByteArrayDataOutput createPacket() {
+    public ByteArrayDataOutput createOutput() {
         return ByteStreams.newDataOutput();
     }
+
+    @Override
+    public void closeOutput(ByteArrayDataOutput output) {}
 
     @Override
     public void sendPacket(Collection<Player> players, Predicate<Player> test, ByteArrayDataOutput output) {

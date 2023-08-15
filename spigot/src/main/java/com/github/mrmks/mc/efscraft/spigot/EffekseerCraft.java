@@ -2,7 +2,7 @@ package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.*;
 import com.github.mrmks.mc.efscraft.common.event.EfsPlayerEvent;
-import com.github.mrmks.mc.efscraft.common.event.EfsTickEvent;
+import com.github.mrmks.mc.efscraft.common.event.EfsServerEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -92,11 +92,12 @@ public class EffekseerCraft extends JavaPlugin {
         EfsServerImpl server = new EfsServerImpl(
                 adaptor,
                 logger,
-                Collections.singletonList(new File(getDataFolder(), "effects.json")),
                 EfsServerEnv.BUKKIT,
                 this.getDescription().getVersion(),
                 true
         );
+
+        server.receiveEvent(new EfsServerEvent.Start<>(getServer(), Collections.singletonList(new File(getDataFolder(), "effects.json"))));
 
         // network
         Messenger messenger = getServer().getMessenger();
@@ -113,7 +114,7 @@ public class EffekseerCraft extends JavaPlugin {
         EventHandler eventHandler = new EventHandler(server);
         getServer().getPluginManager().registerEvents(eventHandler, this);
         // and tick
-        getServer().getScheduler().runTaskTimer(this, () -> server.receiveEvent(EfsTickEvent.INSTANCE), 0, 0);
+        getServer().getScheduler().runTaskTimer(this, () -> server.receiveEvent(new EfsServerEvent.Tick<>(getServer())), 0, 0);
 
         // localize
         Localize localize = new Localize();
@@ -145,8 +146,8 @@ public class EffekseerCraft extends JavaPlugin {
     }
 
     private static class EfsServerImpl extends EfsServer<Server, World, Entity, Player, CommandSender, ByteArrayDataOutput, ByteArrayDataInput> {
-        public EfsServerImpl(EfsAdaptorImpl adaptor, LogAdaptor logger, List<File> registries, EfsServerEnv env, String implVer, boolean autoReply) {
-            super(adaptor, logger, registries, env, implVer, autoReply);
+        public EfsServerImpl(EfsAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
+            super(adaptor, logger, env, implVer, autoReply);
         }
     }
 

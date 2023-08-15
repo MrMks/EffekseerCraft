@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.Renderer;
-import com.github.mrmks.mc.efscraft.client.RenderingQueue;
+import com.github.mrmks.mc.efscraft.client.EfsDrawingQueue;
 import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
@@ -17,7 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
 public class RendererImpl extends Renderer {
-    protected RendererImpl(RenderingQueue<?> queue) {
+    protected RendererImpl(EfsDrawingQueue<?> queue) {
         super(queue);
     }
 

@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class CommandAdaptor extends CommandBase implements EfsServerCommandHandler.Adaptor<Entity, EntityPlayer, MinecraftServer, ICommandSender, World> {
 
     private final NetworkWrapper wrapper;

@@ -3,6 +3,7 @@ package com.github.mrmks.mc.efscraft.client;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
+@Deprecated
 public interface EntityConvert<ENTITY> {
 
     /**

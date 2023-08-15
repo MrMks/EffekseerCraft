@@ -5,6 +5,7 @@ import com.github.mrmks.mc.efscraft.math.Vec3f;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -20,12 +21,13 @@ import java.util.function.Predicate;
  * @param <DI>
  * @param <CTX>
  */
-public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends DataOutput, DI extends DataInput> {
+public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends DataOutput, DI extends DataInput>
+    extends IEfsNetworkAdaptor<DI, DA> {
 
     // test if a sender has some permission.
     boolean hasPermission(CTX ctx, SE sender, String permissionNode);
 
-    PL getPlayer(UUID uuid);
+    PL getPlayer(CTX ctx, UUID uuid);
 
     /**
      * @param toFind a string fo indicate which entity to find, we always try UUID version of this method first, therefore, if this method is called, this will not be a uuid;
@@ -67,7 +69,8 @@ public interface IEfsServerAdaptor<CTX, WO, EN, PL extends EN, SE, DA extends Da
     List<PL> getPlayersInServer(CTX ctx);
     List<PL> getPlayersInServer(CTX ctx, SE sender);
 
-    DA createPacket();
+    DA createOutput();
+    void closeOutput(DA output) throws IOException;
     void sendPacket(Collection<PL> players, Predicate<PL> test, DA output);
     void sendPacket(CTX ctx, Collection<PL> players, Predicate<PL> test, DA output);
 

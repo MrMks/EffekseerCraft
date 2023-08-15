@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 
+@Deprecated
 public class EntityConvertImpl implements EntityConvert<Entity> {
 
     private static final Vec2f EMPTY_FLOAT_2 = new Vec2f();

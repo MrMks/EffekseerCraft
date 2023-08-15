@@ -15,6 +15,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.Map;
 import java.util.UUID;
 
+@Deprecated
 class EventHandlerImpl extends EfsServerEventHandler {
 
     private final NetworkWrapper wrapper;

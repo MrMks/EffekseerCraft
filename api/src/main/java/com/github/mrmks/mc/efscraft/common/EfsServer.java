@@ -16,7 +16,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
     protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor;
     protected final EfsServerCommandHandler<SV, WO, EN, PL, SE> commandHandler;
     protected final EfsServerPacketHandler<SV, EN, PL, DO, DI> packetHandler;
-    protected final EfsServerEventHandler eventHandler;
+    protected final EfsServerEventHandler<SV> eventHandler;
 
     final Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
     protected final LogAdaptor logger;
@@ -26,7 +26,6 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
     public EfsServer(
             IEfsServerAdaptor<SV, WO, EN, PL, SE, DO, DI> adaptor,
             LogAdaptor logger,
-            List<File> registries,
             EfsServerEnv env,
             String implVer,
             boolean autoReply
@@ -36,9 +35,9 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
         this.env = env;
         this.implVer = implVer;
 
-        this.commandHandler = new EfsServerCommandHandler<>(this, registries);
+        this.commandHandler = new EfsServerCommandHandler<>(this);
         this.packetHandler = new EfsServerPacketHandler<>(this, autoReply);
-        this.eventHandler = new EfsServerEventHandler(this);
+        this.eventHandler = new EfsServerEventHandler<>(this);
     }
 
     // commands
@@ -56,7 +55,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends DataOutput, DI 
     }
 
     // packets
-    public void receivePacket(PL receiver, DI dataIn) throws IOException {
-        packetHandler.receive(receiver, dataIn);
+    public DO receivePacket(PL receiver, DI dataIn) throws IOException {
+        return packetHandler.receive(receiver, dataIn);
     }
 }
