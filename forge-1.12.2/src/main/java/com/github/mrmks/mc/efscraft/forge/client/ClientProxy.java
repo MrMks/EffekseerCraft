@@ -17,15 +17,16 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 public class ClientProxy extends CommonProxy {
     @Override
-    public void preInitialize(FMLPreInitializationEvent event) {
+    public void initialize(FMLInitializationEvent event) {
 
-        super.preInitialize(event);
+        super.initialize(event);
 
         if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL)) {
 

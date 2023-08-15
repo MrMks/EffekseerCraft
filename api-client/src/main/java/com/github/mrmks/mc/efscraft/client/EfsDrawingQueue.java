@@ -39,7 +39,7 @@ public final class EfsDrawingQueue<ENTITY> {
     }
 
     EfsDrawingQueue(EfsClient<ENTITY, ?, ?, ?> client) {
-        this.effects = client.resources::getOrLoad;
+        this.effects = it -> client.resources.getOrLoad(it);
 //        this.convert = null;
         this.logger = client.logger;
         this.adaptor = client.adaptor;

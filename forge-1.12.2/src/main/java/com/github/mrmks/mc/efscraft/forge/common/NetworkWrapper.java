@@ -31,13 +31,13 @@ import static net.minecraftforge.fml.common.network.FMLIndexedMessageToMessageCo
 public class NetworkWrapper {
 
     @ChannelHandler.Sharable
-    private static class MessageCodecReply extends SimpleChannelInboundHandler<ByteBuf> {
+    private static class MessageCodecReply extends SimpleChannelInboundHandler<BufCan> {
         MessageCodecReply() {
-            super(ByteBuf.class);
+            super(BufCan.class);
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, BufCan msg) throws Exception {
             if (msg != null) {
                 ctx.channel().attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.REPLY);
                 ctx.writeAndFlush(msg).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
@@ -46,12 +46,18 @@ public class NetworkWrapper {
     }
 
     @ChannelHandler.Sharable
-    private class MessageCodec extends MessageToMessageCodec<FMLProxyPacket, ByteBuf> {
+    private class MessageCodec extends MessageToMessageCodec<FMLProxyPacket, BufCan> {
 
         @Override
-        protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+        public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+            super.handlerAdded(ctx);
+            ctx.channel().attr(INBOUNDPACKETTRACKER).set(new ThreadLocal<>());
+        }
+
+        @Override
+        protected void encode(ChannelHandlerContext ctx, BufCan msg, List<Object> out) throws Exception {
             String channel = ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get();
-            FMLProxyPacket proxy = new FMLProxyPacket(new PacketBuffer(msg), channel);
+            FMLProxyPacket proxy = new FMLProxyPacket(new PacketBuffer(msg.buf), channel);
             WeakReference<FMLProxyPacket> ref = ctx.channel().attr(INBOUNDPACKETTRACKER).get().get();
             FMLProxyPacket old = ref == null ? null : ref.get();
             if (old != null) {
@@ -68,17 +74,22 @@ public class NetworkWrapper {
             if (toRemote) {
                 outputStream = efsClient.receivePacket(inputStream);
             } else {
-                if (efsServer != null)
-                    outputStream = efsServer.receivePacket(((NetHandlerPlayServer) msg.handler()).player, inputStream);
-                else
-                    outputStream = null;
+                outputStream = efsServer.receivePacket(((NetHandlerPlayServer) msg.handler()).player, inputStream);
             }
 
+            ctx.channel().attr(INBOUNDPACKETTRACKER).get().set(new WeakReference<>(msg));
             inputStream.close();
 
-            if (outputStream != null)
-                out.add(outputStream.buffer());
+            if (outputStream != null) {
+                out.add(new BufCan(outputStream.buffer()));
+            }
         }
+    }
+
+    private static class BufCan {
+        ByteBuf buf;
+
+        BufCan(ByteBuf buf) { this.buf = buf; }
     }
 
     private final EnumMap<Side, FMLEmbeddedChannel> channels;
@@ -110,13 +121,17 @@ public class NetworkWrapper {
 
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.PLAYER);
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(player);
-        channel.writeAndFlush(buf).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+
+//        byte[] bytes = ByteBufUtil.getBytes(buf.slice());
+        channel.writeAndFlush(new BufCan(buf.retainedSlice())).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 
     public void sendTo(ByteBuf buf) {
         FMLEmbeddedChannel channel = channels.get(Side.CLIENT);
 
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.TOSERVER);
-        channel.writeAndFlush(buf).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+
+//        byte[] bytes = ByteBufUtil.getBytes(buf.slice());
+        channel.writeAndFlush(new BufCan(buf.retainedSlice())).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 }

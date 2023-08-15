@@ -15,6 +15,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -51,7 +52,6 @@ public class CommonProxy {
         wrapper = new NetworkWrapper();
         EfsServerAdaptorImpl serverAdaptor = new EfsServerAdaptorImpl(wrapper);
 
-        PermissionAPI.registerNode("efscraft.command", DefaultPermissionLevel.OP, "permissions to use efscraft's commands");
 
         efsServer = new EfsServerImpl(
                 serverAdaptor,
@@ -66,6 +66,7 @@ public class CommonProxy {
 
     public void initialize(FMLInitializationEvent event) {
         // do nothing
+        PermissionAPI.registerNode("efscraft.command", DefaultPermissionLevel.OP, "permissions to use efscraft's commands");
     }
 
     public void serverStarting(FMLServerStartingEvent event) {
@@ -149,7 +150,7 @@ public class CommonProxy {
         @SubscribeEvent
         public void serverTick(TickEvent.ServerTickEvent event) {
             if (event.phase == TickEvent.Phase.START && event.side == Side.SERVER && event.type == TickEvent.Type.SERVER)
-                server.receiveEvent(new EfsServerEvent.Tick<>(FMLServerHandler.instance().getServer()));
+                server.receiveEvent(new EfsServerEvent.Tick<>(FMLCommonHandler.instance().getMinecraftServerInstance()));
         }
     }
 }

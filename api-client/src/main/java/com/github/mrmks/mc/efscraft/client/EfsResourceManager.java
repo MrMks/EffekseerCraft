@@ -72,7 +72,7 @@ public class EfsResourceManager {
         }
 
         for (EfsEffect.Texture texture : EfsEffect.Texture.values()) {
-            flag &= loadResource0(
+            flag = flag && loadResource0(
                     key,
                     () -> effect.textureCount(texture),
                     i -> effect.getTexturePath(i, texture),
@@ -80,9 +80,9 @@ public class EfsResourceManager {
             );
         }
 
-        flag &= loadResource0(key, effect::curveCount, effect::getCurvePath, (i, in) -> effect.loadCurve(in, i, true));
-        flag &= loadResource0(key, effect::materialCount, effect::getMaterialPath, (i, in) -> effect.loadMaterial(in, i, true));
-        flag &= loadResource0(key, effect::modelCount, effect::getModelPath, (i, in) -> effect.loadModel(in, i, true));
+        flag = flag && loadResource0(key, effect::curveCount, effect::getCurvePath, (i, in) -> effect.loadCurve(in, i, true));
+        flag = flag && loadResource0(key, effect::materialCount, effect::getMaterialPath, (i, in) -> effect.loadMaterial(in, i, true));
+        flag = flag && loadResource0(key, effect::modelCount, effect::getModelPath, (i, in) -> effect.loadModel(in, i, true));
 
         if (!flag) {
             effect.delete();

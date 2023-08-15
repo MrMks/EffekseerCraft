@@ -192,7 +192,9 @@ class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, WorldSe
 
     @Override
     public void closeOutput(ByteBufOutputStream output) {
-        output.buffer().release();
+        ByteBuf buf = output.buffer();
+        if (buf.refCnt() > 0)
+            buf.release();
     }
 
     @Override

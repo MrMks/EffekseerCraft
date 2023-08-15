@@ -54,6 +54,7 @@ minecraft {
             property 'fml.coreMods.load', 'com.github.mrmks.mc.efscraft.forge.core.LoadingPlugin'
             property 'efscraft.log.debug', 'true'
             property 'efscraft.effect.debug', 'true'
+            property 'io.netty.leakDetectionLevel', 'paranoid'
 
             mods {
                 grouparticle {

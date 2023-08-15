@@ -103,7 +103,7 @@ public class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, EntityPla
     @Override
     public InputStream loadResource(String namespace, String key, String path) throws IOException {
         IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
-        IResource resource = manager.getResource(new ResourceLocation(namespace, String.format("%s/%s", key, path)));
+        IResource resource = manager.getResource(new ResourceLocation(namespace, String.format("effects/%s/%s", key, path)));
         return resource.getInputStream();
     }
 

@@ -44,7 +44,7 @@ public class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends DataOutput
         if (pl == null)
             return;
 
-        sendToClient(pl, packet);
+        sendToClient(sv, pl, packet);
     }
 
     void sendToClient(PL player, NetworkPacket packet) {
