@@ -16,7 +16,7 @@ public class EfsClientEventHandler {
         if (event instanceof EfsRenderEvent) {
             EfsRenderEvent rEvent = (EfsRenderEvent) event;
 
-            if (event instanceof EfsRenderEvent.Prev) {
+            if (rEvent.getPhase() == EfsRenderEvent.Phase.START) {
                 if (!rEvent.isGamePause())
                     client.renderer.update(rEvent.getPartial(), rEvent.getNanoNow(), rEvent.isGamePause(), rEvent.getMatProj(), rEvent.getMatModel());
             }

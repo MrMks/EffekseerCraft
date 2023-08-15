@@ -18,7 +18,6 @@ import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
@@ -103,17 +102,14 @@ public class ClientProxy extends CommonProxy {
             Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
             Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
 
-            EfsRenderEvent efsRenderEvent;
-
-            if (event.prev) {
-                efsRenderEvent = new EfsRenderEvent.Prev(
-                        event.partial, event.finishNano, Minecraft.getMinecraft().isGamePaused(), matProj, matModel, vPos, vPrev
-                );
-            } else {
-                efsRenderEvent = new EfsRenderEvent.Post(
-                        event.partial, event.finishNano, Minecraft.getMinecraft().isGamePaused(), matProj, matModel, vPos, vPrev
-                );
-            }
+            EfsRenderEvent efsRenderEvent = new EfsRenderEvent(
+                    event.partial,
+                    event.finishNano,
+                    Minecraft.getMinecraft().isGamePaused(),
+                    matProj,
+                    matModel, vPos, vPrev,
+                    event.prev ? EfsRenderEvent.Phase.START : EfsRenderEvent.Phase.END
+            );
 
             client.receiveEvent(efsRenderEvent);
         }

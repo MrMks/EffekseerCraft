@@ -2,9 +2,6 @@ package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.common.PropertyFlags;
-import com.github.mrmks.mc.efscraft.math.Vec3f;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
@@ -284,7 +281,7 @@ class RendererImpl {
         glGetInteger(GL_VIEWPORT, INT_16);
         tryResize(w = INT_16.get(2), h = INT_16.get(3));
 
-        Minecraft mc = Minecraft.getMinecraft();
+//        Minecraft mc = Minecraft.getMinecraft();
 
         if (PropertyFlags.ENABLE_TRANSPARENCY && openglSupported())
         {
@@ -306,7 +303,7 @@ class RendererImpl {
             }
             glActiveTexture(originUnit);
 
-            if (event instanceof EfsRenderEvent.Prev)
+            if (event.getPhase() == EfsRenderEvent.Phase.START)
             {
                 // clear working and backup;
                 float[] cls = new float[4];
@@ -418,9 +415,9 @@ class RendererImpl {
                 glStencilMask(0xff);
 //                update(event.partial, event.finishNano, 1_000_000_000L, Minecraft.getMinecraft().isGamePaused());
                 {
-                    Entity entity = mc.getRenderViewEntity();
-                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
+//                    Entity entity = mc.getRenderViewEntity();
+//                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
+//                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
 //                    updateAndRender(event.finishNano, 1_000_000_000L, mc.isGamePaused(),
 //                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
 //                            new Matrix4f(getProjectionMatrix()));
@@ -496,7 +493,7 @@ class RendererImpl {
             if (openglSupported())
             {
                 int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
-                if (event instanceof EfsRenderEvent.Prev)
+                if (event.getPhase() == EfsRenderEvent.Phase.START)
                 {
                     glBindTexture(GL_TEXTURE_2D, texDepthBackup);
                     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
@@ -531,7 +528,7 @@ class RendererImpl {
             }
             else
             {
-                if (event instanceof EfsRenderEvent.Post) {
+                if (event.getPhase() == EfsRenderEvent.Phase.END) {
 //                    Entity entity = mc.getRenderViewEntity();
 //                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
 //                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
