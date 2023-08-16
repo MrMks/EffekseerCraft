@@ -26,6 +26,7 @@ import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.FLOAT_16;
 public class ClientProxy extends CommonProxy {
 
     public static RenderLevelStageEvent.Stage BEFORE_DEBUG;
+    public static RenderLevelStageEvent.Stage BEFORE_TRANSPARENCY;
 
     public ClientProxy(String version) {
         super(version);
@@ -41,6 +42,7 @@ public class ClientProxy extends CommonProxy {
 
     private void onRegisterStage(RenderLevelStageEvent.RegisterStageEvent event) {
         BEFORE_DEBUG = event.register(new ResourceLocation("efscraft", "before_debug"), null);
+        BEFORE_TRANSPARENCY = event.register(new ResourceLocation("efscraft", "before_transparency"), null);
     }
 
     private void syncCommonSetup() {
@@ -73,7 +75,7 @@ public class ClientProxy extends CommonProxy {
 
             IEfsEvent.Phase phase = null;
 
-            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
+            if (event.getStage() == BEFORE_TRANSPARENCY) {
                 // client.receiveClient(); // START
                 phase = IEfsEvent.Phase.START;
             } else if (event.getStage() == BEFORE_DEBUG) {

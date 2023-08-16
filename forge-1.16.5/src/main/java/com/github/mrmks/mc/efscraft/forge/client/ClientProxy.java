@@ -96,6 +96,7 @@ public class ClientProxy extends CommonProxy {
         @SubscribeEvent
         public void onRenderEvent(RendererImpl.RenderParticleEvent event) {
             if (!Minecraft.useFancyGraphics()) return;
+            if (event.shader != Minecraft.useShaderTransparency()) return;
 
             com.github.mrmks.mc.efscraft.math.Matrix4f matView, matProj;
             Vec3f vPos;
