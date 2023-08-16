@@ -1,22 +1,13 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
-import com.github.mrmks.mc.efscraft.client.Renderer;
-import com.github.mrmks.mc.efscraft.client.EfsDrawingQueue;
-import com.github.mrmks.mc.efscraft.math.Vec3f;
+import com.github.mrmks.mc.efscraft.common.IEfsEvent;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
-public class RendererImpl extends Renderer {
-    protected RendererImpl(EfsDrawingQueue queue) {
-        super(queue);
-    }
+public class RendererImpl {
+    protected RendererImpl() {}
 
     private int lastWidth = -1, lastHeight = -1;
     private int depthFBO = -1, depthAttach0, depthAttach1;
@@ -43,10 +34,15 @@ public class RendererImpl extends Renderer {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    @SubscribeEvent
-    public void renderWorldStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS) return;
+    void drawEffect(IEfsEvent.Phase phase, Runnable drawer) {
+        if (phase == IEfsEvent.Phase.START) {
+            drawEffectPrev(drawer);
+        } else {
+            drawEffectPost(drawer);
+        }
+    }
 
+    private void drawEffectPrev(Runnable drawer) {
         if (Minecraft.useShaderTransparency()) {
             RenderTarget framebuffer = Minecraft.getInstance().getMainRenderTarget();
 
@@ -63,14 +59,8 @@ public class RendererImpl extends Renderer {
         }
     }
 
-    @SubscribeEvent
-    @SuppressWarnings({"removal"})
-    public void renderWorldLast(RenderLevelLastEvent event) {
-
+    private void drawEffectPost(Runnable drawer) {
         Minecraft minecraft = Minecraft.getInstance();
-
-        Camera camera = minecraft.gameRenderer.getMainCamera();
-        Vec3 vec3 = camera.getPosition();
 
         RenderTarget mainFBO = minecraft.getMainRenderTarget();
         int w = mainFBO.viewWidth, h = mainFBO.viewHeight;
@@ -88,24 +78,7 @@ public class RendererImpl extends Renderer {
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO.frameBufferId);
         }
 
-        com.github.mrmks.mc.efscraft.math.Matrix4f matView, matProj;
-        Vec3f vPos;
-        {
-            float[] floats = new float[16];
-            FLOAT_16.clear();
-            event.getPoseStack().last().pose().store(FLOAT_16);
-            FLOAT_16.get(floats);
-            matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
-
-            FLOAT_16.clear();
-            event.getProjectionMatrix().store(FLOAT_16);
-            FLOAT_16.get(floats);
-            matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
-
-            vPos = new Vec3f(vec3.x, vec3.y, vec3.z);
-        }
-
-        updateAndRender(event.getStartNanos(), 1_000_000_000, minecraft.isPaused(), matView, vPos, vPos, 0, matProj);
+        drawer.run();
 
         if (Minecraft.useShaderTransparency()) {
             glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);

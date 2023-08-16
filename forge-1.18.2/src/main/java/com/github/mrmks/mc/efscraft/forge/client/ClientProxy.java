@@ -1,20 +1,36 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EffekSeer4J;
-import com.github.mrmks.mc.efscraft.client.MessageHandlerClient;
-import com.github.mrmks.mc.efscraft.client.EfsDrawingQueue;
-import com.github.mrmks.mc.efscraft.common.packet.*;
+import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
+import com.github.mrmks.mc.efscraft.client.event.EfsResourceEvent;
+import com.github.mrmks.mc.efscraft.common.IEfsEvent;
 import com.github.mrmks.mc.efscraft.forge.EffekseerCraft;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
+import com.github.mrmks.mc.efscraft.math.Vec3f;
+import net.minecraft.Util;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+
+import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.FLOAT_16;
 
 public class ClientProxy extends CommonProxy {
 
+    public static RenderLevelStageEvent.Stage BEFORE_DEBUG;
+
     public ClientProxy(String version) {
         super(version);
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(this::onRegisterStage);
     }
 
     @Override
@@ -23,34 +39,73 @@ public class ClientProxy extends CommonProxy {
         event.enqueueWork(this::syncCommonSetup);
     }
 
+    private void onRegisterStage(RenderLevelStageEvent.RegisterStageEvent event) {
+        BEFORE_DEBUG = event.register(new ResourceLocation("efscraft", "before_debug"), null);
+    }
+
     private void syncCommonSetup() {
         if (EffekSeer4J.setup(EffekSeer4J.Device.OPENGL)) {
             Minecraft mc = Minecraft.getInstance();
 
-            ResourceManagerImpl resources = new ResourceManagerImpl(logAdaptor);
-            ((ReloadableResourceManager) mc.getResourceManager()).registerReloadListener(resources);
-            resources.onResourceManagerReload(mc.getResourceManager());
+            RendererImpl renderer = new RendererImpl();
+            EfsClientImpl client = new EfsClientImpl(wrapper, renderer, logAdaptor, false);
 
-            EfsDrawingQueue<?> queue = new EfsDrawingQueue<>(resources::get, new EntityConvertImpl(), logAdaptor);
-            RendererImpl renderer = new RendererImpl(queue);
-            MinecraftForge.EVENT_BUS.register(renderer);
+            ResourceManagerReloadListener listener = manager -> client.receiveEvent(EfsResourceEvent.Reload.INSTANCE);
+            ((ReloadableResourceManager) mc.getResourceManager()).registerReloadListener(listener);
 
-            EffekseerCraft.registerCleanup(resources::cleanup);
-            EffekseerCraft.registerCleanup(renderer::deleteProgram);
+            MinecraftForge.EVENT_BUS.register(new EventHandler(client));
+
+            EffekseerCraft.registerCleanup(client::deleteAll);
             EffekseerCraft.registerCleanup(renderer::closeResources);
             EffekseerCraft.registerCleanup(EffekSeer4J::finish);
-
-            MessageHandlerClient client = new MessageHandlerClient(queue, ClientProxy::scheduleTask);
-            wrapper.registerClient(PacketHello.class, new PacketHello.ClientHandler(client::handleHello));
-            wrapper.registerClient(SPacketPlayWith.class, client::handlePlayWith);
-            wrapper.registerClient(SPacketPlayAt.class, client::handlePlayAt);
-            wrapper.registerClient(SPacketStop.class, client::handleStop);
-            wrapper.registerClient(SPacketClear.class, client::handleClear);
-            wrapper.registerClient(SPacketTrigger.class, client::handleTrigger);
         }
     }
 
-    static void scheduleTask(Runnable task) {
-        Minecraft.getInstance().submit(task);
+    static class EventHandler {
+
+        final EfsClientImpl client;
+        EventHandler(EfsClientImpl client) {
+            this.client = client;
+        }
+
+        @SubscribeEvent
+        public void renderWorldStage(RenderLevelStageEvent event) {
+
+            IEfsEvent.Phase phase = null;
+
+            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
+                // client.receiveClient(); // START
+                phase = IEfsEvent.Phase.START;
+            } else if (event.getStage() == BEFORE_DEBUG) {
+                // client.receiveClient(); // END
+                phase = IEfsEvent.Phase.END;
+            }
+
+            if (phase == null) return;
+
+            Minecraft minecraft = Minecraft.getInstance();
+            com.github.mrmks.mc.efscraft.math.Matrix4f matView, matProj;
+            Vec3f vPos;
+            {
+                float[] floats = new float[16];
+                FLOAT_16.clear();
+                event.getPoseStack().last().pose().store(FLOAT_16);
+                FLOAT_16.get(floats);
+                matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+                FLOAT_16.clear();
+                event.getProjectionMatrix().store(FLOAT_16);
+                FLOAT_16.get(floats);
+                matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+
+                Camera camera = minecraft.gameRenderer.getMainCamera();
+                Vec3 vec3 = camera.getPosition();
+                vPos = new Vec3f(vec3.x, vec3.y, vec3.z);
+            }
+
+            matView.translatef(vPos.negative());
+
+            client.receiveEvent(new EfsRenderEvent(event.getPartialTick(), Util.getNanos(), minecraft.isPaused(), matProj, matView, phase));
+        }
     }
 }

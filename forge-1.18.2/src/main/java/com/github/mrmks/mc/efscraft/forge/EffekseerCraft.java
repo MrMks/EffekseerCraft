@@ -26,10 +26,8 @@ public class EffekseerCraft {
         callbacks.add(task);
     }
 
-    private final CommonProxy proxy;
-
     public EffekseerCraft() {
-        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();;
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         IModInfo info = ModLoadingContext.get().getActiveContainer().getModInfo();
 
         Dist dist = FMLEnvironment.dist;
@@ -40,8 +38,6 @@ public class EffekseerCraft {
         } else if (dist.isDedicatedServer()) {
             proxy = new CommonProxy(info.getVersion().toString());
         }
-
-        this.proxy = proxy;
 
         if (proxy != null) bus.addListener(proxy::onCommonSetup);
     }
