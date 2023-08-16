@@ -48,23 +48,12 @@ public class ClientProxy extends CommonProxy {
             ISelectiveResourceReloadListener reloadListener = (manager, pred) -> client.receiveEvent(EfsResourceEvent.Reload.INSTANCE);
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(reloadListener);
 
-//            EfsDrawingQueue<?> queue = new EfsDrawingQueue<>(resources::get, new EfsClientAdaptorImpl(), logAdaptor);
-//            RendererImpl renderer = new RendererImpl(queue);
-//            MinecraftForge.EVENT_BUS.register(renderer);
             MinecraftForge.EVENT_BUS.register(new EventHandler(client));
 
-//            EffekseerCraft.registerCleanup(resources::cleanup);
             EffekseerCraft.registerCleanup(client::deleteAll);
             EffekseerCraft.registerCleanup(renderer::cleanup);
             EffekseerCraft.registerCleanup(EffekSeer4J::finish);
 
-//            MessageHandlerClient client = new MessageHandlerClient(queue, ClientProxy::scheduleTask);
-//            wrapper.registerClient(PacketHello.class, new PacketHello.ClientHandler(client::handleHello));
-//            wrapper.registerClient(SPacketPlayWith.class, client::handlePlayWith);
-//            wrapper.registerClient(SPacketPlayAt.class, client::handlePlayAt);
-//            wrapper.registerClient(SPacketStop.class, client::handleStop);
-//            wrapper.registerClient(SPacketClear.class, client::handleClear);
-//            wrapper.registerClient(SPacketTrigger.class, client::handleTrigger);
         }
     }
 
@@ -95,7 +84,7 @@ public class ClientProxy extends CommonProxy {
 
             Minecraft mc = Minecraft.getInstance();
 
-            matProj.translatef(vPos.negative());
+            matView.translatef(vPos.negative());
 
             float partial = event.getPartialTicks();
             long nanoNow = event.getFinishTimeNano();

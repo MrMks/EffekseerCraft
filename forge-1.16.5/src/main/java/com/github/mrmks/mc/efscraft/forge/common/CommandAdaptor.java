@@ -39,11 +39,11 @@ public class CommandAdaptor {
         this.server = server;
     }
 
-    private static class ExceptionWrapper extends EfsServerCommandHandler.CommandException {
+    static class ExceptionWrapper extends EfsServerCommandHandler.CommandException {
 
         final CommandSyntaxException exception;
 
-        protected ExceptionWrapper(CommandSyntaxException e) {
+        ExceptionWrapper(CommandSyntaxException e) {
             super("wrapped");
             this.exception = e;
         }

@@ -35,16 +35,6 @@ import java.util.function.Predicate;
 public class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, ServerWorld, Entity, ServerPlayerEntity,
         CommandContext<CommandSource>, ByteBufInputStream, ByteBufOutputStream> {
 
-    private static class ExceptionWrapper extends EfsServerCommandHandler.CommandException {
-
-        final CommandSyntaxException exception;
-
-        protected ExceptionWrapper(CommandSyntaxException e) {
-            super("wrapped");
-            this.exception = e;
-        }
-    }
-
     private final NetworkWrapper wrapper;
     EfsServerAdaptorImpl(NetworkWrapper wrapper) {
         this.wrapper = wrapper;
@@ -69,7 +59,7 @@ public class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, 
         try {
             return EntityArgument.getEntity(sender, "target");
         } catch (CommandSyntaxException e) {
-            throw new ExceptionWrapper(e);
+            throw new CommandAdaptor.ExceptionWrapper(e);
         }
     }
 
@@ -78,7 +68,7 @@ public class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, 
         try {
             return EntityArgument.getPlayer(sender, "target");
         } catch (CommandSyntaxException e) {
-            throw new ExceptionWrapper(e);
+            throw new CommandAdaptor.ExceptionWrapper(e);
         }
     }
 
@@ -107,7 +97,7 @@ public class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, 
         try {
             return DimensionArgument.getDimension(sender, "dim");
         } catch (CommandSyntaxException e) {
-            throw new ExceptionWrapper(e);
+            throw new CommandAdaptor.ExceptionWrapper(e);
         }
     }
 
@@ -143,7 +133,7 @@ public class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, 
 
     @Override
     public String getWorldName(ServerWorld world) {
-        return world.dimension().getRegistryName().toString();
+        return world.dimension().location().toString();
     }
 
     @Override
