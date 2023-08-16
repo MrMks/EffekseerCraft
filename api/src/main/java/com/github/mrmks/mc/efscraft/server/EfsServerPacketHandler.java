@@ -42,7 +42,7 @@ public class EfsServerPacketHandler<SV, EN, PL extends EN, DI extends DataInput,
     }
 
     void sendToClient(SV sv, UUID receiver, NetworkPacket packet) {
-        PL pl = server.adaptor.getPlayerEntity(server.adaptor.getPlayer(sv, receiver));
+        PL pl = server.adaptor.getPlayer(sv, receiver);
         if (pl == null)
             return;
 

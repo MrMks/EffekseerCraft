@@ -1,103 +1,46 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
-import com.github.mrmks.mc.efscraft.client.Renderer;
-import com.github.mrmks.mc.efscraft.client.EfsDrawingQueue;
+import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
+import com.github.mrmks.mc.efscraft.common.IEfsEvent;
 import com.github.mrmks.mc.efscraft.common.PropertyFlags;
-import com.github.mrmks.mc.efscraft.math.Vec3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.IWorld;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
 
-public class RendererImpl extends Renderer {
-    protected RendererImpl(EfsDrawingQueue<?> queue) {
-        super(queue);
-    }
+public class RendererImpl {
+    protected RendererImpl() {}
 
-    @SubscribeEvent
-    public void onRenderEvent(RenderWorldLastEvent event) {
-        if (Minecraft.useFancyGraphics()) return;
+    void drawEffect(EfsRenderEvent event, Runnable drawer) {
 
-        float[] floats = new float[16];
-        FLOAT_16.clear();
-        event.getMatrixStack().last().pose().store(FLOAT_16);
-        FLOAT_16.get(floats);
-        com.github.mrmks.mc.efscraft.math.Matrix4f matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+        if (!Minecraft.useFancyGraphics()) {
+            if (event.getPhase() == IEfsEvent.Phase.START)
+                drawer.run();
+        } else {
 
-        FLOAT_16.clear();
-        event.getProjectionMatrix().store(FLOAT_16);
-        FLOAT_16.get(floats);
-        com.github.mrmks.mc.efscraft.math.Matrix4f matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
+            if (!apiSupport)
+                return;
 
-        ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vector3d v3d = info.getPosition();
-        Vec3f vPos = new Vec3f(v3d.x, v3d.y, v3d.z);
+            int current = PropertyFlags.ENABLE_TRANSPARENCY ? (Minecraft.useShaderTransparency() ? 1 : 0) : 2;
+            if (current != lastFancy) {
+                if (lastFancy == 0 || lastFancy == 1)
+                    drawers[lastFancy].detach();
+                lastFancy = current;
+                drawers[current].attach();
+            }
+            INT_16.clear();
+            glGetIntegerv(GL_VIEWPORT, INT_16);
+            int w = INT_16.get(2), h = INT_16.get(3);
+            INT_16.clear();
+            drawers[current].drawEffect(w, h, event.getPhase() == IEfsEvent.Phase.START, drawer);
+        }
 
-        Minecraft mc = Minecraft.getInstance();
-
-        updateAndRender(event.getFinishTimeNano(), 1_000_000_000L, mc.isPaused(),
-                matView, vPos, vPos, 0, matProj);
     }
 
     private int lastFancy = -1;
     private final Drawer[] drawers = new Drawer[] {new DrawerFancy(), new DrawerPerfect(), new DrawerNonTransparency()};
-
-    @SubscribeEvent
-    public void renderParticle(RenderParticleEvent event) {
-        if (!Minecraft.useFancyGraphics()) return;
-
-        com.github.mrmks.mc.efscraft.math.Matrix4f matView, matProj;
-        Vec3f vPos;
-
-        {
-            float[] floats = new float[16];
-            FLOAT_16.clear();
-            event.cam.store(FLOAT_16);
-            FLOAT_16.get(floats);
-            matView = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
-
-            FLOAT_16.clear();
-            event.proj.store(FLOAT_16);
-            FLOAT_16.get(floats);
-            matProj = new com.github.mrmks.mc.efscraft.math.Matrix4f(floats);
-
-            Vector3d v3d = event.info.getPosition();
-            vPos = new Vec3f(v3d.x, v3d.y, v3d.z);
-        }
-
-        if (event.prev)
-            update(event.nano, 1000_000_000L, Minecraft.getInstance().isPaused(), matView, vPos, vPos, 0, matProj);
-
-        if (!apiSupport)
-            return;
-
-        int current = PropertyFlags.ENABLE_TRANSPARENCY ? (event.shader ? 1 : 0) : 2;
-        if (current != lastFancy) {
-            if (lastFancy == 0 || lastFancy == 1)
-                drawers[lastFancy].detach();
-            lastFancy = current;
-            drawers[current].attach();
-        }
-        INT_16.clear();
-        glGetIntegerv(GL_VIEWPORT, INT_16);
-        int w = INT_16.get(2), h = INT_16.get(3);
-        INT_16.clear();
-        drawers[current].drawEffect(w, h, event.prev);
-    }
-
-    @SubscribeEvent
-    public void onWorldUnload(WorldEvent.Unload event) {
-        IWorld world = event.getWorld();
-        if (world != null && world.isClientSide())
-            unloadRender();
-    }
 
     void cleanup() {
         for (Drawer drawer : drawers) drawer.cleanup();
@@ -105,12 +48,12 @@ public class RendererImpl extends Renderer {
     }
 
     public static class RenderParticleEvent extends Event {
-        private final Matrix4f cam, proj;
-        private final ActiveRenderInfo info;
-        private final float partial;
-        private final long nano;
-        private final boolean prev;
-        private final boolean shader;
+        final Matrix4f cam, proj;
+        final ActiveRenderInfo info;
+        final float partial;
+        final long nano;
+        final boolean prev;
+        final boolean shader;
         public RenderParticleEvent(float partial, long nano, Matrix4f cam, Matrix4f proj, ActiveRenderInfo info, boolean prev, boolean shader) {
             this.partial = partial;
             this.nano = nano;
@@ -124,12 +67,12 @@ public class RendererImpl extends Renderer {
 
     private interface Drawer {
         default void attach() {}
-        void drawEffect(int w, int h, boolean prev);
+        void drawEffect(int w, int h, boolean prev, Runnable drawer);
         default void detach() {}
         void cleanup();
     }
 
-    private class DrawerFancy implements Drawer {
+    private static class DrawerFancy implements Drawer {
 
         int workingFBO, colorAttach0, depthAttach0;
         int backupFBO, depthAttach1;
@@ -335,7 +278,7 @@ public class RendererImpl extends Renderer {
         }
 
         @Override
-        public void drawEffect(int w, int h, boolean prev) {
+        public void drawEffect(int w, int h, boolean prev, Runnable drawer) {
 
             resize(w, h);
 
@@ -417,7 +360,7 @@ public class RendererImpl extends Renderer {
                 glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
                 glStencilFunc(GL_ALWAYS, 1, 0xff);
                 glStencilMask(0xff);
-                draw();
+                drawer.run();
 
                 // draw colorTex0 to workingFBO
                 glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -436,7 +379,7 @@ public class RendererImpl extends Renderer {
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 // draw effects again
-                draw();
+                drawer.run();
 
                 // draw translucent layer
                 glEnable(GL_BLEND);
@@ -487,7 +430,7 @@ public class RendererImpl extends Renderer {
         }
     }
 
-    private class DrawerPerfect implements Drawer {
+    private static class DrawerPerfect implements Drawer {
 
         private int lastWidth = -1, lastHeight = -1;
         private int depthFBO = -1, depthAttach0, depthAttach1;
@@ -517,7 +460,7 @@ public class RendererImpl extends Renderer {
         }
 
         @Override
-        public void drawEffect(int w, int h, boolean prev) {
+        public void drawEffect(int w, int h, boolean prev, Runnable drawer) {
 
             resize(w, h);
 
@@ -542,7 +485,7 @@ public class RendererImpl extends Renderer {
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-                draw();
+                drawer.run();
 
                 glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
@@ -561,7 +504,7 @@ public class RendererImpl extends Renderer {
         }
     }
 
-    private class DrawerNonTransparency implements Drawer {
+    private static class DrawerNonTransparency implements Drawer {
 
         private int workingFBO, depthAttach0, depthAttach1;
         private int lastWidth, lastHeight;
@@ -589,7 +532,7 @@ public class RendererImpl extends Renderer {
         }
 
         @Override
-        public void drawEffect(int w, int h, boolean prev) {
+        public void drawEffect(int w, int h, boolean prev, Runnable drawer) {
             resize(w, h);
 
             int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
@@ -620,7 +563,7 @@ public class RendererImpl extends Renderer {
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 // draw effects
-                draw();
+                drawer.run();
 
                 // restore depth buffer
                 glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttach1);

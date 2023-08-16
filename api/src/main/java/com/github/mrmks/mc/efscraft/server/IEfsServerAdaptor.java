@@ -14,13 +14,13 @@ import java.util.function.Predicate;
 
 /**
  *
+ * @param <SV> Server
+ * @param <WO> World
  * @param <EN> Entity
  * @param <PL> Player
- * @param <WO> World
  * @param <SE> Sender
- * @param <DO> Data
- * @param <DI>
- * @param <SV>
+ * @param <DI> DataInput
+ * @param <DO> DataOutput
  */
 public interface IEfsServerAdaptor<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO extends DataOutput>
     extends IEfsNetworkAdaptor<DI, DO> {

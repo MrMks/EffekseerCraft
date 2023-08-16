@@ -3,7 +3,6 @@ package com.github.mrmks.mc.efscraft.forge.common;
 import com.github.mrmks.mc.efscraft.client.EfsClient;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.server.EfsServer;
-import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
@@ -110,21 +109,12 @@ public class NetworkWrapper {
         this.efsServer = server;
     }
 
-    public void sendTo(EntityPlayer player, NetworkPacket message) {
-        FMLEmbeddedChannel channel = channels.get(Side.SERVER);
-
-        channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.PLAYER);
-        channel.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(player);
-        channel.writeAndFlush(message).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
-    }
-
     public void sendTo(EntityPlayer player, ByteBuf buf) {
         FMLEmbeddedChannel channel = channels.get(Side.SERVER);
 
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.PLAYER);
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(player);
 
-//        byte[] bytes = ByteBufUtil.getBytes(buf.slice());
         channel.writeAndFlush(new BufCan(buf.retainedSlice())).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 
@@ -133,7 +123,6 @@ public class NetworkWrapper {
 
         channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.TOSERVER);
 
-//        byte[] bytes = ByteBufUtil.getBytes(buf.slice());
         channel.writeAndFlush(new BufCan(buf.retainedSlice())).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 }
