@@ -20,7 +20,10 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
+
+import java.io.File;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.FLOAT_16;
 
@@ -41,7 +44,8 @@ public class ClientProxy extends CommonProxy {
 
             RendererImpl renderer = new RendererImpl();
             EfsClientAdaptorImpl adaptor = new EfsClientAdaptorImpl(wrapper, renderer);
-            EfsClient<Entity, ClientPlayerEntity, ByteBufInputStream, ByteBufOutputStream> client = new EfsClient<>(adaptor, logAdaptor, false);
+            File folder = new File(mc.getResourcePackDirectory(), "efscraft");
+            EfsClient<Entity, ClientPlayerEntity, ByteBufInputStream, ByteBufOutputStream> client = new EfsClient<>(adaptor, logAdaptor, false, folder);
 
             wrapper.setClient(client);
 

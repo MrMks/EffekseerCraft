@@ -21,6 +21,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
+import java.io.File;
+
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.FLOAT_16;
 
 public class ClientProxy extends CommonProxy {
@@ -50,7 +52,8 @@ public class ClientProxy extends CommonProxy {
             Minecraft mc = Minecraft.getInstance();
 
             RendererImpl renderer = new RendererImpl();
-            EfsClientImpl client = new EfsClientImpl(wrapper, renderer, logAdaptor, false);
+            File folder = new File(mc.getResourcePackDirectory(), "efscraft");
+            EfsClientImpl client = new EfsClientImpl(wrapper, renderer, logAdaptor, false, folder);
 
             ResourceManagerReloadListener listener = manager -> client.receiveEvent(EfsResourceEvent.Reload.INSTANCE);
             ((ReloadableResourceManager) mc.getResourceManager()).registerReloadListener(listener);

@@ -33,6 +33,7 @@ public interface IEfsClientAdaptor<EN, PL, DI extends DataInput, DO extends Data
     Vec2f getEntityBodyPrevAngle(EN entity);
 
     // resources
+    @Deprecated // load resources by EfsResourceManager, not from Minecraft's ResourceManager
     InputStream loadResource(String namespace, String key, String path) throws IOException;
 
     // packets

@@ -4,13 +4,13 @@ import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 
 public class EfsClient<EN, PL extends EN, DI extends DataInput, DO extends DataOutput> {
     final LogAdaptor logger;
     final IEfsClientAdaptor<EN, PL, DI, DO> adaptor;
 
-//    final RenderingQueue<EN> queue;
     final EfsResourceManager resources;
     final EfsRenderer renderer;
 
@@ -19,11 +19,11 @@ public class EfsClient<EN, PL extends EN, DI extends DataInput, DO extends DataO
 
     boolean compatible = false;
 
-    public EfsClient(IEfsClientAdaptor<EN, PL, DI, DO> adaptor, LogAdaptor logger, boolean autoReply) {
+    public EfsClient(IEfsClientAdaptor<EN, PL, DI, DO> adaptor, LogAdaptor logger, boolean autoReply, File folder) {
         this.logger = logger;
         this.adaptor = adaptor;
 
-        this.resources = new EfsResourceManager(this);
+        this.resources = new EfsResourceManager(this, folder);
         this.eventHandler = new EfsClientEventHandler(this);
 
         EfsDrawingQueue<EN> queue = new EfsDrawingQueue<>(this);

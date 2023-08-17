@@ -19,14 +19,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class EfsClientImpl extends EfsClient<Entity, LocalPlayer, ByteBufInputStream, ByteBufOutputStream> {
 
-    public EfsClientImpl(NetworkWrapper wrapper, RendererImpl renderer, LogAdaptor logger, boolean autoReply) {
-        super(new AdaptorImpl(wrapper, renderer), logger, autoReply);
+    public EfsClientImpl(NetworkWrapper wrapper, RendererImpl renderer, LogAdaptor logger, boolean autoReply, File folder) {
+        super(new AdaptorImpl(wrapper, renderer), logger, autoReply, folder);
         wrapper.setClient(this);
     }
 

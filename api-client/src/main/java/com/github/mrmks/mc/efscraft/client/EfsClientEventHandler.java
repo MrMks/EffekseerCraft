@@ -31,6 +31,8 @@ class EfsClientEventHandler {
         } else if (event instanceof EfsDisconnectEvent) {
             client.compatible = false;
             client.renderer.stopAll();
+
+            client.resources.onReload();
         }
     }
 

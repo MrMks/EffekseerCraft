@@ -21,6 +21,8 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
+import java.io.File;
+
 public class ClientProxy extends CommonProxy {
     @Override
     public void initialize(FMLInitializationEvent event) {
@@ -34,7 +36,7 @@ public class ClientProxy extends CommonProxy {
             // create efs client
             RendererImpl renderer = new RendererImpl();
             EfsClientAdaptorImpl adaptor = new EfsClientAdaptorImpl(wrapper, renderer);
-            EfsClientImpl efsClient = new EfsClientImpl(adaptor, logAdaptor, false);
+            EfsClientImpl efsClient = new EfsClientImpl(adaptor, logAdaptor, false, new File(mc.getResourcePackRepository().getDirResourcepacks(), "efscraft"));
 
             wrapper.setClient(efsClient);
 
@@ -80,8 +82,8 @@ public class ClientProxy extends CommonProxy {
 //    }
 
     private static class EfsClientImpl extends EfsClient<Entity, EntityPlayerSP, ByteBufInputStream, ByteBufOutputStream> {
-        public EfsClientImpl(IEfsClientAdaptor<Entity, EntityPlayerSP, ByteBufInputStream, ByteBufOutputStream> adaptor, LogAdaptor logger, boolean autoReply) {
-            super(adaptor, logger, autoReply);
+        public EfsClientImpl(IEfsClientAdaptor<Entity, EntityPlayerSP, ByteBufInputStream, ByteBufOutputStream> adaptor, LogAdaptor logger, boolean autoReply, File folder) {
+            super(adaptor, logger, autoReply, folder);
         }
     }
 
