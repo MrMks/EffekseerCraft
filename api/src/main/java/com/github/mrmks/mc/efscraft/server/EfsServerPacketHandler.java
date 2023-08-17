@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class EfsServerPacketHandler<SV, EN, PL extends EN, DI extends DataInput, DO extends DataOutput> {
+class EfsServerPacketHandler<SV, EN, PL extends EN, DI extends DataInput, DO extends DataOutput> {
 
     private final EfsServer<SV, ?, EN, PL, ?, DI, DO> server;
     private final MessageCodec codec;

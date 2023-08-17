@@ -7,7 +7,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class EfsClientPacketHandler<DI extends DataInput, DO extends DataOutput> {
+class EfsClientPacketHandler<DI extends DataInput, DO extends DataOutput> {
 
     private final MessageCodec codec;
     private final boolean autoReply;
@@ -20,9 +20,7 @@ public class EfsClientPacketHandler<DI extends DataInput, DO extends DataOutput>
         this.autoReply = autoReply;
         this.queue = queue;
 
-        codec.registerClient(PacketHello.class, new PacketHello.ClientHandler(flag -> {
-            client.adaptor.schedule(() -> client.compatible = flag);
-        }));
+        codec.registerClient(PacketHello.class, new PacketHello.ClientHandler(flag -> client.adaptor.schedule(() -> client.compatible = flag)));
         codec.registerClient(SPacketPlayWith.class, this::handlePlayWith);
         codec.registerClient(SPacketPlayAt.class, this::handlePlayAt);
         codec.registerClient(SPacketTrigger.class, this::handleTrigger);

@@ -8,7 +8,7 @@ import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
 import java.util.*;
 
-public class EfsServerEventHandler<SV> {
+class EfsServerEventHandler<SV> {
 
     private static class Counter {
         int count;
@@ -31,13 +31,6 @@ public class EfsServerEventHandler<SV> {
         this.server = server;
         this.logger = server.logger;
         this.clients = server.clients;
-    }
-
-    @Deprecated
-    protected EfsServerEventHandler(Map<UUID, PacketHello.State> clients, LogAdaptor logger) {
-        this.clients = clients;
-        this.logger = logger;
-        this.server = null;
     }
 
     void receive(IEfsServerEvent event) {
@@ -89,10 +82,6 @@ public class EfsServerEventHandler<SV> {
                 logger.logWarning("Received hello packet from unexpected client " + sender);
             }
         }
-    }
-
-    protected final void tickAndUpdate() {
-        tickAndUpdate(null);
     }
 
     protected final void tickAndUpdate(SV sv) {

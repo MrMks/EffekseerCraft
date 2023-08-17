@@ -11,7 +11,7 @@ import java.util.function.IntSupplier;
 
 import static com.github.mrmks.mc.efscraft.common.Constants.RESOURCE_NAMESPACE;
 
-public class EfsResourceManager {
+class EfsResourceManager {
 
     private interface InputStreamConsumer {
         boolean accept(int i, InputStream stream) throws IOException;
@@ -23,8 +23,8 @@ public class EfsResourceManager {
         this.client = client;
     }
 
-    private Map<String, EfsEffect> effects = new HashMap<>();
-    private Set<String> errorLoaded = new HashSet<>();
+    private final Map<String, EfsEffect> effects = new HashMap<>();
+    private final Set<String> errorLoaded = new HashSet<>();
 
 
     void onReload() {

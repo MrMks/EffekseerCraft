@@ -17,15 +17,6 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
     private final String port, portVersion;
     private final Map<UUID, PacketHello.State> clients;
     private final EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server;
-    public EfsServerCommandHandler(Adaptor<ENTITY, PLAYER, SERVER, SENDER, WORLD> adaptor, File file, String port, String portVersion, Map<UUID, PacketHello.State> clients) {
-        this.adaptor = null;
-        this.server = null;
-        this.registry = new ServerRegistryMap(file);
-        this.port = port;
-        this.portVersion = portVersion;
-        this.clients = clients;
-    }
-
     EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server) {
         this.server = server;
         this.adaptor = server.adaptor;
@@ -114,7 +105,7 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
         }
     }
 
-    public void dispatchExecute(String label, String[] args, SERVER server, SENDER sender) throws CommandException {
+    void dispatchExecute(String label, String[] args, SERVER server, SENDER sender) throws CommandException {
         if ("effek".equals(label) && adaptor.hasPermission(server, sender, "efscraft.command")) {
             if (args.length < 1) throw new WrongUsageException("commands.effek.usage");
             else {
@@ -134,7 +125,7 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
         }
     }
 
-    public List<String> dispatchComplete(String label, String[] args, SERVER server, SENDER sender) {
+    List<String> dispatchComplete(String label, String[] args, SERVER server, SENDER sender) {
         if (!"effek".equals(label) || !adaptor.hasPermission(server, sender, "efscraft.command"))
             return Collections.emptyList();
 
@@ -441,33 +432,6 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
 
     private List<String> completeVersion(String[] args, SERVER server, SENDER sender) {
         return Collections.emptyList();
-    }
-
-    public interface Adaptor<ENTITY, PLAYER extends ENTITY, SERVER, SENDER, WORLD> {
-        boolean hasPermission(SERVER server, SENDER sender, String node);
-        UUID getClientUUID(PLAYER sender);
-        void sendPacketTo(SERVER server, PLAYER player, NetworkPacket message);
-        PLAYER findPlayer(SERVER server, SENDER sender, String toFound) throws CommandException;
-        ENTITY findEntity(SERVER server, SENDER sender, String toFound) throws CommandException;
-        Collection<PLAYER> getPlayersInWorld(SERVER server, SENDER sender, WORLD world);
-        float[] getSenderPosAngle(SENDER sender); // or null if sender has no position.
-//        Vec3f getSenderPos(SENDER sender);
-//        Vec2f getSenderAngle(SENDER sender);
-        int getEntityId(ENTITY entity);
-        float[] getEntityPosAngle(ENTITY entity);
-//        Vec3f getEntityPos(ENTITY entity);
-//        Vec2f getEntityAngle(ENTITY entity);
-
-        WORLD getEntityWorld(ENTITY entity);
-        WORLD findWorld(SERVER server, SENDER sender, String str) throws CommandException;
-
-        Collection<String> completePlayers(SERVER server);
-        Collection<String> completeWorlds(SERVER server);
-
-        int getViewDistance(WORLD world);
-
-        void sendMessage(SENDER player, String msg, Object[] objects, boolean schedule);
-
     }
 
     public static class CommandException extends Exception {

@@ -3,18 +3,18 @@ package com.github.mrmks.mc.efscraft.client;
 import com.github.mrmks.efkseer4j.EfsEffect;
 import com.github.mrmks.efkseer4j.EfsEffectHandle;
 import com.github.mrmks.efkseer4j.EfsProgram;
-import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
-public final class EfsDrawingQueue<ENTITY> {
+final class EfsDrawingQueue<ENTITY> {
 
     // a mask that will clear the queue and prevent any further render;
     private final AtomicBoolean clearMark = new AtomicBoolean(false);
@@ -24,24 +24,11 @@ public final class EfsDrawingQueue<ENTITY> {
     private final Map<String, Map<String, Entry>> lookup = new ConcurrentHashMap<>();
 
     // client effect registry
-    private final Function<String, EfsEffect> effects;
-    // a version specific adaptor
-//    private final EntityConvert<ENTITY> convert;
-    private final LogAdaptor logger;
+    private final EfsClient<ENTITY, ?, ?, ?> client;
     private final IEfsClientAdaptor<ENTITY, ?, ?, ?> adaptor;
 
-    @Deprecated
-    public EfsDrawingQueue(Function<String, EfsEffect> getter, EntityConvert<ENTITY> convert, LogAdaptor logger) {
-        this.effects = getter;
-//        this.convert = convert;
-        this.logger = logger;
-        this.adaptor = null;
-    }
-
     EfsDrawingQueue(EfsClient<ENTITY, ?, ?, ?> client) {
-        this.effects = client.resources::getOrLoad;
-//        this.convert = null;
-        this.logger = client.logger;
+        this.client = client;
         this.adaptor = client.adaptor;
     }
 
@@ -240,13 +227,13 @@ public final class EfsDrawingQueue<ENTITY> {
         } else {
             present.removeIf(entry -> {
                 if (entry.state == State.NEW) {
-                    EfsEffect effect = effects.apply(entry.effect);
+                    EfsEffect effect = client.resources.getOrLoad(entry.effect);
                     if (effect == null) {
                         entry.state = State.STOPPED;
-                        logger.logWarning("Unable to player an absent effect with key: " + entry.effect);
+                        client.logger.logWarning("Unable to player an absent effect with key: " + entry.effect);
                     } else {
                         entry.init(program.playEffect(effect));
-                        logger.logDebug("Begin to play effect: " + "[key: " + entry.effect + ", emitter: " + entry.emitter + "]");
+                        client.logger.logDebug("Begin to play effect: " + "[key: " + entry.effect + ", emitter: " + entry.emitter + "]");
                     }
                 }
 

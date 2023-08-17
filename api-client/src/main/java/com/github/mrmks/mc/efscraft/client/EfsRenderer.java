@@ -4,7 +4,7 @@ import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 
-public class EfsRenderer {
+class EfsRenderer {
 
     private final EfsClient<?, ?, ?, ?> client;
     private final EfsDrawingQueue<?> queue;

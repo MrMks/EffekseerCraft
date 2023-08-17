@@ -4,7 +4,7 @@ import com.github.mrmks.mc.efscraft.client.event.EfsDisconnectEvent;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.client.event.EfsResourceEvent;
 
-public class EfsClientEventHandler {
+class EfsClientEventHandler {
 
     private final EfsClient<?, ?, ?, ?> client;
 
