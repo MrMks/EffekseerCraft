@@ -5,7 +5,6 @@ import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.forge.common.NetworkWrapper;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
@@ -20,7 +19,7 @@ import net.minecraft.util.ResourceLocation;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, EntityPlayerSP, ByteBufInputStream, ByteBufOutputStream> {
+public class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, EntityPlayerSP, ByteBufOutputStream> {
 
     private final NetworkWrapper wrapper;
     private final RendererImpl renderer;

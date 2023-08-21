@@ -1,12 +1,11 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.common.*;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.server.EfsServer;
 import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
 import com.github.mrmks.mc.efscraft.server.EfsServerEnv;
 import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -18,7 +17,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -90,7 +92,7 @@ public class CommonProxy {
     }
 
     protected static class EfsServerImpl extends EfsServer<MinecraftServer, WorldServer,
-                Entity, EntityPlayerMP, ICommandSender, ByteBufInputStream, ByteBufOutputStream> {
+                Entity, EntityPlayerMP, ICommandSender, ByteBufOutputStream> {
 
         public EfsServerImpl(EfsServerAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
             super(adaptor, logger, env, implVer, autoReply);

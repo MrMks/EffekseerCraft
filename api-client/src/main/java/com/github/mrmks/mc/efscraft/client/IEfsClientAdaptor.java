@@ -5,13 +5,10 @@ import com.github.mrmks.mc.efscraft.common.IEfsNetworkAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
-public interface IEfsClientAdaptor<EN, PL, DI extends DataInput, DO extends DataOutput>
-    extends IEfsNetworkAdaptor<DI, DO> {
+public interface IEfsClientAdaptor<EN, PL, DO extends OutputStream>
+    extends IEfsNetworkAdaptor<DO> {
 
     // entity convert
     EN findEntity(int entityId);

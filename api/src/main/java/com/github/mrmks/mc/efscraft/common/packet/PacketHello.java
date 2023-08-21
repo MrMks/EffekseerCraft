@@ -1,14 +1,10 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
 import com.github.mrmks.mc.efscraft.server.IEfsServerEvent;
-import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.Map;
+import java.io.*;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -19,13 +15,13 @@ public class PacketHello implements NetworkPacket {
 
     static final NetworkPacket.Codec<PacketHello> CODEC = new NetworkPacket.Codec<PacketHello>() {
         @Override
-        public void read(PacketHello packet, DataInput stream) throws IOException {
-            packet.version = stream.readInt();
+        public void read(PacketHello packet, InputStream stream) throws IOException {
+            packet.version = new DataInputStream(stream).readInt();
         }
 
         @Override
-        public void write(PacketHello packet, DataOutput stream) throws IOException {
-            stream.writeInt(Constants.PROTOCOL_VERSION);
+        public void write(PacketHello packet, OutputStream stream) throws IOException {
+            new DataOutputStream(stream).writeInt(Constants.PROTOCOL_VERSION);
         }
     };
 
@@ -55,35 +51,9 @@ public class PacketHello implements NetworkPacket {
 
     public static final class ServerHandler implements NetworkPacket.ServerHandler<PacketHello, NetworkPacket> {
 
-        private final Map<UUID, State> clients;
-        private final LogAdaptor logger;
-
-        public ServerHandler(Map<UUID, State> clients, LogAdaptor logger) {
-            this.clients = clients;
-            this.logger = logger;
-        }
-
-        @Override
-        public NetworkPacket handlePacket(PacketHello packet, UUID sender) {
-
-            if (packet.version == Constants.PROTOCOL_VERSION) {
-                if (clients.get(sender) == State.WAITING_FOR_REPLY) {
-                    clients.put(sender, State.COMPLETE);
-                    logger.logInfo("Established connection to client with uuid " + sender);
-                } else {
-                    logger.logWarning("Received hello packet from unexpected client " + sender);
-                }
-            }
-
-            return null;
-        }
-    }
-
-    public static final class InternalServerHandler implements NetworkPacket.ServerHandler<PacketHello, NetworkPacket> {
-
         private final Consumer<IEfsServerEvent> consumer;
 
-        public InternalServerHandler(Consumer<IEfsServerEvent> consumer) {
+        public ServerHandler(Consumer<IEfsServerEvent> consumer) {
             this.consumer = consumer;
         }
 

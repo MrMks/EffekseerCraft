@@ -6,7 +6,6 @@ import com.github.mrmks.mc.efscraft.forge.common.NetworkWrapper;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
@@ -23,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @SuppressWarnings("SuspiciousNameCombination")
-class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, ClientPlayerEntity, ByteBufInputStream, ByteBufOutputStream> {
+class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, ClientPlayerEntity, ByteBufOutputStream> {
 
     NetworkWrapper wrapper;
     RendererImpl renderer;

@@ -1,8 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
 public class SPacketStop implements NetworkPacket {
     private String key, emitter; // effect and emitter to search which emitter
@@ -24,13 +22,15 @@ public class SPacketStop implements NetworkPacket {
 
     static final NetworkPacket.Codec<SPacketStop> CODEC = new Codec<SPacketStop>() {
         @Override
-        public void read(SPacketStop packet, DataInput stream) throws IOException {
+        public void read(SPacketStop packet, InputStream inputStream) throws IOException {
+            DataInputStream stream = new DataInputStream(inputStream);
             packet.key = stream.readUTF();
             packet.emitter = stream.readUTF();
         }
 
         @Override
-        public void write(SPacketStop packet, DataOutput stream) throws IOException {
+        public void write(SPacketStop packet, OutputStream outputStream) throws IOException {
+            DataOutputStream stream = new DataOutputStream(outputStream);
             stream.writeUTF(packet.key);
             stream.writeUTF(packet.emitter);
         }

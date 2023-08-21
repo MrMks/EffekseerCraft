@@ -1,11 +1,10 @@
 package com.github.mrmks.mc.efscraft.forge.common;
 
-import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
-import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
+import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
+import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import net.minecraft.command.CommandBase;
@@ -27,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, WorldServer, Entity, EntityPlayerMP, ICommandSender, ByteBufInputStream, ByteBufOutputStream> {
+class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, WorldServer, Entity, EntityPlayerMP, ICommandSender, ByteBufOutputStream> {
 
     private static class CommandExceptionWrapper extends EfsServerCommandHandler.CommandException {
 

@@ -5,31 +5,31 @@ import com.github.mrmks.mc.efscraft.common.packet.MessageContext;
 import com.github.mrmks.mc.efscraft.common.packet.NetworkPacket;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-class EfsServerPacketHandler<SV, EN, PL extends EN, DI extends DataInput, DO extends DataOutput> {
+class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
 
-    private final EfsServer<SV, ?, EN, PL, ?, DI, DO> server;
+    private final EfsServer<SV, ?, EN, PL, ?, DO> server;
     private final MessageCodec codec;
     private final boolean autoReply;
 
-    EfsServerPacketHandler(EfsServer<SV, ?, EN, PL, ?, DI, DO> server, boolean autoReply) {
+    EfsServerPacketHandler(EfsServer<SV, ?, EN, PL, ?, DO> server, boolean autoReply) {
         this.server = server;
         this.codec = new MessageCodec();
         this.autoReply = autoReply;
     }
 
     void init() {
-        codec.registerServer(PacketHello.class, new PacketHello.InternalServerHandler(server.eventHandler::receive));
+        codec.registerServer(PacketHello.class, new PacketHello.ServerHandler(server::receiveEvent));
     }
 
-    DO receive(SV sv, PL receiver, DI dataIn) throws IOException {
+    DO receive(SV sv, PL receiver, InputStream dataIn) throws IOException {
         UUID uuid = server.adaptor.getEntityUUID(receiver);
         NetworkPacket packet = codec.readInput(dataIn, new MessageContext(uuid));
 

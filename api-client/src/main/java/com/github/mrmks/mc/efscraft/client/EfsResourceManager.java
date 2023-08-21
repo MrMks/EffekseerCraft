@@ -21,21 +21,15 @@ class EfsResourceManager {
         boolean accept(int i, InputStream stream) throws IOException;
     }
 
-    private final EfsClient<?, ?, ?, ?> client;
+    private final EfsClient<?, ?, ?> client;
     private final File folder;
     private List<Pack> packs;
     private final Map<String, EncryptedPack> digestToPack = new HashMap<>();
     private final Map<String, EfsEffect> effects = new HashMap<>();
 
-    EfsResourceManager(EfsClient<?, ?, ?, ?> client, File file) {
+    EfsResourceManager(EfsClient<?, ?, ?> client, File file) {
         this.client = client;
         this.folder = file;
-    }
-
-    @Deprecated
-    EfsResourceManager(EfsClient<?, ?, ?, ?> client) {
-        this.client = client;
-        this.folder = null;
     }
 
     private void loadPacks() {

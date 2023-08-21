@@ -7,7 +7,6 @@ import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import net.minecraft.command.CommandSource;
@@ -33,7 +32,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public class EfsServerAdaptorImpl implements IEfsServerAdaptor<MinecraftServer, ServerWorld, Entity, ServerPlayerEntity,
-        CommandContext<CommandSource>, ByteBufInputStream, ByteBufOutputStream> {
+        CommandContext<CommandSource>, ByteBufOutputStream> {
 
     private final NetworkWrapper wrapper;
     EfsServerAdaptorImpl(NetworkWrapper wrapper) {

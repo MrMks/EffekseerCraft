@@ -3,9 +3,7 @@ package com.github.mrmks.mc.efscraft.common.packet;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
 import static com.github.mrmks.mc.efscraft.common.Constants.MASK_CONFLICT;
 
@@ -138,8 +136,7 @@ public abstract class SPacketPlayAbstract implements NetworkPacket {
 
     protected static abstract class Codec<T extends SPacketPlayAbstract> implements NetworkPacket.Codec<T> {
 
-        @Override
-        public void read(SPacketPlayAbstract packet, DataInput stream) throws IOException {
+        protected void read0(SPacketPlayAbstract packet, DataInputStream stream) throws IOException {
             packet.key = stream.readUTF();
             packet.effect = stream.readUTF();
             packet.emitter = stream.readUTF();
@@ -161,8 +158,7 @@ public abstract class SPacketPlayAbstract implements NetworkPacket {
             packet.mask = stream.readByte();
         }
 
-        @Override
-        public void write(SPacketPlayAbstract packet, DataOutput stream) throws IOException {
+        protected void write0(SPacketPlayAbstract packet, DataOutputStream stream) throws IOException {
             stream.writeUTF(packet.key);
             stream.writeUTF(packet.effect);
             stream.writeUTF(packet.emitter);

@@ -7,7 +7,6 @@ import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.forge.common.NetworkWrapper;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import net.minecraft.ResourceLocationException;
@@ -24,14 +23,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class EfsClientImpl extends EfsClient<Entity, LocalPlayer, ByteBufInputStream, ByteBufOutputStream> {
+public class EfsClientImpl extends EfsClient<Entity, LocalPlayer, ByteBufOutputStream> {
 
     public EfsClientImpl(NetworkWrapper wrapper, RendererImpl renderer, LogAdaptor logger, boolean autoReply, File folder) {
         super(new AdaptorImpl(wrapper, renderer), logger, autoReply, folder);
         wrapper.setClient(this);
     }
 
-    static class AdaptorImpl implements IEfsClientAdaptor<Entity, LocalPlayer, ByteBufInputStream, ByteBufOutputStream> {
+    static class AdaptorImpl implements IEfsClientAdaptor<Entity, LocalPlayer, ByteBufOutputStream> {
 
         final NetworkWrapper wrapper;
         final RendererImpl renderer;

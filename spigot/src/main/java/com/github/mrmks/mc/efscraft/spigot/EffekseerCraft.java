@@ -1,15 +1,13 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
-import com.github.mrmks.mc.efscraft.common.*;
+import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.server.EfsServer;
 import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
 import com.github.mrmks.mc.efscraft.server.EfsServerEnv;
 import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import org.bukkit.Bukkit;
@@ -29,9 +27,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.Messenger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
@@ -107,7 +103,7 @@ public class EffekseerCraft extends JavaPlugin {
         messenger.registerOutgoingPluginChannel(this, Constants.CHANNEL_KEY);
         messenger.registerIncomingPluginChannel(this, Constants.CHANNEL_KEY, (channel, player, data) -> {
             try {
-                server.receivePacket(getServer(), player, ByteStreams.newDataInput(data));
+                server.receivePacket(getServer(), player, new ByteArrayInputStream(data));
             } catch (IOException e) {
                 logger.logWarning("Unable to handle a client packet", e);
             }
@@ -148,15 +144,15 @@ public class EffekseerCraft extends JavaPlugin {
         if (command != null) command.setExecutor(null);
     }
 
-    private static class EfsServerImpl extends EfsServer<Server, World, Entity, Player, CommandSender, ByteArrayDataInput, ByteArrayDataOutput> {
+    private static class EfsServerImpl extends EfsServer<Server, World, Entity, Player, CommandSender, ByteArrayOutputStream> {
         public EfsServerImpl(EfsAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
             super(adaptor, logger, env, implVer, autoReply);
         }
     }
 
     static class EventHandler implements Listener {
-        EfsServer<?,?,?,?,?,?,?> server;
-        EventHandler(EfsServer<?,?,?,?,?,?,?> server) { this.server = server; }
+        EfsServer<?,?,?,?,?,?> server;
+        EventHandler(EfsServer<?,?,?,?,?,?> server) { this.server = server; }
 
         @org.bukkit.event.EventHandler
         public void handleLogin(PlayerRegisterChannelEvent event) {
@@ -172,10 +168,10 @@ public class EffekseerCraft extends JavaPlugin {
 
     static class CommandHandler implements TabExecutor {
 
-        EfsServer<Server,?,?,?,CommandSender,?,?> server;
+        EfsServer<Server,?,?,?,CommandSender,?> server;
         Localize localize;
 
-        CommandHandler(EfsServer<Server,?,?,?,CommandSender,?,?> server, Localize localize) {
+        CommandHandler(EfsServer<Server,?,?,?,CommandSender,?> server, Localize localize) {
             this.server = server;
             this.localize = localize;
         }

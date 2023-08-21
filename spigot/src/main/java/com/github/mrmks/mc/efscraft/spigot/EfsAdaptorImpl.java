@@ -1,13 +1,10 @@
 package com.github.mrmks.mc.efscraft.spigot;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
-import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
-import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
+import com.github.mrmks.mc.efscraft.server.EfsServerCommandHandler;
+import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -20,13 +17,14 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, Player, CommandSender, ByteArrayDataInput, ByteArrayDataOutput> {
+public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, Player, CommandSender, ByteArrayOutputStream> {
 
     private final Plugin plugin;
     EfsAdaptorImpl(Plugin plugin) {
@@ -194,15 +192,15 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
     }
 
     @Override
-    public ByteArrayDataOutput createOutput() {
-        return ByteStreams.newDataOutput();
+    public ByteArrayOutputStream createOutput() {
+        return new ByteArrayOutputStream();
     }
 
     @Override
-    public void closeOutput(ByteArrayDataOutput output) {}
+    public void closeOutput(ByteArrayOutputStream output) {}
 
     @Override
-    public void sendPacket(Collection<Player> players, Predicate<Player> test, ByteArrayDataOutput output) {
+    public void sendPacket(Collection<Player> players, Predicate<Player> test, ByteArrayOutputStream output) {
         byte[] data = output.toByteArray();
         players.stream()
                 .filter(test)
@@ -210,7 +208,7 @@ public class EfsAdaptorImpl implements IEfsServerAdaptor<Server, World, Entity, 
     }
 
     @Override
-    public void sendPacket(Server server, Collection<Player> players, Predicate<Player> test, ByteArrayDataOutput output) {
+    public void sendPacket(Server server, Collection<Player> players, Predicate<Player> test, ByteArrayOutputStream output) {
         byte[] data = output.toByteArray();
         players.stream()
                 .filter(test)

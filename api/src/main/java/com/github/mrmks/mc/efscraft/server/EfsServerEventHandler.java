@@ -25,9 +25,9 @@ class EfsServerEventHandler<SV> {
     private final Map<UUID, PacketHello.State> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
-    private final EfsServer<SV, ?, ?, ?, ?, ?, ?> server;
+    private final EfsServer<SV, ?, ?, ?, ?, ?> server;
 
-    EfsServerEventHandler(EfsServer<SV, ?, ?, ?, ?, ?, ?> server) {
+    EfsServerEventHandler(EfsServer<SV, ?, ?, ?, ?, ?> server) {
         this.server = server;
         this.logger = server.logger;
         this.clients = server.clients;

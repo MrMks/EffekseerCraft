@@ -3,18 +3,16 @@ package com.github.mrmks.mc.efscraft.client;
 import com.github.mrmks.mc.efscraft.common.packet.*;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
-class EfsClientPacketHandler<DI extends DataInput, DO extends DataOutput> {
+class EfsClientPacketHandler<DO extends OutputStream> {
 
     private final MessageCodec codec;
     private final boolean autoReply;
-    private final EfsClient<?, ?, DI, DO> client;
+    private final EfsClient<?, ?, DO> client;
     private final EfsDrawingQueue<?> queue;
 
-    EfsClientPacketHandler(EfsClient<?,?,DI, DO> client, boolean autoReply, EfsDrawingQueue<?> queue) {
+    EfsClientPacketHandler(EfsClient<?, ?, DO> client, boolean autoReply, EfsDrawingQueue<?> queue) {
         this.client = client;
         this.codec = new MessageCodec();
         this.autoReply = autoReply;
@@ -28,7 +26,7 @@ class EfsClientPacketHandler<DI extends DataInput, DO extends DataOutput> {
         codec.registerClient(SPacketClear.class, this::handleClear);
     }
 
-    DO receive(DI dataInput) throws IOException {
+    DO receive(InputStream dataInput) throws IOException {
         NetworkPacket packet = codec.readInput(dataInput, MessageContext.AT_CLIENT);
 
         if (autoReply && packet != null) {

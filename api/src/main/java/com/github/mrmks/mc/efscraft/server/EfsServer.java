@@ -3,19 +3,17 @@ package com.github.mrmks.mc.efscraft.server;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EfsServer<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO extends DataOutput> {
+public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends OutputStream> {
 
-    protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DI, DO> adaptor;
+    protected final IEfsServerAdaptor<SV, WO, EN, PL, SE, DO> adaptor;
     protected final EfsServerCommandHandler<SV, WO, EN, PL, SE> commandHandler;
-    protected final EfsServerPacketHandler<SV, EN, PL, DI, DO> packetHandler;
+    protected final EfsServerPacketHandler<SV, EN, PL, DO> packetHandler;
     protected final EfsServerEventHandler<SV> eventHandler;
 
     final Map<UUID, PacketHello.State> clients = new ConcurrentHashMap<>();
@@ -24,7 +22,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO e
     protected final String implVer;
 
     public EfsServer(
-            IEfsServerAdaptor<SV, WO, EN, PL, SE, DI, DO> adaptor,
+            IEfsServerAdaptor<SV, WO, EN, PL, SE, DO> adaptor,
             LogAdaptor logger,
             EfsServerEnv env,
             String implVer,
@@ -57,7 +55,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO e
     }
 
     // packets
-    public DO receivePacket(SV sv, PL receiver, DI dataIn) throws IOException {
+    public DO receivePacket(SV sv, PL receiver, InputStream dataIn) throws IOException {
         return packetHandler.receive(sv, receiver, dataIn);
     }
 }

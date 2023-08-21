@@ -6,7 +6,6 @@ import com.github.mrmks.mc.efscraft.server.EfsServerEnv;
 import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
 import com.mojang.brigadier.context.CommandContext;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
@@ -85,7 +84,7 @@ public class CommonProxy {
         CommandAdaptor.register(new CommandAdaptor(efsServer), event.getDispatcher());
     }
 
-    private static class EfsServerImpl extends EfsServer<MinecraftServer, ServerWorld, Entity, ServerPlayerEntity, CommandContext<CommandSource>, ByteBufInputStream, ByteBufOutputStream> {
+    private static class EfsServerImpl extends EfsServer<MinecraftServer, ServerWorld, Entity, ServerPlayerEntity, CommandContext<CommandSource>, ByteBufOutputStream> {
         public EfsServerImpl(EfsServerAdaptorImpl adaptor, LogAdaptor logger, EfsServerEnv env, String implVer, boolean autoReply) {
             super(adaptor, logger, env, implVer, autoReply);
         }
@@ -93,9 +92,9 @@ public class CommonProxy {
 
     private static class EventHandler {
 
-        private final EfsServer<MinecraftServer, ?, ?, ?, ?, ?, ?> efsServer;
+        private final EfsServer<MinecraftServer, ?, ?, ?, ?, ?> efsServer;
 
-        EventHandler(EfsServer<MinecraftServer, ?, ?, ?, ?, ?, ?> efsServer) {
+        EventHandler(EfsServer<MinecraftServer, ?, ?, ?, ?, ?> efsServer) {
             this.efsServer = efsServer;
         }
 

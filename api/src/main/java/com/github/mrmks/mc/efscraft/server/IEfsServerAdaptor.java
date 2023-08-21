@@ -4,9 +4,8 @@ import com.github.mrmks.mc.efscraft.common.IEfsNetworkAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -19,11 +18,10 @@ import java.util.function.Predicate;
  * @param <EN> Entity
  * @param <PL> Player
  * @param <SE> Sender
- * @param <DI> DataInput
  * @param <DO> DataOutput
  */
-public interface IEfsServerAdaptor<SV, WO, EN, PL extends EN, SE, DI extends DataInput, DO extends DataOutput>
-    extends IEfsNetworkAdaptor<DI, DO> {
+public interface IEfsServerAdaptor<SV, WO, EN, PL extends EN, SE, DO extends OutputStream>
+    extends IEfsNetworkAdaptor<DO> {
 
     // test if a sender has some permission.
     boolean hasPermission(SV sv, SE sender, String permissionNode);

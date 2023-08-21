@@ -1,8 +1,8 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,6 @@ public class MessageCodec {
         private final Byte desc;
         private final Supplier<T> supplier;
         private final NetworkPacket.Codec<T> codec;
-        @Deprecated private NetworkPacket.Handler<T, ?> handle;
         private NetworkPacket.ClientHandler<T, ?> cHandler;
         private NetworkPacket.ServerHandler<T, ?> sHandler;
 
@@ -29,11 +28,6 @@ public class MessageCodec {
             this.codec = codec;
         }
 
-        @Deprecated
-        void setHandler(NetworkPacket.Handler<T, ?> handle) {
-            if (this.handle == null && handle != null) this.handle = handle;
-        }
-
         void setHandler(NetworkPacket.ClientHandler<T, ?> handler) {
             if (this.cHandler == null && handler != null) this.cHandler = handler;
         }
@@ -42,7 +36,7 @@ public class MessageCodec {
             if (this.sHandler == null && handler != null) this.sHandler = handler;
         }
 
-        NetworkPacket handle(DataInput input, MessageContext context) throws IOException {
+        NetworkPacket handle(InputStream input, MessageContext context) throws IOException {
 
             T packet = supplier.get();
             if (codec != null)
@@ -52,20 +46,16 @@ public class MessageCodec {
             if (context.isRemote()) {
                 if (cHandler != null)
                     reply = cHandler.handlePacket(packet);
-                else if (handle != null)
-                    reply = handle.handlePacket(packet, context);
             } else {
                 if (sHandler != null)
                     reply = sHandler.handlePacket(packet, context.getSender());
-                else if (handle != null)
-                    reply = handle.handlePacket(packet, context);
             }
 
             return reply;
         }
 
-        void writeTo(T packet, DataOutput output) throws IOException {
-            output.writeByte(desc);
+        void writeTo(T packet, OutputStream output) throws IOException {
+            output.write(desc);
             if (codec != null)
                 codec.write(packet, output);
         }
@@ -100,20 +90,6 @@ public class MessageCodec {
         descToNode.put(node.desc, node);
     }
 
-    @Deprecated
-    public final <T extends NetworkPacket> void register(Class<T> klass, NetworkPacket.Handler<T, ?> handle) {
-        Node<?> node = klassToNode.get(klass);
-        if (node != null) {
-            //noinspection unchecked
-            ((Node<T>) node).setHandler(handle);
-        }
-    }
-
-    @Deprecated
-    public final <T extends NetworkPacket> void register(Class<T> klass, BiConsumer<T, MessageContext> consumer) {
-        register(klass, (packetIn, context) -> {consumer.accept(packetIn, context); return null;});
-    }
-
     public final <T extends NetworkPacket> void registerClient(Class<T> klass, NetworkPacket.ClientHandler<T, ?> handle) {
         Node<?> node = klassToNode.get(klass);
         if (node != null)
@@ -137,8 +113,8 @@ public class MessageCodec {
     }
 
     // in this case, responses always send back to the sender;
-    public final <S extends DataInput> NetworkPacket readInput(S input, MessageContext context) throws IOException {
-        byte desc = input.readByte();
+    public final NetworkPacket readInput(InputStream input, MessageContext context) throws IOException {
+        byte desc = (byte) input.read();
         Node<?> node = descToNode.get(desc);
         if (node != null)
             return node.handle(input, context);
@@ -146,7 +122,7 @@ public class MessageCodec {
         return null;
     }
 
-    public final <T extends NetworkPacket> boolean writeOutput(T packet, DataOutput output) throws IOException {
+    public final <T extends NetworkPacket> boolean writeOutput(T packet, OutputStream output) throws IOException {
         Node<?> node = klassToNode.get(packet.getClass());
         if (node != null) {
             //noinspection unchecked

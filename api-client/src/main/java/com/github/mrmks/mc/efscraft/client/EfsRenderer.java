@@ -6,14 +6,14 @@ import com.github.mrmks.mc.efscraft.math.Matrix4f;
 
 class EfsRenderer {
 
-    private final EfsClient<?, ?, ?, ?> client;
+    private final EfsClient<?, ?, ?> client;
     private final EfsDrawingQueue<?> queue;
 
     private EfsProgram program = null;
     private Thread createThread = null;
     private long lastFrameTimer = -1;
 
-    EfsRenderer(EfsClient<?,?,?,?> client, EfsDrawingQueue<?> queue) {
+    EfsRenderer(EfsClient<?,?,?> client, EfsDrawingQueue<?> queue) {
         this.client = client;
         this.queue = queue;
     }

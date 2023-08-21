@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
 
 public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTITY, SENDER> {
 
-    private final IEfsServerAdaptor<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> adaptor;
+    private final IEfsServerAdaptor<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?> adaptor;
     private final ServerRegistryMap registry;
     private final String port, portVersion;
     private final Map<UUID, PacketHello.State> clients;
-    private final EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server;
-    EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?, ?> server) {
+    private final EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?> server;
+    EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?> server) {
         this.server = server;
         this.adaptor = server.adaptor;
         this.registry = new ServerRegistryMap();

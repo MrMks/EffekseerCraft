@@ -12,36 +12,41 @@ import static com.github.mrmks.mc.efscraft.common.crypt.CryptUtils.*;
 
 public class NetworkSession {
 
-    private static void writePublicKey(PublicKey key, DataOutput output) {
+    private static void writePublicKey(PublicKey key, OutputStream output) {
         try {
+            DataOutputStream stream = new DataOutputStream(output);
             writeBytes(key.getEncoded(), output);
-            output.writeUTF(key.getAlgorithm());
+            stream.writeUTF(key.getAlgorithm());
         } catch (IOException e) {
             // this should never happen;
         }
     }
 
-    private static PublicKey readPublicKey(DataInput input) throws IOException {
+    private static PublicKey readPublicKey(InputStream input) throws IOException {
+        DataInputStream stream = new DataInputStream(input);
         byte[] bytes = readBytes(input);
-        String alg = input.readUTF();
+        String alg = stream.readUTF();
 
         return pubKeyFromBytes(alg, bytes);
     }
 
-    private static void writeBytes(byte[] data, DataOutput output) {
+    private static void writeBytes(byte[] data, OutputStream output) {
         try {
-            output.writeInt(data.length);
+            new DataOutputStream(output).writeInt(data.length);
             output.write(data);
         } catch (IOException e) {
             // this should never happen;
         }
     }
 
-    private static byte[] readBytes(DataInput input) throws IOException {
-        int len = input.readInt();
-        byte[] bytes = new byte[len];
+    private static byte[] readBytes(InputStream input) throws IOException {
+        int len = new DataInputStream(input).readInt();
 
-        input.readFully(bytes);
+        byte[] bytes = new byte[len];
+        len = input.read(bytes);
+
+        if (len != bytes.length)
+            throw new IOException("un-match data size.");
 
         return bytes;
     }
@@ -63,7 +68,7 @@ public class NetworkSession {
         }
     }
 
-    public static class Server<DI extends DataInput, DO extends DataOutput> extends Common {
+    public static class Server<DO extends OutputStream> extends Common {
 
         private KeyPair rsaPair;
         private byte[] rnd;
@@ -81,17 +86,17 @@ public class NetworkSession {
             return data;
         }
 
-        public DO handshakeConfirm(DI input, Supplier<DO> supplier) throws IOException {
+        public DO handshakeConfirm(InputStream input, Supplier<DO> supplier) throws IOException {
             byte[] bytes = readBytes(input);
             bytes = decryptWithRSA(rsaPair.getPrivate(), bytes);
 
-            DataInput dataInput = new DataInputStream(new ByteArrayInputStream(bytes));
-            bytes = readBytes(dataInput);
+            input = new ByteArrayInputStream(bytes);
+            bytes = readBytes(input);
 
             if (!Arrays.equals(hash(rsaPair.getPublic(), rnd), bytes))
                 return null;
 
-            PublicKey clientDHPub = readPublicKey(dataInput);
+            PublicKey clientDHPub = readPublicKey(input);
 
             KeyPair pair = genDHPair();
 
@@ -110,11 +115,11 @@ public class NetworkSession {
 
     }
 
-    public static class Client<DI extends DataInput, DO extends DataOutput> extends Common {
+    public static class Client<DO extends OutputStream> extends Common {
         private PublicKey sKey;
         private KeyPair dhPair;
 
-        DO handshakeHello(DI input, Supplier<DO> supplier) throws IOException {
+        DO handshakeHello(InputStream input, Supplier<DO> supplier) throws IOException {
             sKey = readPublicKey(input);
             byte[] rnd = readBytes(input);
 
@@ -122,10 +127,9 @@ public class NetworkSession {
 
             dhPair = genDHPair();
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            DataOutput output = new DataOutputStream(stream);
 
-            writeBytes(hash, output);
-            writePublicKey(dhPair.getPublic(), output);
+            writeBytes(hash, stream);
+            writePublicKey(dhPair.getPublic(), stream);
 
             byte[] bytes = encryptWithRSA(sKey, stream.toByteArray());
 
@@ -136,7 +140,7 @@ public class NetworkSession {
             return data;
         }
 
-        boolean handshakeConfirm(DI input) throws IOException {
+        boolean handshakeConfirm(InputStream input) throws IOException {
             PublicKey key = readPublicKey(input);
             byte[] bytes = readBytes(input);
 

@@ -6,9 +6,9 @@ import com.github.mrmks.mc.efscraft.client.event.EfsResourceEvent;
 
 class EfsClientEventHandler {
 
-    private final EfsClient<?, ?, ?, ?> client;
+    private final EfsClient<?, ?, ?> client;
 
-    EfsClientEventHandler(EfsClient<?,?,?,?> client) {
+    EfsClientEventHandler(EfsClient<?,?,?> client) {
         this.client = client;
     }
 

@@ -27,8 +27,8 @@ public class NetworkWrapper {
     private static final ResourceLocation CHANNEL_NAME = ResourceLocation.tryParse(Constants.CHANNEL_KEY);
     private static final Logger LOGGER = LogManager.getLogger("efscraft");
 
-    private EfsServer<MinecraftServer, ?, ? super ServerPlayerEntity, ServerPlayerEntity, ?, ByteBufInputStream, ByteBufOutputStream> efsServer;
-    private EfsClient<?, ?, ByteBufInputStream, ByteBufOutputStream> efsClient;
+    private EfsServer<MinecraftServer, ?, ? super ServerPlayerEntity, ServerPlayerEntity, ?, ByteBufOutputStream> efsServer;
+    private EfsClient<?, ?, ByteBufOutputStream> efsClient;
 
     NetworkWrapper() {
         EventNetworkChannel channel = NetworkRegistry.newEventChannel(
@@ -40,11 +40,11 @@ public class NetworkWrapper {
         channel.addListener(this::receivePacket);
     }
 
-    public void setServer(EfsServer<MinecraftServer, ?, ? super ServerPlayerEntity, ServerPlayerEntity, ?, ByteBufInputStream, ByteBufOutputStream> efsServer) {
+    public void setServer(EfsServer<MinecraftServer, ?, ? super ServerPlayerEntity, ServerPlayerEntity, ?, ByteBufOutputStream> efsServer) {
         this.efsServer = efsServer;
     }
 
-    public void setClient(EfsClient<?, ?, ByteBufInputStream, ByteBufOutputStream> efsClient) {
+    public void setClient(EfsClient<?, ?, ByteBufOutputStream> efsClient) {
         this.efsClient = efsClient;
     }
 

@@ -8,7 +8,6 @@ import com.github.mrmks.mc.efscraft.common.IEfsEvent;
 import com.github.mrmks.mc.efscraft.forge.EffekseerCraft;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -20,7 +19,6 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 
 import java.io.File;
@@ -45,7 +43,7 @@ public class ClientProxy extends CommonProxy {
             RendererImpl renderer = new RendererImpl();
             EfsClientAdaptorImpl adaptor = new EfsClientAdaptorImpl(wrapper, renderer);
             File folder = new File(mc.getResourcePackDirectory(), "efscraft");
-            EfsClient<Entity, ClientPlayerEntity, ByteBufInputStream, ByteBufOutputStream> client = new EfsClient<>(adaptor, logAdaptor, false, folder);
+            EfsClient<Entity, ClientPlayerEntity, ByteBufOutputStream> client = new EfsClient<>(adaptor, logAdaptor, false, folder);
 
             wrapper.setClient(client);
 
@@ -62,8 +60,8 @@ public class ClientProxy extends CommonProxy {
     }
 
     private static class EventHandler {
-        EfsClient<?, ?, ?, ?> efsClient;
-        EventHandler(EfsClient<?,?,?,?> client) {
+        EfsClient<?, ?, ?> efsClient;
+        EventHandler(EfsClient<?,?,?> client) {
             this.efsClient = client;
         }
 

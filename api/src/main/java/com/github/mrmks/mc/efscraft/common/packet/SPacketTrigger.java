@@ -1,8 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
 public class SPacketTrigger implements NetworkPacket {
 
@@ -31,14 +29,16 @@ public class SPacketTrigger implements NetworkPacket {
 
     static final NetworkPacket.Codec<SPacketTrigger> CODEC = new NetworkPacket.Codec<SPacketTrigger>() {
         @Override
-        public void read(SPacketTrigger packet, DataInput stream) throws IOException {
+        public void read(SPacketTrigger packet, InputStream inputStream) throws IOException {
+            DataInputStream stream = new DataInputStream(inputStream);
             packet.effect = stream.readUTF();
             packet.emitter = stream.readUTF();
             packet.id = stream.readByte();
         }
 
         @Override
-        public void write(SPacketTrigger packet, DataOutput stream) throws IOException {
+        public void write(SPacketTrigger packet, OutputStream outputStream) throws IOException {
+            DataOutputStream stream = new DataOutputStream(outputStream);
             stream.writeUTF(packet.effect);
             stream.writeUTF(packet.emitter);
             stream.writeByte(packet.id);

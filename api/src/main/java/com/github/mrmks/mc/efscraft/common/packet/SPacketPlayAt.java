@@ -3,9 +3,7 @@ package com.github.mrmks.mc.efscraft.common.packet;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
 public class SPacketPlayAt extends SPacketPlayAbstract {
 
@@ -31,15 +29,19 @@ public class SPacketPlayAt extends SPacketPlayAbstract {
     static final NetworkPacket.Codec<SPacketPlayAt> CODEC = new Codec<SPacketPlayAt>() {
 
         @Override
-        public void read(SPacketPlayAt packet, DataInput stream) throws IOException {
-            super.read(packet, stream);
+        public void read(SPacketPlayAt packet, InputStream input) throws IOException {
+            DataInputStream stream = new DataInputStream(input);
+
+            super.read0(packet, stream);
             packet.targetPos = new Vec3f().read(stream);
             packet.targetRot = new Vec2f().read(stream);
         }
 
         @Override
-        public void write(SPacketPlayAt packet, DataOutput stream) throws IOException {
-            super.write(packet, stream);
+        public void write(SPacketPlayAt packet, OutputStream output) throws IOException {
+            DataOutputStream stream = new DataOutputStream(output);
+
+            super.write0(packet, stream);
 
             if (packet.targetPos == null) packet.targetPos = new Vec3f();
             packet.targetPos.write(stream);

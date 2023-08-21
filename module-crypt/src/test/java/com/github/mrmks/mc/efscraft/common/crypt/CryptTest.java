@@ -12,16 +12,16 @@ public class CryptTest {
     @Test
     public void testCrypt() throws IOException {
 
-        NetworkSession.Server<DataInput, DataOutput> sCtx = new NetworkSession.Server<>();
-        NetworkSession.Client<DataInput, DataOutput> cCtx = new NetworkSession.Client<>();
+        NetworkSession.Server<OutputStream> sCtx = new NetworkSession.Server<>();
+        NetworkSession.Client<OutputStream> cCtx = new NetworkSession.Client<>();
 
         byte[] data;
-        DataOutput dataOutput;
-        DataInput dataInput;
         PipedOutputStream outputStream = new PipedOutputStream();
         PipedInputStream inputStream = new PipedInputStream(outputStream);
 
-        Supplier<DataOutput> supplier = () -> new DataOutputStream(outputStream);
+        OutputStream dataOutput = null;
+
+        Supplier<OutputStream> supplier = () -> new DataOutputStream(outputStream);
         {
             // server kick off
             // 1. generate a rsa keyPair, a random big number

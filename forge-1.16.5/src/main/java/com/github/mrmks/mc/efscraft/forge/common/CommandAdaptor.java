@@ -33,9 +33,9 @@ import java.util.concurrent.CompletableFuture;
 public class CommandAdaptor {
 
     private static final Splitter SPLITTER = Splitter.on(' ');
-    private final EfsServer<MinecraftServer, ?, ?, ?, CommandContext<CommandSource>, ?, ?> server;
+    private final EfsServer<MinecraftServer, ?, ?, ?, CommandContext<CommandSource>, ?> server;
 
-    CommandAdaptor(EfsServer<MinecraftServer, ?, ?, ?, CommandContext<CommandSource>, ?, ?> server) {
+    CommandAdaptor(EfsServer<MinecraftServer, ?, ?, ?, CommandContext<CommandSource>, ?> server) {
         this.server = server;
     }
 

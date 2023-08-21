@@ -10,7 +10,6 @@ import com.github.mrmks.mc.efscraft.common.LogAdaptor;
 import com.github.mrmks.mc.efscraft.forge.common.CommonProxy;
 import com.github.mrmks.mc.efscraft.math.Matrix4f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -81,17 +80,17 @@ public class ClientProxy extends CommonProxy {
 //        if (sync) task.run(); else mc.addScheduledTask(task);
 //    }
 
-    private static class EfsClientImpl extends EfsClient<Entity, EntityPlayerSP, ByteBufInputStream, ByteBufOutputStream> {
-        public EfsClientImpl(IEfsClientAdaptor<Entity, EntityPlayerSP, ByteBufInputStream, ByteBufOutputStream> adaptor, LogAdaptor logger, boolean autoReply, File folder) {
+    private static class EfsClientImpl extends EfsClient<Entity, EntityPlayerSP, ByteBufOutputStream> {
+        public EfsClientImpl(IEfsClientAdaptor<Entity, EntityPlayerSP, ByteBufOutputStream> adaptor, LogAdaptor logger, boolean autoReply, File folder) {
             super(adaptor, logger, autoReply, folder);
         }
     }
 
     private static class EventHandler {
 
-        EfsClient<?,?,?,?> client;
+        EfsClient<?,?,?> client;
 
-        EventHandler(EfsClient<?,?,?,?> client) {
+        EventHandler(EfsClient<?,?,?> client) {
             this.client = client;
         }
 

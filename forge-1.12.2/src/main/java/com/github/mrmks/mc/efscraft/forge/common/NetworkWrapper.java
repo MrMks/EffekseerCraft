@@ -94,18 +94,18 @@ public class NetworkWrapper {
     }
 
     private final EnumMap<Side, FMLEmbeddedChannel> channels;
-    private EfsServer<MinecraftServer, ?, ? super EntityPlayerMP, EntityPlayerMP, ?, ByteBufInputStream, ByteBufOutputStream> efsServer;
-    private EfsClient<?, ?, ByteBufInputStream, ByteBufOutputStream> efsClient;
+    private EfsServer<MinecraftServer, ?, ? super EntityPlayerMP, EntityPlayerMP, ?, ByteBufOutputStream> efsServer;
+    private EfsClient<?, ?, ByteBufOutputStream> efsClient;
 
     NetworkWrapper() {
         channels = NetworkRegistry.INSTANCE.newChannel(Constants.CHANNEL_KEY, new MessageCodec(), new MessageCodecReply());
     }
 
-    public void setClient(EfsClient<?, ?, ByteBufInputStream, ByteBufOutputStream> client) {
+    public void setClient(EfsClient<?, ?, ByteBufOutputStream> client) {
         this.efsClient = client;
     }
 
-    public void setServer(EfsServer<MinecraftServer,?,? super EntityPlayerMP, EntityPlayerMP,?, ByteBufInputStream, ByteBufOutputStream> server) {
+    public void setServer(EfsServer<MinecraftServer,?,? super EntityPlayerMP, EntityPlayerMP,?, ByteBufOutputStream> server) {
         this.efsServer = server;
     }
 

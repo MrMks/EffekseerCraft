@@ -10,7 +10,6 @@ import com.github.mrmks.mc.efscraft.server.IEfsServerAdaptor;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import net.minecraft.commands.CommandSourceStack;
@@ -35,14 +34,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-class EfsServerImpl extends EfsServer<MinecraftServer, ServerLevel, Entity, ServerPlayer, CommandContext<CommandSourceStack>, ByteBufInputStream, ByteBufOutputStream> {
+class EfsServerImpl extends EfsServer<MinecraftServer, ServerLevel, Entity, ServerPlayer, CommandContext<CommandSourceStack>, ByteBufOutputStream> {
     EfsServerImpl(NetworkWrapper wrapper, LogAdaptor logger, String implVer) {
         super(new AdaptorImpl(wrapper), logger, EfsServerEnv.FORGE, implVer, false);
 
         wrapper.setServer(this);
     }
 
-    private static class AdaptorImpl implements IEfsServerAdaptor<MinecraftServer, ServerLevel, Entity, ServerPlayer, CommandContext<CommandSourceStack>, ByteBufInputStream, ByteBufOutputStream> {
+    private static class AdaptorImpl implements IEfsServerAdaptor<MinecraftServer, ServerLevel, Entity, ServerPlayer, CommandContext<CommandSourceStack>, ByteBufOutputStream> {
 
         private final NetworkWrapper wrapper;
         private AdaptorImpl(NetworkWrapper wrapper) {

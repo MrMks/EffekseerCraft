@@ -24,10 +24,10 @@ final class EfsDrawingQueue<ENTITY> {
     private final Map<String, Map<String, Entry>> lookup = new ConcurrentHashMap<>();
 
     // client effect registry
-    private final EfsClient<ENTITY, ?, ?, ?> client;
-    private final IEfsClientAdaptor<ENTITY, ?, ?, ?> adaptor;
+    private final EfsClient<ENTITY, ?, ?> client;
+    private final IEfsClientAdaptor<ENTITY, ?, ?> adaptor;
 
-    EfsDrawingQueue(EfsClient<ENTITY, ?, ?, ?> client) {
+    EfsDrawingQueue(EfsClient<ENTITY, ?, ?> client) {
         this.client = client;
         this.adaptor = client.adaptor;
     }

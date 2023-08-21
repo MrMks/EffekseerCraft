@@ -1,8 +1,6 @@
 package com.github.mrmks.mc.efscraft.common.packet;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 
 import static com.github.mrmks.mc.efscraft.common.Constants.*;
 
@@ -105,15 +103,17 @@ public class SPacketPlayWith extends SPacketPlayAbstract {
 
     static final NetworkPacket.Codec<SPacketPlayWith> CODEC = new SPacketPlayAbstract.Codec<SPacketPlayWith>() {
         @Override
-        public void read(SPacketPlayWith packet, DataInput stream) throws IOException {
-            super.read(packet, stream);
+        public void read(SPacketPlayWith packet, InputStream input) throws IOException {
+            DataInputStream stream = new DataInputStream(input);
+            super.read0(packet, stream);
             packet.target = stream.readInt();
             packet.mask2 = stream.readByte();
         }
 
         @Override
-        public void write(SPacketPlayWith packet, DataOutput stream) throws IOException {
-            super.write(packet, stream);
+        public void write(SPacketPlayWith packet, OutputStream output) throws IOException {
+            DataOutputStream stream = new DataOutputStream(output);
+            super.write0(packet, stream);
             stream.writeInt(packet.target);
             stream.writeByte(packet.mask2);
         }
