@@ -74,7 +74,8 @@ public class CommonProxy {
         List<File> files = new ArrayList<>();
 
         // on server, read registries in ./configs/efscraft/effects.json
-        File file = new File(new File(configurationFolder, "efscraft"), "effects.json");
+        File confDir = new File(configurationFolder, "efscraft");
+        File file = new File(confDir, "effects.json");
         files.add(file);
         if (!server.isDedicatedServer()) {
             // on integrated server, read registries in ./saves/<world>/efscraft/effects.json, too
@@ -82,7 +83,8 @@ public class CommonProxy {
             files.add(file);
         }
 
-        efsServer.receiveEvent(new EfsServerEvent.Start<>(server, files));
+        file = new File(confDir, "decrypts.json");
+        efsServer.receiveEvent(new EfsServerEvent.Start<>(server, files, file));
 
         event.registerServerCommand(new CommandHandler(efsServer));
     }

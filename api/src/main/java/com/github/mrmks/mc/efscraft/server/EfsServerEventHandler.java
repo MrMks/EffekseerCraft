@@ -1,11 +1,17 @@
 package com.github.mrmks.mc.efscraft.server;
 
-import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.HandshakeState;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
+import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
 import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 import com.github.mrmks.mc.efscraft.server.event.EfsServerEvent;
-import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 class EfsServerEventHandler<SV> {
@@ -22,7 +28,7 @@ class EfsServerEventHandler<SV> {
     }
 
     private final LogAdaptor logger;
-    private final Map<UUID, PacketHello.State> clients;
+    private final Map<UUID, HandshakeState> clients;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
     private final EfsServer<SV, ?, ?, ?, ?, ?> server;
@@ -41,6 +47,30 @@ class EfsServerEventHandler<SV> {
                 tickAndUpdate(sv);
             } else if (event instanceof EfsServerEvent.Start) {
                 server.commandHandler.updateFiles(((EfsServerEvent.Start<?>) event).getFiles());
+
+                File keys = ((EfsServerEvent.Start<?>) event).getKeys();
+                if (keys.exists() && keys.isFile() && keys.canRead()) {
+                    try (InputStream stream = new BufferedInputStream(Files.newInputStream(keys.toPath(), StandardOpenOption.READ))) {
+                        Gson gson = new Gson();
+                        JsonObject obj = gson.fromJson(new InputStreamReader(stream), JsonObject.class);
+
+                        Map<String, byte[]> map = new HashMap<>();
+                        for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                            String k = entry.getKey();
+                            JsonElement je = entry.getValue();
+                            if (je.isJsonPrimitive() && je.getAsJsonPrimitive().isString()) {
+                                byte[] v = Base64.getDecoder().decode(je.getAsString());
+
+                                map.put(k, v);
+                            }
+                        }
+
+                        server.decryptKeys.clear();
+                        server.decryptKeys.putAll(map);
+                    } catch (IOException e) {
+                        // do nothing
+                    }
+                }
             } else if (event instanceof EfsServerEvent.Stop) {
                 server.commandHandler.updateFiles(Collections.emptyList());
             }
@@ -62,8 +92,10 @@ class EfsServerEventHandler<SV> {
     }
 
     protected final void onLogin(UUID uuid) {
-        if (!clients.containsKey(uuid))
+        if (!clients.containsKey(uuid)) {
             pending.computeIfAbsent(uuid, it -> new Counter(10));
+            clients.put(uuid, HandshakeState.START);
+        }
 
         logger.logDebug("Player with uuid " + uuid + " begin to login");
     }
@@ -73,15 +105,9 @@ class EfsServerEventHandler<SV> {
         clients.remove(uuid);
     }
 
+    @Deprecated
     protected final void onVerify(UUID sender, int ver) {
-        if (ver == Constants.PROTOCOL_VERSION) {
-            if (clients.get(sender) == PacketHello.State.WAITING_FOR_REPLY) {
-                clients.put(sender, PacketHello.State.COMPLETE);
-                logger.logInfo("Established connection to client with uuid " + sender);
-            } else {
-                logger.logWarning("Received hello packet from unexpected client " + sender);
-            }
-        }
+        throw new UnsupportedOperationException();
     }
 
     protected final void tickAndUpdate(SV sv) {
@@ -96,19 +122,18 @@ class EfsServerEventHandler<SV> {
 
                 UUID uuid = entry.getKey();
 
-                PacketHello.State state = clients.get(uuid);
-                if (state == null) {
+                HandshakeState state = clients.get(uuid);
+                if (state == HandshakeState.START) {
 
                     if (sv != null)
                         server.packetHandler.sendToClient(sv, entry.getKey(), new PacketHello());
 
-//                    sendMessage(entry.getKey(), new PacketHello());
-                    clients.put(uuid, PacketHello.State.WAITING_FOR_REPLY);
+                    clients.put(uuid, HandshakeState.VERIFY);
 
                     if (list == null) list = new ArrayList<>();
                     list.add(uuid);
                     logger.logInfo("Begin to connect to client with uuid " + uuid);
-                } else if (state != PacketHello.State.COMPLETE) {
+                } else if (state != HandshakeState.DONE) {
                     clients.remove(uuid);
                     logger.logInfo("Failed to establish the connection to client with uuid " + uuid + ": Timeout");
                 }

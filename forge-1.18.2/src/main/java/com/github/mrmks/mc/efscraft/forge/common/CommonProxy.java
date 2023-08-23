@@ -53,8 +53,8 @@ public class CommonProxy {
 
         List<File> files = new ArrayList<>();
 
-        File file;
-        file = new File(new File(FMLPaths.CONFIGDIR.get().toFile().getAbsoluteFile(), "efscraft"), "effects.json");
+        File file, confDir = new File(FMLPaths.CONFIGDIR.get().toFile().getAbsoluteFile(), "efscraft");
+        file = new File(confDir, "effects.json");
 
         files.add(file);
 
@@ -64,7 +64,9 @@ public class CommonProxy {
             files.add(file);
         }
 
-        efsServer.receiveEvent(new EfsServerEvent.Start<>(server, files));
+        file = new File(confDir, "decrypts.json");
+
+        efsServer.receiveEvent(new EfsServerEvent.Start<>(server, files, file));
     }
 
     public void onServerStopping(ServerStoppingEvent event) {

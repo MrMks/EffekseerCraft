@@ -68,25 +68,29 @@ public class NetworkSession {
         }
     }
 
-    public static class Server<DO extends OutputStream> extends Common {
+    public static class Server extends Common {
 
         private KeyPair rsaPair;
         private byte[] rnd;
-        public DO handshakeHello(Supplier<? extends DO> supplier) {
+        public byte[] handshakeHello() {
             rsaPair = genRSAPair();
             SecureRandom rGen = new SecureRandom();
             rnd = new byte[rGen.nextInt(16) + 64];
             rGen.nextBytes(rnd);
 
-            DO data = supplier.get();
+            ByteArrayOutputStream data = new ByteArrayOutputStream();
 
             writePublicKey(rsaPair.getPublic(), data);
             writeBytes(rnd, data);
 
-            return data;
+            return data.toByteArray();
         }
 
-        public DO handshakeConfirm(InputStream input, Supplier<DO> supplier) throws IOException {
+        public byte[] handshakeConfirm(byte[] input) throws IOException {
+            return handshakeConfirm(new ByteArrayInputStream(input));
+        }
+
+        public byte[] handshakeConfirm(InputStream input) throws IOException {
             byte[] bytes = readBytes(input);
             bytes = decryptWithRSA(rsaPair.getPrivate(), bytes);
 
@@ -103,23 +107,60 @@ public class NetworkSession {
             bytes = agreementDH(pair.getPrivate(), clientDHPub);
             generateCipher(bytes);
 
-            DO output = supplier.get();
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
             writePublicKey(pair.getPublic(), output);
             writeBytes(signWithRSA(rsaPair.getPrivate(), pair.getPublic().getEncoded()), output);
 
             rsaPair = null;
+            rnd = bytes;
+
+            return output.toByteArray();
+        }
+
+        public boolean handshakeDone(byte[] input) throws IOException {
+            DataInputStream stream = new DataInputStream(new ByteArrayInputStream(input));
+
+            int offset = stream.readInt();
+            int len = stream.read();
+
+            byte[] bytes = Arrays.copyOfRange(input, 5, input.length);
+            boolean flag = Arrays.equals(bytes, exchangeConfirm(rnd, offset, len));
+
             rnd = null;
 
-            return output;
+            return flag;
+        }
+
+        public boolean handshakeDone(InputStream input) throws IOException {
+            DataInputStream stream = new DataInputStream(input);
+            int offset = stream.readInt();
+            int len = stream.readByte();
+
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            for (int i = input.read(); i >= 0; i = input.read()) {
+                os.write(i);
+            }
+
+            byte[] bytes = os.toByteArray();
+
+            boolean flag = Arrays.equals(bytes, exchangeConfirm(rnd, offset, len));
+
+            rnd = null;
+
+            return flag;
         }
 
     }
 
-    public static class Client<DO extends OutputStream> extends Common {
+    public static class Client extends Common {
         private PublicKey sKey;
         private KeyPair dhPair;
 
-        DO handshakeHello(InputStream input, Supplier<DO> supplier) throws IOException {
+        public byte[] handshakeHello(byte[] input) throws IOException {
+            return handshakeHello(new ByteArrayInputStream(input));
+        }
+
+        public byte[] handshakeHello(InputStream input) throws IOException {
             sKey = readPublicKey(input);
             byte[] rnd = readBytes(input);
 
@@ -133,19 +174,22 @@ public class NetworkSession {
 
             byte[] bytes = encryptWithRSA(sKey, stream.toByteArray());
 
-            DO data = supplier.get();
-
+            ByteArrayOutputStream data = new ByteArrayOutputStream();
             writeBytes(bytes, data);
 
-            return data;
+            return data.toByteArray();
         }
 
-        boolean handshakeConfirm(InputStream input) throws IOException {
+        public byte[] handshakeConfirm(byte[] input) throws IOException {
+            return handshakeConfirm(new ByteArrayInputStream(input));
+        }
+
+        public byte[] handshakeConfirm(InputStream input) throws IOException {
             PublicKey key = readPublicKey(input);
             byte[] bytes = readBytes(input);
 
             if (!verifyWithRSA(sKey, key.getEncoded(), bytes))
-                return false;
+                return null;
 
             bytes = agreementDH(dhPair.getPrivate(), key);
             generateCipher(bytes);
@@ -153,7 +197,17 @@ public class NetworkSession {
             sKey = null;
             dhPair = null;
 
-            return true;
+            ByteArrayOutputStream data = new ByteArrayOutputStream();
+            SecureRandom random = new SecureRandom();
+            int offset = random.nextInt(bytes.length - 64);
+            int len = 48 + random.nextInt(16);
+
+            DataOutputStream stream = new DataOutputStream(data);
+            stream.writeInt(offset);
+            stream.write(len);
+            stream.write(exchangeConfirm(bytes, offset, len));
+
+            return data.toByteArray();
         }
     }
 

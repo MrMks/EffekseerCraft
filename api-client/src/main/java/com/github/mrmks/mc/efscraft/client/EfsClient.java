@@ -1,6 +1,8 @@
 package com.github.mrmks.mc.efscraft.client;
 
+import com.github.mrmks.mc.efscraft.common.HandshakeState;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
+import com.github.mrmks.mc.efscraft.common.crypt.NetworkSession;
 
 import java.io.*;
 
@@ -14,7 +16,8 @@ public class EfsClient<EN, PL extends EN, DO extends OutputStream> {
     final EfsClientPacketHandler<DO> packetHandler;
     final EfsClientEventHandler eventHandler;
 
-    boolean compatible = false;
+    transient HandshakeState handshakeState = HandshakeState.START;
+    transient NetworkSession.Client session = null;
 
     public EfsClient(IEfsClientAdaptor<EN, PL, DO> adaptor, LogAdaptor logger, boolean autoReply, File folder) {
         this.logger = logger;

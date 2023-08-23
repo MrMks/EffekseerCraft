@@ -205,4 +205,21 @@ public class CryptUtils {
         }
     }
 
+    static byte[] exchangeConfirm(byte[] bytes, int offset, int len) {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (int i = 0; i < len; i++) {
+            for (int j = 0; j < i; j++) {
+                digest.update(bytes[offset + i]);
+                digest.update((byte) (j ^ i));
+            }
+        }
+
+        return digest.digest();
+    }
 }

@@ -100,6 +100,7 @@ dependencies {
     shade rootProject.project(':api-client'), {
         transitive = false
     }
+    shade rootProject.project(':module-crypt')
     shade "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer", {
         transitive = false
     }

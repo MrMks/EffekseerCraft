@@ -3,49 +3,57 @@ package com.github.mrmks.mc.efscraft.common.crypt;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Supplier;
 
 public class CryptTest {
 
     @Test
     public void testCrypt() throws IOException {
 
-        NetworkSession.Server<OutputStream> sCtx = new NetworkSession.Server<>();
-        NetworkSession.Client<OutputStream> cCtx = new NetworkSession.Client<>();
+        NetworkSession.Server sCtx = new NetworkSession.Server();
+        NetworkSession.Client cCtx = new NetworkSession.Client();
 
         byte[] data;
-        PipedOutputStream outputStream = new PipedOutputStream();
-        PipedInputStream inputStream = new PipedInputStream(outputStream);
+//        PipedOutputStream outputStream = new PipedOutputStream();
+//        PipedInputStream inputStream = new PipedInputStream(outputStream);
 
-        OutputStream dataOutput = null;
+//        OutputStream dataOutput = null;
 
-        Supplier<OutputStream> supplier = () -> new DataOutputStream(outputStream);
         {
             // server kick off
             // 1. generate a rsa keyPair, a random big number
-            dataOutput = sCtx.handshakeHello(supplier);
+            data = sCtx.handshakeHello();
         }
 
         {
             // client
             // 2. hash the server input, generate the DH pair and send the public key
-            dataOutput = cCtx.handshakeHello(new DataInputStream(inputStream), supplier);
-            Assertions.assertNotNull(dataOutput);
+            data = cCtx.handshakeHello(data);
+            Assertions.assertNotNull(data);
         }
 
         {
             // server
             // 3. validate the hash, generate dh pair, compute to aes cipher, and send the public key;
-            dataOutput = sCtx.handshakeConfirm(new DataInputStream(inputStream), supplier);
-            Assertions.assertNotNull(dataOutput);
+            data = sCtx.handshakeConfirm(data);
+            Assertions.assertNotNull(data);
         }
 
         {
             // client
             // 4. validate the dh public key, validate the sender, and compute to aes cipher;
-            boolean flag = cCtx.handshakeConfirm(new DataInputStream(inputStream));
+            data = cCtx.handshakeConfirm(data);
+            Assertions.assertNotNull(data);
+        }
+
+        {
+            // server
+            // 5. confirm that the client has done the aes key generate;
+            boolean flag = sCtx.handshakeDone(data);
             Assertions.assertTrue(flag);
         }
 

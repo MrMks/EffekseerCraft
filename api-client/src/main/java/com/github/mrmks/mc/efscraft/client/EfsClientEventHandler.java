@@ -3,6 +3,7 @@ package com.github.mrmks.mc.efscraft.client;
 import com.github.mrmks.mc.efscraft.client.event.EfsDisconnectEvent;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.client.event.EfsResourceEvent;
+import com.github.mrmks.mc.efscraft.common.HandshakeState;
 
 class EfsClientEventHandler {
 
@@ -29,7 +30,7 @@ class EfsClientEventHandler {
                 client.resources.onReload();
 
         } else if (event instanceof EfsDisconnectEvent) {
-            client.compatible = false;
+            client.handshakeState = HandshakeState.START;
             client.renderer.stopAll();
 
             client.resources.onReload();

@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.server;
 
 import com.github.mrmks.mc.efscraft.common.Constants;
+import com.github.mrmks.mc.efscraft.common.HandshakeState;
 import com.github.mrmks.mc.efscraft.common.packet.*;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
 import com.github.mrmks.mc.efscraft.math.Vec3f;
@@ -15,7 +16,7 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
     private final IEfsServerAdaptor<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?> adaptor;
     private final ServerRegistryMap registry;
     private final String port, portVersion;
-    private final Map<UUID, PacketHello.State> clients;
+    private final Map<UUID, HandshakeState> clients;
     private final EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?> server;
     EfsServerCommandHandler(EfsServer<SERVER, WORLD, ENTITY, PLAYER, SENDER, ?> server) {
         this.server = server;
@@ -52,7 +53,7 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
         Predicate<PLAYER> filter = player -> {
             if (player == null) return false;
             UUID uuid = adaptor.getEntityUUID(player);
-            if (uuid == null || clients.get(uuid) != PacketHello.State.COMPLETE)
+            if (uuid == null || clients.get(uuid) != HandshakeState.DONE)
                 return false;
 
             Vec3f pos = adaptor.getEntityPos(player);

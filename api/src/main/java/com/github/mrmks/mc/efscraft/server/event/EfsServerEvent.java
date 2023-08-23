@@ -23,10 +23,12 @@ public interface EfsServerEvent extends IEfsServerEvent {
 
         private final S server;
         private final List<File> files;
+        private final File keys;
 
-        public Start(S server, List<File> files) {
+        public Start(S server, List<File> files, File keys) {
             this.server = server;
             this.files = files;
+            this.keys = keys;
         }
 
         public S getServer() {
@@ -35,6 +37,10 @@ public interface EfsServerEvent extends IEfsServerEvent {
 
         public List<File> getFiles() {
             return files;
+        }
+
+        public File getKeys() {
+            return keys;
         }
     }
 

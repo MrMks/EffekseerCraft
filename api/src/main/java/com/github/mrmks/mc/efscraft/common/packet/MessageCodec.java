@@ -17,11 +17,11 @@ public class MessageCodec {
         private final Class<T> klass;
         private final Byte desc;
         private final Supplier<T> supplier;
-        private final NetworkPacket.Codec<T> codec;
+        private final NetworkPacket.Codec<? super T> codec;
         private NetworkPacket.ClientHandler<T, ?> cHandler;
         private NetworkPacket.ServerHandler<T, ?> sHandler;
 
-        Node(Class<T> klass, Byte desc, Supplier<T> supplier, NetworkPacket.Codec<T> codec) {
+        Node(Class<T> klass, Byte desc, Supplier<T> supplier, NetworkPacket.Codec<? super T> codec) {
             this.klass = klass;
             this.desc = desc;
             this.supplier = supplier;
@@ -36,22 +36,20 @@ public class MessageCodec {
             if (this.sHandler == null && handler != null) this.sHandler = handler;
         }
 
-        NetworkPacket handle(InputStream input, MessageContext context) throws IOException {
-
+        private T cvtPacket(InputStream input) throws IOException {
             T packet = supplier.get();
             if (codec != null)
                 codec.read(packet, input);
 
-            NetworkPacket reply = null;
-            if (context.isRemote()) {
-                if (cHandler != null)
-                    reply = cHandler.handlePacket(packet);
-            } else {
-                if (sHandler != null)
-                    reply = sHandler.handlePacket(packet, context.getSender());
-            }
+            return packet;
+        }
 
-            return reply;
+        NetworkPacket handle(InputStream input, UUID sender) throws IOException {
+            return sHandler == null ? null : sHandler.handlePacket(cvtPacket(input), sender);
+        }
+
+        NetworkPacket handle(InputStream input) throws IOException {
+            return cHandler == null ? null : cHandler.handlePacket(cvtPacket(input));
         }
 
         void writeTo(T packet, OutputStream output) throws IOException {
@@ -68,6 +66,12 @@ public class MessageCodec {
     public MessageCodec() {
 
         register(PacketHello.class, PacketHello::new, PacketHello.CODEC);
+        register(PacketHandshake.SHello.class, PacketHandshake.SHello::new, PacketHandshake.CODEC);
+        register(PacketHandshake.CHello.class, PacketHandshake.CHello::new, PacketHandshake.CODEC);
+        register(PacketHandshake.SConfirm.class, PacketHandshake.SConfirm::new, PacketHandshake.CODEC);
+        register(PacketHandshake.CConfirmAndRequest.class, PacketHandshake.CConfirmAndRequest::new, PacketHandshake.CODEC);
+        register(PacketHandshake.SResponse.class, PacketHandshake.SResponse::new, PacketHandshake.CODEC);
+        register(PacketHandshakeDisconnect.class, () -> PacketHandshakeDisconnect.INSTANCE, null);
 
         register(SPacketPlayWith.class, SPacketPlayWith::new, SPacketPlayWith.CODEC);
         register(SPacketPlayAt.class, SPacketPlayAt::new, SPacketPlayAt.CODEC);
@@ -76,7 +80,7 @@ public class MessageCodec {
         register(SPacketTrigger.class, SPacketTrigger::new, SPacketTrigger.CODEC);
     }
 
-    private <T extends NetworkPacket> void register(Class<T> klass, Supplier<T> supplier, NetworkPacket.Codec<T> codec) {
+    private <T extends NetworkPacket> void register(Class<T> klass, Supplier<T> supplier, NetworkPacket.Codec<? super T> codec) {
         int modifier = klass.getModifiers();
         if (Modifier.isAbstract(modifier) || Modifier.isInterface(modifier))
             throw new IllegalArgumentException("We can't accept an abstract class or interface as message type!");
@@ -113,13 +117,19 @@ public class MessageCodec {
     }
 
     // in this case, responses always send back to the sender;
-    public final NetworkPacket readInput(InputStream input, MessageContext context) throws IOException {
+    private Node<?> findNode(InputStream input) throws IOException {
         byte desc = (byte) input.read();
-        Node<?> node = descToNode.get(desc);
-        if (node != null)
-            return node.handle(input, context);
+        return descToNode.get(desc);
+    }
 
-        return null;
+    public final NetworkPacket readInput(InputStream input, UUID sender) throws IOException {
+        Node<?> node = findNode(input);
+        return node == null ? null : node.handle(input, sender);
+    }
+
+    public final NetworkPacket readInput(InputStream input) throws IOException {
+        Node<?> node = findNode(input);
+        return node == null ? null : node.handle(input);
     }
 
     public final <T extends NetworkPacket> boolean writeOutput(T packet, OutputStream output) throws IOException {

@@ -96,7 +96,11 @@ public class EffekseerCraft extends JavaPlugin {
                 true
         );
 
-        server.receiveEvent(new EfsServerEvent.Start<>(getServer(), Collections.singletonList(new File(getDataFolder(), "effects.json"))));
+        {
+            List<File> files = Collections.singletonList(new File(getDataFolder(), "effects.json"));
+            File keys = new File(getDataFolder(), "decrypts.json");
+            server.receiveEvent(new EfsServerEvent.Start<>(getServer(), files, keys));
+        }
 
         // network
         Messenger messenger = getServer().getMessenger();
