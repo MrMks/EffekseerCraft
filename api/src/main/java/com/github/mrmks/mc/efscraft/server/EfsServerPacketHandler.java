@@ -4,6 +4,7 @@ import com.github.mrmks.mc.efscraft.common.Constants;
 import com.github.mrmks.mc.efscraft.common.HandshakeState;
 import com.github.mrmks.mc.efscraft.common.crypt.NetworkSession;
 import com.github.mrmks.mc.efscraft.common.packet.*;
+import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 
 import java.io.*;
 import java.util.*;
@@ -15,24 +16,24 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
     private final EfsServer<SV, ?, EN, PL, ?, DO> server;
     private final MessageCodec codec;
     private final boolean autoReply;
-    private final Map<UUID, NetworkSession.Server> sessions;
     private final Map<UUID, HandshakeState> states;
+    private final Map<UUID, NetworkSession.Server> sessions;
 
     EfsServerPacketHandler(EfsServer<SV, ?, EN, PL, ?, DO> server, boolean autoReply) {
         this.server = server;
         this.codec = new MessageCodec();
         this.autoReply = autoReply;
 
-        this.sessions = new ConcurrentHashMap<>();
         this.states = server.clients;
+        this.sessions = server.sessions;
 
         init();
     }
 
     void init() {
-        codec.registerServer(PacketHello.class, this::dispatchHandshake);
-        codec.registerServer(PacketHandshake.CHello.class, this::dispatchHandshake);
-        codec.registerServer(PacketHandshake.CConfirmAndRequest.class, this::dispatchHandshake);
+        codec.registerServer(PacketHello.class, handshakeHandler(this::handleHandshakeHello, HandshakeState.HELLO, HandshakeState.BEGIN));
+        codec.registerServer(PacketHandshake.CHello.class, handshakeHandler(this::handleHandshakeVerify, HandshakeState.BEGIN, HandshakeState.CONFIRM));
+        codec.registerServer(PacketHandshake.CConfirmAndRequest.class, handshakeHandler(this::handleHandshakeConfirm, HandshakeState.CONFIRM, HandshakeState.DONE));
         codec.registerServer(PacketHandshakeDisconnect.class, this::handleDisconnect);
     }
 
@@ -84,84 +85,134 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
         return null;
     }
 
-    private NetworkPacket dispatchHandshake(NetworkPacket packet, UUID uuid) {
-        HandshakeState state = states.get(uuid);
-
-        if (state == null) return null;
-
-        if (state == HandshakeState.START || state == HandshakeState.DONE)
-            states.put(uuid, state = HandshakeState.ERROR);
-
-        if (state == HandshakeState.VERIFY && packet instanceof PacketHello) {
-            if (((PacketHello) packet).version == Constants.PROTOCOL_VERSION) {
-                states.put(uuid, HandshakeState.HELLO);
-                NetworkSession.Server session = new NetworkSession.Server();
-                sessions.put(uuid, session);
-                return new PacketHandshake.SHello(session.handshakeHello());
-            }
-        }
-        else if (state == HandshakeState.HELLO && packet instanceof PacketHandshake.CHello) {
-            NetworkSession.Server session = sessions.get(uuid);
-            if (session != null) {
-                byte[] data = ((PacketHandshake.CHello) packet).getData();
-                try {
-                    data = session.handshakeConfirm(data);
-                    states.put(uuid, HandshakeState.CONFIRM);
-                    return new PacketHandshake.SConfirm(data);
-                } catch (IOException e) {}
-            }
-        }
-        else if (state == HandshakeState.CONFIRM && packet instanceof PacketHandshake.CConfirmAndRequest) {
-            NetworkSession.Server session = sessions.get(uuid);
-            if (session != null) {
-                // todo: validate client, read request and return response;
-                byte[] data = ((PacketHandshake.CConfirmAndRequest) packet).getData();
-                DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
-                try {
-                    data = new byte[input.readInt()];
-                    int len = input.read(data);
-                    if (len != data.length) throw new EOFException();
-
-                    boolean flag = session.handshakeDone(data);
-                    if (flag) {
-                        states.put(uuid, HandshakeState.DONE); // skip complete
-
-                        int size = input.readInt();
-                        String[] digests = new String[size];
-                        for (int i = 0; i < size; i++)
-                            digests[i] = input.readUTF();
-
-                        Map<String, byte[]> ret = new HashMap<>();
-                        for (String d : digests) {
-                            byte[] k = server.decryptKeys.get(d);
-                            if (k != null)
-                                ret.put(d, k);
-                        }
-
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        DataOutputStream stream = new DataOutputStream(outputStream);
-
-                        stream.writeInt(ret.size());
-                        for (Map.Entry<String, byte[]> entry : ret.entrySet()) {
-                            stream.writeUTF(entry.getKey());
-                            stream.writeInt(entry.getValue().length);
-                            stream.write(entry.getValue());
-                        }
-
-                        return new PacketHandshake.SResponse(session.encryptData(outputStream.toByteArray()));
-                    }
-                } catch (IOException e) {}
-            }
-        }
-
-        sessions.remove(uuid);
-        states.remove(uuid);
-        return PacketHandshakeDisconnect.INSTANCE;
-    }
-
     private void handleDisconnect(PacketHandshakeDisconnect packet, UUID uuid) {
         sessions.remove(uuid);
         states.remove(uuid);
     }
 
+    private interface Func<T extends NetworkPacket> {
+        NetworkPacket accept(T packet, UUID uuid, Runnable trigger);
+    }
+
+    private <T extends NetworkPacket> NetworkPacket.ServerHandler<T, NetworkPacket> handshakeHandler(Func<T> func, HandshakeState stateFrom, HandshakeState stateTo) {
+        return (packet, sender) -> {
+            HandshakeState curState = states.get(sender);
+            if (curState == null || curState.ordinal() > stateFrom.ordinal())
+                return null;
+
+            if (curState != stateFrom) {
+                states.remove(sender);
+                sessions.remove(sender);
+
+                return PacketHandshakeDisconnect.INSTANCE;
+            }
+
+            boolean[] flags = { false };
+            NetworkPacket ret = func.accept(packet, sender, () -> flags[0] = true);
+
+            if (flags[0]) {
+                states.put(sender, stateTo);
+
+                if (stateTo == HandshakeState.DONE) {
+                    server.receiveEvent(new EfsPlayerEvent.Verify(sender));
+                }
+
+                return ret;
+            } else {
+                states.remove(sender);
+                sessions.remove(sender);
+
+                return PacketHandshakeDisconnect.INSTANCE;
+            }
+
+        };
+    }
+
+    private NetworkPacket handleHandshakeHello(PacketHello packet, UUID sender, Runnable trigger) {
+        if (packet.version == Constants.PROTOCOL_VERSION) {
+            trigger.run();
+
+            NetworkSession.Server session;
+            sessions.put(sender, session = new NetworkSession.Server());
+            return new PacketHandshake.SHello(session.handshakeHello());
+        }
+
+        return null;
+    }
+
+    private NetworkPacket handleHandshakeVerify(PacketHandshake.CHello packet, UUID sender, Runnable trigger) {
+        byte[] data = packet.getData();
+        NetworkSession.Server session = sessions.get(sender);
+
+        if (session == null || data == null) {
+            return null;
+        }
+
+        try {
+            data = session.handshakeConfirm(data);
+        } catch (IOException e) {
+            data = null;
+        }
+
+        if (data != null) {
+            trigger.run();
+            return new PacketHandshake.SConfirm(data);
+        }
+
+        return null;
+    }
+
+    private NetworkPacket handleHandshakeConfirm(PacketHandshake.CConfirmAndRequest packet, UUID sender, Runnable r) {
+        byte[] data = packet.getData();
+        NetworkSession.Server session = sessions.get(sender);
+
+        if (session == null || data == null) {
+            return null;
+        }
+
+        data = session.decryptData(data);
+
+        try {
+            DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
+            int len = input.readInt();
+            byte[] verify = new byte[len];
+            len = input.read(verify);
+
+            if (len != verify.length) throw new EOFException();
+
+            boolean flag = session.handshakeDone(verify);
+
+            if (!flag) return null;
+
+            len = input.readInt();
+            String[] digests = new String[len];
+
+            for (int i = 0; i < len; i++)
+                digests[i] = input.readUTF();
+
+            Map<String, byte[]> map = new HashMap<>();
+            for (String d : digests) {
+                byte[] key = server.decryptKeys.get(d);
+                if (key != null) map.put(d, key);
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            DataOutputStream stream = new DataOutputStream(outputStream);
+
+            for (Map.Entry<String, byte[]> entry : map.entrySet()) {
+                stream.writeUTF(entry.getKey());
+                stream.writeInt(entry.getValue().length);
+                stream.write(entry.getValue());
+            }
+
+            data = outputStream.toByteArray();
+            data = session.encryptData(data);
+
+            r.run();
+
+            return new PacketHandshake.SResponse(data);
+        } catch (IOException e) {}
+
+        return null;
+    }
 }

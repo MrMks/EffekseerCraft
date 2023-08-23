@@ -2,9 +2,11 @@ package com.github.mrmks.mc.efscraft.server;
 
 import com.github.mrmks.mc.efscraft.common.HandshakeState;
 import com.github.mrmks.mc.efscraft.common.LogAdaptor;
-import com.github.mrmks.mc.efscraft.common.packet.PacketHello;
+import com.github.mrmks.mc.efscraft.common.crypt.NetworkSession;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,6 +18,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends OutputStream> {
     final EfsServerEventHandler<SV> eventHandler;
 
     final Map<UUID, HandshakeState> clients;
+    final Map<UUID, NetworkSession.Server> sessions;
     final Map<String, byte[]> decryptKeys;
     protected final LogAdaptor logger;
     protected final EfsServerEnv env;
@@ -33,6 +36,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends OutputStream> {
         this.env = env;
         this.implVer = implVer;
         this.clients = new ConcurrentHashMap<>();
+        this.sessions = new ConcurrentHashMap<>();
         this.decryptKeys = Collections.synchronizedMap(new HashMap<>());
 
         this.commandHandler = new EfsServerCommandHandler<>(this);

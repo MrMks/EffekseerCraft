@@ -27,14 +27,10 @@ public abstract class EfsPlayerEvent implements IEfsServerEvent {
     }
 
     public static class Verify extends EfsPlayerEvent {
-        private final int version;
-        public Verify(UUID uuid, int v) {
+
+        public Verify(UUID uuid) {
             super(uuid);
-            this.version = v;
         }
 
-        public int getVersion() {
-            return version;
-        }
     }
 }

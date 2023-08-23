@@ -31,6 +31,7 @@ class EfsClientEventHandler {
 
         } else if (event instanceof EfsDisconnectEvent) {
             client.handshakeState = HandshakeState.START;
+            client.session = null;
             client.renderer.stopAll();
 
             client.resources.onReload();

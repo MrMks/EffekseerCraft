@@ -6,7 +6,6 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.function.Supplier;
 
 import static com.github.mrmks.mc.efscraft.common.crypt.CryptUtils.*;
 
@@ -124,25 +123,6 @@ public class NetworkSession {
             int len = stream.read();
 
             byte[] bytes = Arrays.copyOfRange(input, 5, input.length);
-            boolean flag = Arrays.equals(bytes, exchangeConfirm(rnd, offset, len));
-
-            rnd = null;
-
-            return flag;
-        }
-
-        public boolean handshakeDone(InputStream input) throws IOException {
-            DataInputStream stream = new DataInputStream(input);
-            int offset = stream.readInt();
-            int len = stream.readByte();
-
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            for (int i = input.read(); i >= 0; i = input.read()) {
-                os.write(i);
-            }
-
-            byte[] bytes = os.toByteArray();
-
             boolean flag = Arrays.equals(bytes, exchangeConfirm(rnd, offset, len));
 
             rnd = null;

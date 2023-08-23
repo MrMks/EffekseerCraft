@@ -29,6 +29,7 @@ class EfsServerEventHandler<SV> {
 
     private final LogAdaptor logger;
     private final Map<UUID, HandshakeState> clients;
+    private final Map<UUID, ?> sessions;
     private final Map<UUID, Counter> pending = new HashMap<>();
 
     private final EfsServer<SV, ?, ?, ?, ?, ?> server;
@@ -37,6 +38,7 @@ class EfsServerEventHandler<SV> {
         this.server = server;
         this.logger = server.logger;
         this.clients = server.clients;
+        this.sessions = server.sessions;
     }
 
     void receive(IEfsServerEvent event) {
@@ -83,9 +85,7 @@ class EfsServerEventHandler<SV> {
             else if (event instanceof EfsPlayerEvent.Leave)
                 onLogout(uuid);
             else if (event instanceof EfsPlayerEvent.Verify) {
-                int ver = ((EfsPlayerEvent.Verify) event).getVersion();
-
-                onVerify(uuid, ver);
+                onVerify(uuid);
             }
 
         }
@@ -103,13 +103,13 @@ class EfsServerEventHandler<SV> {
     protected final void onLogout(UUID uuid) {
         pending.remove(uuid);
         clients.remove(uuid);
+        sessions.remove(uuid);
     }
 
-    @Deprecated
-    protected final void onVerify(UUID sender, int ver) {
-        throw new UnsupportedOperationException();
+    protected final void onVerify(UUID sender) {
+        pending.remove(sender);
+        logger.logInfo("Established connection to client with uuid: " + sender);
     }
-
     protected final void tickAndUpdate(SV sv) {
         ArrayList<UUID> list = null;
         Iterator<Map.Entry<UUID, Counter>> iterator = pending.entrySet().iterator();
@@ -128,7 +128,7 @@ class EfsServerEventHandler<SV> {
                     if (sv != null)
                         server.packetHandler.sendToClient(sv, entry.getKey(), new PacketHello());
 
-                    clients.put(uuid, HandshakeState.VERIFY);
+                    clients.put(uuid, HandshakeState.HELLO);
 
                     if (list == null) list = new ArrayList<>();
                     list.add(uuid);
