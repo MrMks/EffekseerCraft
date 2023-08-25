@@ -420,6 +420,7 @@ public class EfsServerCommandHandler<SERVER, WORLD, ENTITY, PLAYER extends ENTIT
     }
 
     private void executeReload(String[] args, SERVER server, SENDER sender) throws CommandException {
+        this.server.secretStore.reload();
         registry.reload(() -> adaptor.sendMessage(server, sender, "commands.effek.reload.success", new Object[0], true));
     }
 

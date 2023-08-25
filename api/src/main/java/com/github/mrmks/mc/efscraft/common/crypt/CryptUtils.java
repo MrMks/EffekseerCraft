@@ -117,14 +117,17 @@ public class CryptUtils {
         }
     }
 
+    @Deprecated
     public static Cipher genAesEncrypt(byte[] ss) {
         return genAesCipher(ss, Cipher.ENCRYPT_MODE);
     }
 
+    @Deprecated
     public static Cipher genAesDecrypt(byte[] ss) {
         return genAesCipher(ss, Cipher.DECRYPT_MODE);
     }
 
+    @Deprecated
     private static Cipher genAesCipher(byte[] ss, int mode) {
         try {
             MessageDigest dg = MessageDigest.getInstance(ALG_SHA_256);
@@ -142,14 +145,17 @@ public class CryptUtils {
         }
     }
 
+    @Deprecated
     public static byte[] encryptWithAES(Cipher cipher, byte[] data) {
         return cryptWithAES(cipher, data);
     }
 
+    @Deprecated
     public static byte[] decryptWithAES(Cipher cipher, byte[] data) {
         return cryptWithAES(cipher, data);
     }
 
+    @Deprecated
     private static byte[] cryptWithAES(Cipher cipher, byte[] data) {
         try {
             int bs = cipher.getBlockSize();
@@ -162,6 +168,69 @@ public class CryptUtils {
 
             return stream.toByteArray();
         } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static SecretKey createSecretAES(byte[] ss) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(ALG_SHA_256);
+            byte[] data = digest.digest(ss);
+
+            return new SecretKeySpec(data, ALG_AES);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);// this should never happen;
+        }
+    }
+
+    static byte[] encryptWithAES(SecretKey key, byte[] data, int offset, int len) {
+        byte[] iv = new SecureRandom().generateSeed(16);
+        Cipher cipher = createCipherAES(false, key, iv, 0, 16);
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        stream.write(iv, 0, iv.length);
+        cryptWithAES(cipher, data, offset, len, stream);
+
+        return stream.toByteArray();
+    }
+
+    static byte[] decryptWithAES(SecretKey key, byte[] data, int offset, int len) {
+        Cipher cipher = createCipherAES(true, key, data, offset, 16);
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        cryptWithAES(cipher, data, offset + 16, len - 16, stream);
+
+        return stream.toByteArray();
+    }
+
+    private static Cipher createCipherAES(boolean dec, SecretKey key, byte[] iv, int offset, int len) {
+        Cipher cipher;
+        try {
+            cipher = Cipher.getInstance(ALG_AES_CIPHER);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            cipher.init(dec ? Cipher.DECRYPT_MODE : Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv, offset, len));
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            throw new RuntimeException(e);
+        }
+
+        return cipher;
+    }
+
+    private static void cryptWithAES(Cipher cipher, byte[] data, int offset, int len, ByteArrayOutputStream output) {
+        int i, bs = cipher.getBlockSize();
+        byte[] tmp;
+        for (i = 0; i < len - bs; i += bs) {
+            tmp = cipher.update(data, offset + i, bs);
+            output.write(tmp, 0, tmp.length);
+        }
+        try {
+            tmp = cipher.doFinal(data, offset + i, len - i);
+            output.write(tmp, 0, tmp.length);
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
             throw new RuntimeException(e);
         }
     }

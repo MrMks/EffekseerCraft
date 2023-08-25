@@ -73,6 +73,9 @@ public class MessageCodec {
         register(PacketHandshake.SResponse.class, PacketHandshake.SResponse::new, PacketHandshake.CODEC);
         register(PacketHandshakeDisconnect.class, () -> PacketHandshakeDisconnect.INSTANCE, null);
 
+        register(PacketDecrypt.CRequest.class, PacketDecrypt.CRequest::new, PacketDecrypt.CODEC);
+        register(PacketDecrypt.SResponse.class, PacketDecrypt.SResponse::new, PacketDecrypt.CODEC);
+
         register(SPacketPlayWith.class, SPacketPlayWith::new, SPacketPlayWith.CODEC);
         register(SPacketPlayAt.class, SPacketPlayAt::new, SPacketPlayAt.CODEC);
         register(SPacketStop.class, SPacketStop::new, SPacketStop.CODEC);

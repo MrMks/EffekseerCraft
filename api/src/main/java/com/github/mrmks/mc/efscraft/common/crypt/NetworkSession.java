@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.common.crypt;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import java.io.*;
 import java.security.KeyPair;
 import java.security.PublicKey;
@@ -51,19 +52,18 @@ public class NetworkSession {
     }
 
     public static abstract class Common {
-        private Cipher aesEnc, aesDec;
+        private SecretKey secretKey;
 
         protected void generateCipher(byte[] ss) {
-            this.aesEnc = genAesEncrypt(ss);
-            this.aesDec = genAesDecrypt(ss);
+            secretKey = createSecretAES(ss);
         }
 
         public final byte[] encryptData(byte[] output) {
-            return encryptWithAES(aesEnc, output);
+            return encryptWithAES(secretKey, output, 0, output.length);
         }
 
         public final byte[] decryptData(byte[] input) {
-            return decryptWithAES(aesDec, input);
+            return decryptWithAES(secretKey, input, 0, input.length);
         }
     }
 

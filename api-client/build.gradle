@@ -7,5 +7,4 @@ dependencies {
     compileOnly "com.github.mrmks.effekseer4j:effekseer4j:$efscraftVer"
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     compileOnly rootProject.project(':api')
-    compileOnly rootProject.project(':module-crypt')
 }

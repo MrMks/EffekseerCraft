@@ -30,6 +30,8 @@ class EfsClientPacketHandler<DO extends OutputStream> {
         codec.registerClient(PacketHandshake.SResponse.class, handshakeHandler(this::handleHandshakeComplete, HandshakeState.COMPLETE, HandshakeState.DONE));
         codec.registerClient(PacketHandshakeDisconnect.class, this::handleDisconnect);
 
+        codec.registerClient(PacketDecrypt.SResponse.class, this::handleDecryptResponse);
+
         codec.registerClient(SPacketPlayWith.class, this::handlePlayWith);
         codec.registerClient(SPacketPlayAt.class, this::handlePlayAt);
         codec.registerClient(SPacketTrigger.class, this::handleTrigger);
@@ -109,8 +111,8 @@ class EfsClientPacketHandler<DO extends OutputStream> {
 
                 client.logger.logDebug(String.format("Handshake(Client) Failed: %s -> %s", fState, "ERROR"));
 
+                client.handshakeState = HandshakeState.ERROR;
                 client.session = null;
-                client.handshakeState = null;
 
                 return PacketHandshakeDisconnect.INSTANCE;
             }
@@ -186,6 +188,26 @@ class EfsClientPacketHandler<DO extends OutputStream> {
         return new PacketHandshake.CConfirmAndRequest(data);
     }
 
+    private Map<String, byte[]> readSecretMap(byte[] data) {
+        DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
+        Map<String, byte[]> map = new HashMap<>();
+        try {
+            int len = input.readInt();
+
+            for (int i = 0; i < len; i++) {
+                String d = input.readUTF();
+                byte[] v = new byte[input.readInt()];
+                if (v.length != input.read(v)) throw new EOFException();
+
+                map.put(d, v);
+            }
+        } catch (IOException e) {
+            map = null;
+        }
+
+        return map;
+    }
+
     private NetworkPacket handleHandshakeComplete(PacketHandshake.SResponse packet, Runnable t) {
         byte[] data = packet.getData();
         NetworkSession.Client session = client.session;
@@ -193,30 +215,33 @@ class EfsClientPacketHandler<DO extends OutputStream> {
         if (data == null || session == null)
             return null;
 
-        Map<String, byte[]> map = new HashMap<>();
-        try(DataInputStream input = new DataInputStream(new ByteArrayInputStream(data))) {
-            int len = input.readInt();
+        data = session.decryptData(data);
 
-            for (int i = 0; i < len; i ++) {
-                String d = input.readUTF();
-                byte[] v = new byte[input.readInt()];
-                if (v.length != input.read(v)) throw new EOFException();
-
-                v = session.decryptData(v);
-
-                map.put(d, v);
-            }
-
-        } catch (IOException e) {
-            map = null;
-        }
-
+        Map<String, byte[]> map = readSecretMap(data);
         if (map == null)
             return null;
 
         t.run();
         client.resources.receiveDecryptKey(map);
         return null;
+    }
+
+    private void handleDecryptResponse(PacketDecrypt.SResponse packet) {
+        if (client.handshakeState != HandshakeState.DONE)
+            return;
+
+        byte[] data = packet.getData();
+        NetworkSession.Client session = client.session;
+
+        if (data == null || session == null)
+            return;
+
+        data = session.decryptData(data);
+
+        Map<String, byte[]> map = readSecretMap(data);
+        if (map == null) return;
+
+        client.resources.receiveDecryptKey(map);
     }
 
     private void handleDisconnect(PacketHandshakeDisconnect packet) {
@@ -226,6 +251,9 @@ class EfsClientPacketHandler<DO extends OutputStream> {
 
     private void handlePlayWith(SPacketPlayWith packet) { client.adaptor.schedule(() -> handlePlayWith0(packet)); }
     private void handlePlayWith0(SPacketPlayWith packet) {
+
+        if (client.handshakeState != HandshakeState.DONE)
+            return;
 
         Matrix4f base = new Matrix4f().identity()
                 .translatef(packet.getLocalPosition())
@@ -245,6 +273,9 @@ class EfsClientPacketHandler<DO extends OutputStream> {
     private void handlePlayAt(SPacketPlayAt packet) { client.adaptor.schedule(() -> handlePlayAt0(packet)); }
     private void handlePlayAt0(SPacketPlayAt packet) {
 
+        if (client.handshakeState != HandshakeState.DONE)
+            return;
+
         Matrix4f base = new Matrix4f().identity()
                 .translatef(packet.getLocalPosition())
                 .rotateMC(packet.getLocalRotation())
@@ -260,16 +291,25 @@ class EfsClientPacketHandler<DO extends OutputStream> {
 
     private void handleTrigger(SPacketTrigger packet) { client.adaptor.schedule(() -> handleTrigger0(packet)); }
     private void handleTrigger0(SPacketTrigger packet) {
+        if (client.handshakeState != HandshakeState.DONE)
+            return;
+
         queue.commandTrigger(packet.getKey(), packet.getEmitter(), packet.getTrigger());
     }
 
     private void handleStop(SPacketStop packet) { client.adaptor.schedule(() -> handleStop0(packet)); }
     private void handleStop0(SPacketStop packet) {
+        if (client.handshakeState != HandshakeState.DONE)
+            return;
+
         queue.commandStop(packet.getKey(), packet.getEmitter());
     }
 
     private void handleClear(SPacketClear packet) { client.adaptor.schedule(() -> handleClear0(packet)); }
     private void handleClear0(SPacketClear packet) {
+        if (client.handshakeState != HandshakeState.DONE)
+            return;
+
         queue.commandClear();
     }
 }

@@ -34,6 +34,8 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
         codec.registerServer(PacketHandshake.CHello.class, handshakeHandler(this::handleHandshakeVerify, HandshakeState.BEGIN, HandshakeState.CONFIRM));
         codec.registerServer(PacketHandshake.CConfirmAndRequest.class, handshakeHandler(this::handleHandshakeConfirm, HandshakeState.CONFIRM, HandshakeState.DONE));
         codec.registerServer(PacketHandshakeDisconnect.class, this::handleDisconnect);
+
+        codec.registerServer(PacketDecrypt.CRequest.class, this::handleDecryptRequest);
     }
 
     DO receive(SV sv, PL receiver, InputStream dataIn) throws IOException {
@@ -195,34 +197,61 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
 
             if (!flag) return null;
 
-            len = input.readInt();
-            String[] digests = new String[len];
-
-            for (int i = 0; i < len; i++)
-                digests[i] = input.readUTF();
-
-            Map<String, byte[]> map = new HashMap<>();
-            for (String d : digests) {
-                byte[] key = server.decryptKeys.get(d);
-                if (key != null) map.put(d, key);
-            }
-
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            DataOutputStream stream = new DataOutputStream(outputStream);
-
-            stream.writeInt(map.size());
-            for (Map.Entry<String, byte[]> entry : map.entrySet()) {
-                stream.writeUTF(entry.getKey());
-                data = session.encryptData(entry.getValue());
-                stream.writeInt(data.length);
-                stream.write(data);
-            }
-
-            data = outputStream.toByteArray();
+            data = mapDigestToSecret(input);
+            data = session.encryptData(data);
             r.run();
             return new PacketHandshake.SResponse(data);
         } catch (IOException e) {}
 
         return null;
+    }
+
+    private NetworkPacket handleDecryptRequest(PacketDecrypt.CRequest packet, UUID sender) {
+
+        if (states.get(sender) != HandshakeState.DONE)
+            return null;
+
+        NetworkSession.Server session = sessions.get(sender);
+        if (session == null)
+            return null;
+
+        byte[] data = packet.getData();
+        data = session.decryptData(data);
+        DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
+
+        try {
+            data = mapDigestToSecret(input);
+            data = session.encryptData(data);
+            return new PacketDecrypt.SResponse(data);
+        } catch (IOException e) {
+            // do nothing
+        }
+
+        return null;
+    }
+
+    private byte[] mapDigestToSecret(DataInputStream input) throws IOException {
+        int len = input.readInt();
+        String[] digests = new String[len];
+
+        for (int i = 0; i < len; i++)
+            digests[i] = input.readUTF();
+
+        Map<String, byte[]> map = server.secretStore.mapTo(digests);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        DataOutputStream stream = new DataOutputStream(outputStream);
+
+        byte[] data;
+        stream.writeInt(map.size());
+        for (Map.Entry<String, byte[]> entry : map.entrySet()) {
+            stream.writeUTF(entry.getKey());
+            data = entry.getValue();
+            stream.writeInt(data.length);
+            stream.write(data);
+        }
+
+        data = outputStream.toByteArray();
+        return data;
     }
 }

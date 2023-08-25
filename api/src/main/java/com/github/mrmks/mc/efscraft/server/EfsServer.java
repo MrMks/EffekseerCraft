@@ -19,7 +19,7 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends OutputStream> {
 
     final Map<UUID, HandshakeState> clients;
     final Map<UUID, NetworkSession.Server> sessions;
-    final Map<String, byte[]> decryptKeys;
+    final EfsSecretStore secretStore;
     protected final LogAdaptor logger;
     protected final EfsServerEnv env;
     protected final String implVer;
@@ -37,8 +37,8 @@ public class EfsServer<SV, WO, EN, PL extends EN, SE, DO extends OutputStream> {
         this.implVer = implVer;
         this.clients = new ConcurrentHashMap<>();
         this.sessions = new ConcurrentHashMap<>();
-        this.decryptKeys = Collections.synchronizedMap(new HashMap<>());
 
+        this.secretStore = new EfsSecretStore();
         this.commandHandler = new EfsServerCommandHandler<>(this);
         this.packetHandler = new EfsServerPacketHandler<>(this, autoReply);
         this.eventHandler = new EfsServerEventHandler<>(this);

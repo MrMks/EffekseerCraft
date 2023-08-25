@@ -51,28 +51,7 @@ class EfsServerEventHandler<SV> {
                 server.commandHandler.updateFiles(((EfsServerEvent.Start<?>) event).getFiles());
 
                 File keys = ((EfsServerEvent.Start<?>) event).getKeys();
-                if (keys.exists() && keys.isFile() && keys.canRead()) {
-                    try (InputStream stream = new BufferedInputStream(Files.newInputStream(keys.toPath(), StandardOpenOption.READ))) {
-                        Gson gson = new Gson();
-                        JsonObject obj = gson.fromJson(new InputStreamReader(stream), JsonObject.class);
-
-                        Map<String, byte[]> map = new HashMap<>();
-                        for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                            String k = entry.getKey();
-                            JsonElement je = entry.getValue();
-                            if (je.isJsonPrimitive() && je.getAsJsonPrimitive().isString()) {
-                                byte[] v = Base64.getDecoder().decode(je.getAsString());
-
-                                map.put(k, v);
-                            }
-                        }
-
-                        server.decryptKeys.clear();
-                        server.decryptKeys.putAll(map);
-                    } catch (IOException e) {
-                        // do nothing
-                    }
-                }
+                server.secretStore.reload(keys);
             } else if (event instanceof EfsServerEvent.Stop) {
                 server.commandHandler.updateFiles(Collections.emptyList());
             }
