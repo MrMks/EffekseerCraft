@@ -8,7 +8,6 @@ import com.github.mrmks.mc.efscraft.server.event.EfsPlayerEvent;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
@@ -108,9 +107,18 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
             }
 
             boolean[] flags = { false };
-            NetworkPacket ret = func.accept(packet, sender, () -> flags[0] = true);
+            NetworkPacket ret = null;
+            try {
+                ret = func.accept(packet, sender, () -> flags[0] = true);
+            } catch (Throwable tr) {
+                server.logger.logWarning("Unable to handle a handshake packet", tr);
+                flags[0] = false;
+            }
 
             if (flags[0]) {
+
+                server.logger.logDebug(String.format("Handshake(Server): %s -> %s", stateFrom, stateTo));
+
                 states.put(sender, stateTo);
 
                 if (stateTo == HandshakeState.DONE) {
@@ -119,6 +127,9 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
 
                 return ret;
             } else {
+
+                server.logger.logDebug(String.format("Handshake(Server) Failed: %s -> %s", stateFrom, "ERROR"));
+
                 states.remove(sender);
                 sessions.remove(sender);
 
@@ -199,17 +210,16 @@ class EfsServerPacketHandler<SV, EN, PL extends EN, DO extends OutputStream> {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             DataOutputStream stream = new DataOutputStream(outputStream);
 
+            stream.writeInt(map.size());
             for (Map.Entry<String, byte[]> entry : map.entrySet()) {
                 stream.writeUTF(entry.getKey());
-                stream.writeInt(entry.getValue().length);
-                stream.write(entry.getValue());
+                data = session.encryptData(entry.getValue());
+                stream.writeInt(data.length);
+                stream.write(data);
             }
 
             data = outputStream.toByteArray();
-            data = session.encryptData(data);
-
             r.run();
-
             return new PacketHandshake.SResponse(data);
         } catch (IOException e) {}
 

@@ -121,8 +121,8 @@ class EfsServerEventHandler<SV> {
                 iterator.remove();
 
                 UUID uuid = entry.getKey();
-
                 HandshakeState state = clients.get(uuid);
+
                 if (state == HandshakeState.START) {
 
                     if (sv != null)
@@ -131,10 +131,12 @@ class EfsServerEventHandler<SV> {
                     clients.put(uuid, HandshakeState.HELLO);
 
                     if (list == null) list = new ArrayList<>();
+
                     list.add(uuid);
                     logger.logInfo("Begin to connect to client with uuid " + uuid);
                 } else if (state != HandshakeState.DONE) {
                     clients.remove(uuid);
+                    sessions.remove(uuid);
                     logger.logInfo("Failed to establish the connection to client with uuid " + uuid + ": Timeout");
                 }
             }

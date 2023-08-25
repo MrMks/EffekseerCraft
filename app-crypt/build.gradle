@@ -1,0 +1,10 @@
+plugins {
+    id 'java'
+}
+
+jar {
+    archiveBaseName.set 'EfsCraftEncryptor'
+    manifest {
+        attributes 'Main-Class': 'Encrypt'
+    }
+}

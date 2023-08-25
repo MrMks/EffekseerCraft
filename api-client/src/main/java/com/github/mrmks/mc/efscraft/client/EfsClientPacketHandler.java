@@ -91,12 +91,24 @@ class EfsClientPacketHandler<DO extends OutputStream> {
             }
 
             boolean[] flags = { false };
-            NetworkPacket ret = func.accept(packet, () -> flags[0] = true);
+            NetworkPacket ret = null;
+            try {
+                ret = func.accept(packet, () -> flags[0] = true);
+            } catch (Throwable tr) {
+                client.logger.logWarning("Unable to handle a handshake packet", tr);
+                flags[0] = false;
+            }
 
             if (flags[0]) {
+
+                client.logger.logDebug(String.format("Handshake(Client): %s -> %s", fState, tState));
+
                 client.handshakeState = tState;
                 return ret;
             } else {
+
+                client.logger.logDebug(String.format("Handshake(Client) Failed: %s -> %s", fState, "ERROR"));
+
                 client.session = null;
                 client.handshakeState = null;
 
@@ -181,8 +193,6 @@ class EfsClientPacketHandler<DO extends OutputStream> {
         if (data == null || session == null)
             return null;
 
-        data = session.decryptData(data);
-
         Map<String, byte[]> map = new HashMap<>();
         try(DataInputStream input = new DataInputStream(new ByteArrayInputStream(data))) {
             int len = input.readInt();
@@ -191,6 +201,8 @@ class EfsClientPacketHandler<DO extends OutputStream> {
                 String d = input.readUTF();
                 byte[] v = new byte[input.readInt()];
                 if (v.length != input.read(v)) throw new EOFException();
+
+                v = session.decryptData(v);
 
                 map.put(d, v);
             }

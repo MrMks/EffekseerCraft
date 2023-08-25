@@ -10,6 +10,6 @@ pluginManagement {
 System.setProperty("net.minecraftforge.gradle.check.certs", "false")
 
 rootProject.name = 'EffekseerCraft'
-include 'module-crypt'
+include 'module-crypt', 'app-crypt'
 include 'api', 'api-client', 'spigot', 'forge-1.12.2', 'forge-1.16.5', 'forge-1.18.2'
 

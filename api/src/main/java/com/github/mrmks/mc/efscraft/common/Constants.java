@@ -2,7 +2,7 @@ package com.github.mrmks.mc.efscraft.common;
 
 public class Constants {
     public static final String CHANNEL_KEY = "efscraft:main";
-    public static final int PROTOCOL_VERSION = 3;
+    public static final int PROTOCOL_VERSION = 4;
 
     public static final String RESOURCE_NAMESPACE = "efscraft";
 
