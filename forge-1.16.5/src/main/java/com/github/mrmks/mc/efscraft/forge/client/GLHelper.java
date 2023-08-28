@@ -3,6 +3,7 @@ package com.github.mrmks.mc.efscraft.forge.client;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
@@ -239,6 +240,7 @@ public class GLHelper {
 
     static final int GL_RENDERBUFFER = GL30.GL_RENDERBUFFER;
     static final int GL_DEPTH_COMPONENT24 = GL20.GL_DEPTH_COMPONENT24;
+    static final int GL_DEPTH_COMPONENT = GL11.GL_DEPTH_COMPONENT;
     static final int GL_DEPTH24_STENCIL8 = GL30.GL_DEPTH24_STENCIL8;
 
     static int glGenRenderbuffers() {

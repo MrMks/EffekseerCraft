@@ -8,7 +8,7 @@ abstract class ServerRegistry {
         protected boolean baseOnCurrentYaw, baseOnCurrentPitch;
         protected boolean directionFromHead, directionFromBody;
 
-        private FollowArguments() {
+        protected FollowArguments() {
             this.followX = this.followY = this.followZ = this.followYaw = this.followPitch = false;
             this.baseOnCurrentYaw = this.baseOnCurrentPitch = true;
             this.directionFromHead = this.directionFromBody = false;

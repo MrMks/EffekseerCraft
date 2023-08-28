@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
+import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.client.IEfsClientAdaptor;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.forge.common.NetworkWrapper;
@@ -136,8 +137,8 @@ class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, ClientPlayerEnti
     }
 
     @Override
-    public void drawEffect(EfsRenderEvent event, Runnable drawer) {
-        renderer.drawEffect(event, drawer);
+    public void drawEffect(EfsRenderEvent event, EfsProgram program) {
+        renderer.drawEffect(event, program);
     }
 
     @Override

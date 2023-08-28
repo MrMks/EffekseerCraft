@@ -30,6 +30,7 @@ class ServerRegistryMap {
 
         private Entry() {
             this.valid = false;
+            this.followArgs = new FollowArguments();
         }
 
         Entry(Entry parent, PojoV1 pojo) {
@@ -45,17 +46,19 @@ class ServerRegistryMap {
 
             this.overwrite = getOrDefault(pojo.overwriteConflict, parent.overwrite);
 
-            this.followArgs.followX = getOrDefault(pojo.followArgs.followX, parent.followArgs.followX);
-            this.followArgs.followY = getOrDefault(pojo.followArgs.followY, parent.followArgs.followY);
-            this.followArgs.followZ = getOrDefault(pojo.followArgs.followZ, parent.followArgs.followZ);
-            this.followArgs.followYaw = getOrDefault(pojo.followArgs.followYaw, parent.followArgs.followYaw);
-            this.followArgs.followPitch = getOrDefault(pojo.followArgs.followPitch, parent.followArgs.followPitch);
+            if (pojo.followArgs != null) {
+                this.followArgs.followX = getOrDefault(pojo.followArgs.followX, parent.followArgs.followX);
+                this.followArgs.followY = getOrDefault(pojo.followArgs.followY, parent.followArgs.followY);
+                this.followArgs.followZ = getOrDefault(pojo.followArgs.followZ, parent.followArgs.followZ);
+                this.followArgs.followYaw = getOrDefault(pojo.followArgs.followYaw, parent.followArgs.followYaw);
+                this.followArgs.followPitch = getOrDefault(pojo.followArgs.followPitch, parent.followArgs.followPitch);
 
-            this.followArgs.baseOnCurrentYaw = getOrDefault(pojo.followArgs.inheritYaw, parent.followArgs.baseOnCurrentYaw);
-            this.followArgs.baseOnCurrentPitch = getOrDefault(pojo.followArgs.inheritPitch, parent.followArgs.baseOnCurrentPitch);
+                this.followArgs.baseOnCurrentYaw = getOrDefault(pojo.followArgs.inheritYaw, parent.followArgs.baseOnCurrentYaw);
+                this.followArgs.baseOnCurrentPitch = getOrDefault(pojo.followArgs.inheritPitch, parent.followArgs.baseOnCurrentPitch);
 
-            this.followArgs.directionFromHead = getOrDefault(pojo.followArgs.useHead, parent.followArgs.directionFromHead);
-            this.followArgs.directionFromBody = getOrDefault(pojo.followArgs.useRender, parent.followArgs.directionFromBody);
+                this.followArgs.directionFromHead = getOrDefault(pojo.followArgs.useHead, parent.followArgs.directionFromHead);
+                this.followArgs.directionFromBody = getOrDefault(pojo.followArgs.useRender, parent.followArgs.directionFromBody);
+            }
 
             this.localPos = getOrDefault(pojo.posLocal, parent.localPos).clone();
             this.modelPos = getOrDefault(pojo.posModel, parent.modelPos).clone();

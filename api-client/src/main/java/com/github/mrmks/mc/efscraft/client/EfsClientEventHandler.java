@@ -29,7 +29,7 @@ class EfsClientEventHandler {
                     client.renderer.update(rEvent.getPartial(), rEvent.getNanoNow(), rEvent.isGamePause(), rEvent.getMatProj(), rEvent.getMatModel());
             }
 
-            client.adaptor.drawEffect(rEvent, client.renderer::draw);
+            client.adaptor.drawEffect(rEvent, client.renderer.getProgram());
 
         } else if (event instanceof EfsResourceEvent) {
 

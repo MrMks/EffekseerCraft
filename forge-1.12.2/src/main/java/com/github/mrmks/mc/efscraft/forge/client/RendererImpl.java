@@ -1,7 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
+import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
-import com.github.mrmks.mc.efscraft.common.PropertyFlags;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 import static com.github.mrmks.mc.efscraft.forge.client.GLHelper.*;
@@ -10,9 +10,8 @@ class RendererImpl {
 
     private int workingFBO, colorAttachBuf, depthAttachBuf;
     private final int vertexBuffer;
-    private final int programDepth, programPlain;
+    private final int programDepth;
     private final int texColor, texColorOverlay, texDepthBackup, texDepthWorking, texDepthOverlay;
-    private int texColorOrigin;
 
     private int lastWidth = -1, lastHeight = -1;
 
@@ -131,8 +130,6 @@ class RendererImpl {
 
         glDeleteShader(fs);
 
-        programPlain = prog;
-
         glDeleteShader(vs);
         glUseProgram(originProg);
 
@@ -220,12 +217,6 @@ class RendererImpl {
             if (workingFBO <= 0) {
                 workingFBO = glGenFramebuffers();
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
-                if (PropertyFlags.ENABLE_TRANSPARENCY) {
-                    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorAttachBuf);
-                    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
-                    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthAttachBuf);
-                }
-
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentDraw);
             }
 
@@ -239,41 +230,7 @@ class RendererImpl {
         }
     }
 
-    private int[] backupDrawBuffers() {
-        int[] cache = new int[5];
-        for (int i = 0; i < cache.length - 1; i++)
-            cache[i] = glGetInteger(GL_DRAW_BUFFER0 + i);
-        cache[cache.length - 1] = glGetInteger(GL_DRAW_BUFFER);
-        return cache;
-    }
-
-    private void restoreDrawBuffers(int[] cache) {
-        if (cache.length < 1) return;
-        glDrawBuffer(cache[cache.length - 1]);
-        INT_16.clear();
-        INT_16.put(cache, 0, cache.length - 1);
-        INT_16.limit(INT_16.position());
-        INT_16.position(0);
-        glDrawBuffers(INT_16);
-    }
-
-    private void drawRectangle(int program) {
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 20, 0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 20, 12);
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-
-        glUseProgram(program);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-
-    public void renderWorld(EfsRenderEvent event, Runnable drawer) {
+    public void renderWorld(EfsRenderEvent event, EfsProgram program) {
 
         int w, h;
 
@@ -281,264 +238,39 @@ class RendererImpl {
         glGetInteger(GL_VIEWPORT, INT_16);
         tryResize(w = INT_16.get(2), h = INT_16.get(3));
 
-//        Minecraft mc = Minecraft.getMinecraft();
-
-        if (PropertyFlags.ENABLE_TRANSPARENCY && openglSupported())
-        {
-            // record current states
-            int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
-            int originDraw = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
-
-            int[] caps = {GL_DEPTH_TEST, GL_ALPHA_TEST, GL_STENCIL_TEST, GL_BLEND, GL_FOG, GL_LIGHTING, GL_COLOR_MATERIAL};
-            boolean[] originCaps = new boolean[caps.length];
-            for (int i = 0; i < caps.length; i++) {
-                originCaps[i] = glIsEnabled(caps[i]);
-                if (originCaps[i]) glDisable(caps[i]);
-            }
-            int originUnit = glGetInteger(GL_ACTIVE_TEXTURE);
-            int[] originTextures = new int[4];
-            for (int i = 0; i < originTextures.length; i++) {
-                glActiveTexture(GL_TEXTURE0 + i);
-                originTextures[i] = glGetInteger(GL_TEXTURE_BINDING_2D);
-            }
-            glActiveTexture(originUnit);
-
-            if (event.getPhase() == EfsRenderEvent.Phase.START)
-            {
-                // clear working and backup;
-                float[] cls = new float[4];
-                FLOAT_16.clear();
-                glGetFloat(GL_COLOR_CLEAR_VALUE, FLOAT_16);
-                FLOAT_16.get(cls);
-                glDepthMask(true);
-                glClearColor(0, 0, 0, 0);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                // backup color on COLOR_ATTACHMENT0 to working
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
-                int rb = glGetInteger(GL_READ_BUFFER);
-                glReadBuffer(glGetInteger(GL_DRAW_BUFFER));
-                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-                glReadBuffer(rb);
-
-                // copy depth to texDepthBackup
-                glActiveTexture(GL_TEXTURE0);
+        if (openglSupported()) {
+            int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
+            if (event.getPhase() == EfsRenderEvent.Phase.START) {
                 glBindTexture(GL_TEXTURE_2D, texDepthBackup);
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-
-                // bind origin framebuffers back
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
-
-                // backup drawing buffers;
-                int[] draws = backupDrawBuffers();
-                glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-                // bind texColor to color attachment 0 and clear color
-                texColorOrigin = glGetFramebufferAttachmentParameteri(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME);
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColor, 0);
-                glClear(GL_COLOR_BUFFER_BIT);
-                glClearColor(cls[0], cls[1], cls[2], cls[3]);
-
-                // restore drawing buffers;
-                restoreDrawBuffers(draws);
-
-                // setup states
-                glDepthMask(false);
-                glDepthMask(true);
-                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-                int error = glGetError();
-                if (error != GL_NO_ERROR)
-                    System.out.println(error);
-            }
-            else
-            {
-                // restore states
-                glDepthMask(false);
-
-                // backup origin program;
-                int originProgram = glGetInteger(GL_CURRENT_PROGRAM);
-                glUseProgram(0);
-
-                // setup textures
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, texColorOverlay);
-                glActiveTexture(GL_TEXTURE0 + 1);
-                glBindTexture(GL_TEXTURE_2D, texDepthBackup);
-                glActiveTexture(GL_TEXTURE0 + 2);
-                glBindTexture(GL_TEXTURE_2D, texDepthWorking);
-                glActiveTexture(GL_TEXTURE0 + 3);
-                glBindTexture(GL_TEXTURE_2D, texDepthOverlay);
-
-                // copy color to texColorOverlay
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, originDraw);
-                int rb = glGetInteger(GL_READ_BUFFER);
-                glReadBuffer(glGetInteger(GL_DRAW_BUFFER));
-                glActiveTexture(GL_TEXTURE0);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-                glReadBuffer(rb);
+            } else {
                 glBindTexture(GL_TEXTURE_2D, texColor);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
-                // bind origin color attachment 0
-                glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorOrigin, 0);
-                texColorOrigin = -1;
+                glBindTexture(GL_TEXTURE_2D, texDepthWorking);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
 
-                // copy depth to workingFBO
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, workingFBO);
+                int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
+
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
+                glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthBackup, 0);
                 glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-                // copy depth to texDepthOverlay
-                glActiveTexture(GL_TEXTURE0 + 3);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
+                program.setBackground(texColor, false);
+                program.setDepth(texDepthWorking, false);
+                program.draw();
+                program.unsetBackground();
+                program.unsetDepth();
 
-                // copy working's color to texColorBackup
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
-                glActiveTexture(GL_TEXTURE0);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-
-                // draw backup's color to working;
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                glBindTexture(GL_TEXTURE_2D, texColorOverlay);
-                drawRectangle(programPlain);
-                glDisable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                glBindTexture(GL_TEXTURE_2D, texColor);
-
-                // draw effect and generate stencils
-                glEnable(GL_STENCIL_TEST);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-                glStencilFunc(GL_ALWAYS, 1, 0xff);
-                glStencilMask(0xff);
-//                update(event.partial, event.finishNano, 1_000_000_000L, Minecraft.getMinecraft().isGamePaused());
-                {
-//                    Entity entity = mc.getRenderViewEntity();
-//                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-//                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
-//                    updateAndRender(event.finishNano, 1_000_000_000L, mc.isGamePaused(),
-//                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-//                            new Matrix4f(getProjectionMatrix()));
-                }
-                drawer.run();
-
-                // copy current working's depth to texDepthWorking
-                glActiveTexture(GL_TEXTURE0 + 2);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-
-                // draw color back
-                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-                drawRectangle(programPlain);
-
-                // draw depth back
-                glEnable(GL_BLEND);
-                glDisable(GL_STENCIL_TEST);
-                glEnable(GL_DEPTH_TEST);
-                glDepthFunc(GL_ALWAYS);
-                glDepthMask(true);
-                drawRectangle(programDepth);
-                glDisable(GL_BLEND);
-                glEnable(GL_STENCIL_TEST);
-                glDisable(GL_DEPTH_TEST);
-                glDepthFunc(GL_LEQUAL);
-                glDepthMask(false);
-
-                // draw effect again in stencils
-                drawer.run();
-
-                // draw translucent layer again
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, texColorOverlay);
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                drawRectangle(programPlain);
-                glBindTexture(GL_TEXTURE_2D, texColor);
-                glDisable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-                // we got every thing we need, copy them to originDraw
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originDraw);
-                int[] draws = backupDrawBuffers();
-                glDrawBuffer(GL_COLOR_ATTACHMENT0);
-                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-                restoreDrawBuffers(draws);
+                glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthWorking, 0);
+                glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
-                glUseProgram(originProgram);
-
-                int error = glGetError();
-                if (error != GL_NO_ERROR)
-                    System.out.println(error);
             }
-
-            // restore to recorded states
-            for (int i = 0; i < caps.length; i++) {
-                if (originCaps[i])
-                    glEnable(caps[i]);
-                else
-                    glDisable(caps[i]);
-            }
-            for (int i = 0; i < originTextures.length; i++) {
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, originTextures[i]);
-            }
-            glActiveTexture(originUnit);
-        }
-        else
-        {
-            if (openglSupported())
-            {
-                int originTex = glGetInteger(GL_TEXTURE_BINDING_2D);
-                if (event.getPhase() == EfsRenderEvent.Phase.START)
-                {
-                    glBindTexture(GL_TEXTURE_2D, texDepthBackup);
-                    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-                }
-                else
-                {
-                    glBindTexture(GL_TEXTURE_2D, texDepthWorking);
-                    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-
-                    int originRead = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
-
-                    glBindFramebuffer(GL_READ_FRAMEBUFFER, workingFBO);
-                    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthBackup, 0);
-                    glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-                    drawer.run();
-
-//                    Entity entity = mc.getRenderViewEntity();
-//                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-//                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
-//                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
-//                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-//                            new Matrix4f(getProjectionMatrix())
-//                    );
-
-                    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepthWorking, 0);
-                    glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-                    glBindFramebuffer(GL_READ_FRAMEBUFFER, originRead);
-                }
-                glBindTexture(GL_TEXTURE_2D, originTex);
-            }
-            else
-            {
-                if (event.getPhase() == EfsRenderEvent.Phase.END) {
-//                    Entity entity = mc.getRenderViewEntity();
-//                    Vec3f vPos = entity == null ? new Vec3f() : new Vec3f(entity.posX, entity.posY, entity.posZ);
-//                    Vec3f vPrev = entity == null ? new Vec3f() : new Vec3f(entity.prevPosX, entity.prevPosY, entity.prevPosZ);
-
-//                    updateAndRender(event.finishNano, 1000_000_000L, mc.isGamePaused(),
-//                            new Matrix4f(getModelviewMatrix()), vPos, vPrev, event.partial,
-//                            new Matrix4f(getProjectionMatrix())
-//                    );
-                    drawer.run();
-                }
+            glBindTexture(GL_TEXTURE_2D, originTex);
+        } else {
+            if (event.getPhase() == EfsRenderEvent.Phase.END) {
+                program.draw();
             }
         }
     }

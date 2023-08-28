@@ -1,6 +1,7 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
 import com.github.mrmks.efkseer4j.EffekSeer4J;
+import com.github.mrmks.mc.efscraft.client.event.EfsDisconnectEvent;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.client.event.EfsResourceEvent;
 import com.github.mrmks.mc.efscraft.common.IEfsEvent;
@@ -14,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -111,6 +113,11 @@ public class ClientProxy extends CommonProxy {
             matView.translatef(vPos.negative());
 
             client.receiveEvent(new EfsRenderEvent(event.getPartialTick(), Util.getNanos(), minecraft.isPaused(), matProj, matView, phase));
+        }
+
+        @SubscribeEvent
+        public void clientDisconnect(ClientPlayerNetworkEvent.LoggedOutEvent event) {
+            client.receiveEvent(EfsDisconnectEvent.INSTANCE);
         }
     }
 }

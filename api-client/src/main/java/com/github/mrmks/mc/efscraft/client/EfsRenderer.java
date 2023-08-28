@@ -61,7 +61,7 @@ class EfsRenderer {
         deleteProgram();
     }
 
-    private EfsProgram getProgram() {
+    EfsProgram getProgram() {
         synchronized (this) {
             if (program == null || createThread == null) {
                 if (program != null) program.delete();

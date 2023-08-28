@@ -187,6 +187,7 @@ class EfsResourceManager {
     }
 
     private InputStream loadResource0(String path) {
+        loadPacks();
         for (Pack pack : packs) {
             if (pack.isDecrypted() && pack.fileExist(path)) {
                 try {

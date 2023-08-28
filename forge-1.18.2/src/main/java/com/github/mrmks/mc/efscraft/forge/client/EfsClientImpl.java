@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
+import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.client.EfsClient;
 import com.github.mrmks.mc.efscraft.client.IEfsClientAdaptor;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
@@ -139,8 +140,8 @@ public class EfsClientImpl extends EfsClient<Entity, LocalPlayer, ByteBufOutputS
         }
 
         @Override
-        public void drawEffect(EfsRenderEvent event, Runnable drawer) {
-            renderer.drawEffect(event.getPhase(), drawer);
+        public void drawEffect(EfsRenderEvent event, EfsProgram program) {
+            renderer.drawEffect(event.getPhase(), program);
         }
 
         @Override

@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.client;
 
+import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.common.IEfsNetworkAdaptor;
 import com.github.mrmks.mc.efscraft.math.Vec2f;
@@ -39,7 +40,7 @@ public interface IEfsClientAdaptor<EN, PL, DO extends OutputStream>
     void sendPacket(DO dataOutput);
 
     // render impl
-    void drawEffect(EfsRenderEvent event, Runnable drawer);
+    void drawEffect(EfsRenderEvent event, EfsProgram program);
 
     // main thread task
     void schedule(Runnable runnable);

@@ -1,5 +1,6 @@
 package com.github.mrmks.mc.efscraft.forge.client;
 
+import com.github.mrmks.efkseer4j.EfsProgram;
 import com.github.mrmks.mc.efscraft.client.IEfsClientAdaptor;
 import com.github.mrmks.mc.efscraft.client.event.EfsRenderEvent;
 import com.github.mrmks.mc.efscraft.forge.common.NetworkWrapper;
@@ -12,6 +13,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
@@ -122,8 +124,8 @@ public class EfsClientAdaptorImpl implements IEfsClientAdaptor<Entity, EntityPla
     }
 
     @Override
-    public void drawEffect(EfsRenderEvent event, Runnable drawer) {
-        renderer.renderWorld(event, drawer);
+    public void drawEffect(EfsRenderEvent event, EfsProgram program) {
+        renderer.renderWorld(event, program);
     }
 
     @Override
