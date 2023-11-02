@@ -136,7 +136,8 @@ processResources {
 
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
-    archiveClassifier.set 'forge-1.16.5'
+    archiveClassifier.set 'forge-1.18.2'
+    from( project.configurations.shade.collect { it.isDirectory() ? it : zipTree(it)} )
     manifest {
         attributes([
                 "Specification-Title": "efscraft",
