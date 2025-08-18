@@ -270,6 +270,37 @@ class EfsResourceManager {
             }
         }
 
+        private static class DecryptInputStream extends InputStream {
+
+            private final InputStream inner;
+            private final byte[] decryptKey;
+            private int cur = 0;
+
+            DecryptInputStream(InputStream inner, byte[] decryptKey) {
+                this.inner = inner;
+                this.decryptKey = decryptKey;
+            }
+
+            @Override
+            public int read() throws IOException {
+                int upstream = inner.read();
+                if (upstream < 0)
+                    return upstream;
+                else {
+                    int v = upstream ^ (decryptKey[cur++]);
+                    if (cur >= decryptKey.length)
+                        cur = 0;
+
+                    return v & 0xFF;
+                }
+            }
+
+            @Override
+            public void close() throws IOException {
+                inner.close();
+            }
+        }
+
         @Override
         public InputStream loadResource(String path) throws IOException {
             if (!isDecrypted()) throw new UnsupportedEncodingException(); // this should never happen;
@@ -277,25 +308,7 @@ class EfsResourceManager {
             ZipEntry entry = zipFile.getEntry(path);
             InputStream stream = zipFile.getInputStream(entry);
             if (decryptKey != null) {
-                return new InputStream() {
-
-                    private final byte[] block = new byte[decryptKey.length];
-                    private int len = 0, max = len;
-
-                    @Override
-                    public int read() throws IOException {
-
-                        if (len >= max && max >= 0) {
-                            max = stream.read(block);
-                            for (int i = 0; i < max; i++)
-                                block[i] ^= decryptKey[i];
-
-                            len = 0;
-                        }
-
-                        return max < 0 ? -1 : (block[len ++] & 0xFF);
-                    }
-                };
+                return new DecryptInputStream(stream, decryptKey);
             } else {
                 return stream;
             }
